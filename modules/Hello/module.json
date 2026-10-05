@@ -1,0 +1,19 @@
+{
+  "name": "Hello Module",
+  "slug": "hello",
+  "description": "Referencyjny moduł demonstracyjny prezentujący rozszerzalność architektury Projekt-Emet",
+  "version": "1.0.0",
+  "icon": "sparkles",
+  "order": 10,
+  "enabled": true,
+  "permission": null,
+  "menu1": {
+    "title": "Hello",
+    "route": "hello.index",
+    "icon": "sparkles",
+    "order": 10
+  },
+  "menu2": [
+    { "id": "index", "title": "Przegląd", "route": "hello.index" }
+  ]
+}

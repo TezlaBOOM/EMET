@@ -1,0 +1,23 @@
+{
+  "name": "Ustawienia użytkownika",
+  "slug": "users",
+  "description": "Zarządzanie użytkownikami, rolami, uprawnieniami oraz profilem",
+  "version": "1.0.0",
+  "icon": "users",
+  "order": 6,
+  "enabled": true,
+  "permission": null,
+  "menu1": {
+    "title": "users.menu_title",
+    "route": "users.index",
+    "icon": "user-group",
+    "order": 6
+  },
+  "menu2": [
+    { "id": "list", "title": "users.sub_users", "route": "users.index", "permission": "users.manage" },
+    { "id": "roles", "title": "users.sub_roles", "route": "users.roles", "permission": "roles.manage" },
+    { "id": "profile", "title": "users.sub_profile", "route": "users.profile", "permission": null },
+    { "id": "security", "title": "users.sub_security", "route": "users.security", "permission": null },
+    { "id": "system", "title": "users.sub_system", "route": "users.system", "permission": "users.manage" }
+  ]
+}

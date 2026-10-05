@@ -1,0 +1,17 @@
+{
+  "schema_version": "1.0",
+  "name": "{{NAME}}",
+  "slug": "{{SLUG}}",
+  "type": "{{TYPE}}",
+  "mode": "{{MODE}}",
+  "port": {{PORT}},
+  "health_check": {
+    "path": "/health",
+    "interval_seconds": 30,
+    "timeout_seconds": 5
+  },
+  "runtime": {
+    "user": "agenthub-runner",
+    "work_dir": "/opt/agenthub/instances/{{TYPE}}/{{SLUG}}"
+  }
+}

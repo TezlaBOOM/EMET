@@ -1,0 +1,23 @@
+{
+  "name": "Integracje",
+  "slug": "integrations",
+  "description": "Zarządzanie środowiskami uruchomieniowymi i provisioning instancji agentów zewnętrznych",
+  "version": "1.0.0",
+  "icon": "command-line",
+  "order": 6,
+  "enabled": true,
+  "permission": "integrations.manage",
+  "menu1": {
+    "title": "integrations.menu_title",
+    "route": "integrations.index",
+    "icon": "command-line",
+    "order": 6
+  },
+  "menu2": [
+    { "id": "all", "title": "integrations.sub_all", "route": "integrations.index", "permission": "integrations.manage" },
+    { "id": "hermes", "title": "integrations.sub_hermes", "route": "integrations.hermes", "permission": "integrations.manage" },
+    { "id": "openclaw", "title": "integrations.sub_openclaw", "route": "integrations.openclaw", "permission": "integrations.manage" },
+    { "id": "claude", "title": "integrations.sub_claude", "route": "integrations.claude", "permission": "integrations.manage" },
+    { "id": "codex", "title": "integrations.sub_codex", "route": "integrations.codex", "permission": "integrations.manage" }
+  ]
+}

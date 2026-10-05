@@ -1,0 +1,22 @@
+{
+  "name": "Logi i Audyt",
+  "slug": "logs",
+  "description": "Dziennik audytu użytkowników, aktywność agentów, zdarzenia AI i logi systemowe",
+  "version": "1.0.0",
+  "icon": "clipboard-document-list",
+  "order": 7,
+  "enabled": true,
+  "permission": "audit.view",
+  "menu1": {
+    "title": "logs.menu_title",
+    "route": "logs.index",
+    "icon": "document-text",
+    "order": 7
+  },
+  "menu2": [
+    { "id": "audit", "title": "logs.sub_audit", "route": "logs.index", "permission": "audit.view" },
+    { "id": "agents", "title": "logs.sub_agents", "route": "logs.agents", "permission": "audit.view" },
+    { "id": "ai", "title": "logs.sub_ai", "route": "logs.ai", "permission": "audit.view" },
+    { "id": "system", "title": "logs.sub_system", "route": "logs.system", "permission": "audit.view" }
+  ]
+}

@@ -1,0 +1,27 @@
+<?php
+
+return [
+    'title' => 'Ustawienia AI',
+    'menu_title' => 'Ustawienia AI',
+    'sub_providers' => 'Dostawcy',
+    'sub_accounts' => 'Konta modeli',
+    'sub_pools' => 'Pule kont i routing',
+    'sub_limits' => 'Limity i cennik',
+    'add_account' => 'Dodaj konto',
+    'account_name' => 'Nazwa konta',
+    'provider' => 'Dostawca',
+    'api_key' => 'Klucz API',
+    'api_key_placeholder' => 'Wklej klucz API (zostanie zaszyfrowany)',
+    'organization_id' => 'ID Organizacji / Projektu (opcjonalne)',
+    'weight' => 'Waga w puli',
+    'rpm_limit' => 'Limit RPM (zapytań/min)',
+    'tpm_limit' => 'Limit TPM (tokenów/min)',
+    'test_connection' => 'Test połączenia',
+    'connection_success' => 'Połączenie pomyślne! Latencja: :latency ms.',
+    'connection_failed' => 'Błąd połączenia: :error',
+    'account_created' => 'Konto zostało pomyślnie dodane i zaszyfrowane.',
+    'account_deleted' => 'Konto zostało usunięte.',
+    'status_active' => 'Aktywne',
+    'status_cooldown' => 'Cooldown',
+    'status_error' => 'Błąd',
+];

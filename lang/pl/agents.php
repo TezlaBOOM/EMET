@@ -1,0 +1,26 @@
+<?php
+
+return [
+    'title' => 'Agenci AI',
+    'menu_title' => 'Agenci AI',
+    'sub_all' => 'Wszyscy agenci',
+    'sub_active' => 'Aktywni agenci',
+    'sub_create' => 'Utwórz agenta',
+    'sub_templates' => 'Szablony agentów',
+    'name' => 'Nazwa agenta',
+    'slug' => 'Identyfikator (slug)',
+    'description' => 'Opis roli agenta',
+    'runtime_type' => 'Środowisko uruchomieniowe (Runtime)',
+    'pool' => 'Pula kont LLM',
+    'primary_model' => 'Model priorytetowy',
+    'system_prompt' => 'Instrukcja systemowa (System Prompt)',
+    'temperature' => 'Temperatura (kreatywność)',
+    'skills' => 'Narzędzia i umiejętności (Skills)',
+    'actions' => 'Akcje',
+    'created_success' => 'Agent został pomyślnie utworzony.',
+    'updated_success' => 'Konfiguracja agenta została zaktualizowana.',
+    'deleted_success' => 'Agent został usunięty.',
+    'active' => 'Aktywny',
+    'inactive' => 'Wyłączony',
+    'chat_with_agent' => 'Czatuj z agentem',
+];

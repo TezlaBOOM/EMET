@@ -1,0 +1,26 @@
+<?php
+
+return [
+    'title' => 'Integracje & Instancje',
+    'menu_title' => 'Integracje',
+    'sub_all' => 'Wszystkie instancje',
+    'sub_hermes' => 'Hermes Agent',
+    'sub_openclaw' => 'OpenClaw',
+    'sub_claude' => 'Claude Code',
+    'sub_codex' => 'Codex',
+    'provision_instance' => 'Uruchom nową instancję',
+    'instance_name' => 'Nazwa instancji',
+    'runtime_type' => 'Typ środowiska',
+    'execution_mode' => 'Tryb wykonania',
+    'status' => 'Status zdrowia',
+    'port' => 'Port usługi',
+    'endpoint' => 'Adres URL API',
+    'status_running' => 'Działa poprawnie',
+    'status_stopped' => 'Zatrzymana',
+    'status_provisioning' => 'Wdrażanie...',
+    'status_error' => 'Błąd',
+    'status_degraded' => 'Zdegradowana',
+    'provision_queued' => 'Zadanie provisioningu zostało zakolejkowane i jest przetwarzane.',
+    'reconciled_success' => 'Pętla uzgadniania stanu została zakończona.',
+    'instance_deleted' => 'Instancja została usunięta.',
+];

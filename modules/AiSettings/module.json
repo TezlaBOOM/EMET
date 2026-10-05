@@ -1,0 +1,22 @@
+{
+  "name": "Ustawienia AI",
+  "slug": "ai-settings",
+  "description": "Konfiguracja dostawców modeli AI, zarządzanie wieloma kontami, pule i limity",
+  "version": "1.0.0",
+  "icon": "cpu-chip",
+  "order": 5,
+  "enabled": true,
+  "permission": "ai_settings.manage",
+  "menu1": {
+    "title": "ai.menu_title",
+    "route": "ai-settings.index",
+    "icon": "sparkles",
+    "order": 5
+  },
+  "menu2": [
+    { "id": "providers", "title": "ai.sub_providers", "route": "ai-settings.index", "permission": "ai_settings.manage" },
+    { "id": "accounts", "title": "ai.sub_accounts", "route": "ai-settings.accounts", "permission": "ai_settings.manage" },
+    { "id": "pools", "title": "ai.sub_pools", "route": "ai-settings.pools", "permission": "ai_settings.manage" },
+    { "id": "limits", "title": "ai.sub_limits", "route": "ai-settings.limits", "permission": "ai_settings.manage" }
+  ]
+}

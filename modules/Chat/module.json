@@ -1,0 +1,20 @@
+{
+  "name": "Czat AI",
+  "slug": "chat",
+  "description": "Zunifikowany interfejs czatu z agentami, strumieniowanie odpowiedzi i historia rozmów",
+  "version": "1.0.0",
+  "icon": "chat-bubble-left-right",
+  "order": 3,
+  "enabled": true,
+  "permission": "agents.chat",
+  "menu1": {
+    "title": "chat.menu_title",
+    "route": "chat.index",
+    "icon": "chat-bubble-left-right",
+    "order": 3
+  },
+  "menu2": [
+    { "id": "new", "title": "chat.new_conversation", "route": "chat.index", "permission": "agents.chat" },
+    { "id": "history", "title": "chat.history", "route": "chat.history", "permission": "agents.chat" }
+  ]
+}

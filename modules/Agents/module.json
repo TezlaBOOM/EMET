@@ -1,0 +1,22 @@
+{
+  "name": "Agenci AI",
+  "slug": "agents",
+  "description": "Zarządzanie agentami AI, konfiguracja promptów, narzędzi i powiązań z pamięcią",
+  "version": "1.0.0",
+  "icon": "user-group",
+  "order": 2,
+  "enabled": true,
+  "permission": "agents.view",
+  "menu1": {
+    "title": "agents.menu_title",
+    "route": "agents.index",
+    "icon": "user-group",
+    "order": 2
+  },
+  "menu2": [
+    { "id": "index", "title": "agents.sub_all", "route": "agents.index", "permission": "agents.view" },
+    { "id": "active", "title": "agents.sub_active", "route": "agents.active", "permission": "agents.view" },
+    { "id": "create", "title": "agents.sub_create", "route": "agents.create", "permission": "agents.manage" },
+    { "id": "templates", "title": "agents.sub_templates", "route": "agents.templates", "permission": "agents.manage" }
+  ]
+}

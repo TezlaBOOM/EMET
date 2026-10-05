@@ -1,0 +1,26 @@
+<?php
+
+return [
+    'title' => 'AI Agents',
+    'menu_title' => 'AI Agents',
+    'sub_all' => 'All Agents',
+    'sub_active' => 'Active Agents',
+    'sub_create' => 'Create Agent',
+    'sub_templates' => 'Agent Templates',
+    'name' => 'Agent Name',
+    'slug' => 'Identifier (slug)',
+    'description' => 'Role description',
+    'runtime_type' => 'Execution Runtime',
+    'pool' => 'LLM Account Pool',
+    'primary_model' => 'Primary Model',
+    'system_prompt' => 'System Prompt',
+    'temperature' => 'Temperature',
+    'skills' => 'Skills & Tools',
+    'actions' => 'Actions',
+    'created_success' => 'Agent created successfully.',
+    'updated_success' => 'Agent configuration updated.',
+    'deleted_success' => 'Agent deleted successfully.',
+    'active' => 'Active',
+    'inactive' => 'Inactive',
+    'chat_with_agent' => 'Chat with agent',
+];

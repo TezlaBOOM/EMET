@@ -1,0 +1,22 @@
+{
+  "name": "Pamięć Wektorowa",
+  "slug": "memory",
+  "description": "Współdzielona baza wiedzy semantycznej, graf Obsidian i kolekcje wektorowe",
+  "version": "1.0.0",
+  "icon": "server-stack",
+  "order": 4,
+  "enabled": true,
+  "permission": "memory.view",
+  "menu1": {
+    "title": "memory.menu_title",
+    "route": "memory.index",
+    "icon": "server-stack",
+    "order": 4
+  },
+  "menu2": [
+    { "id": "index", "title": "memory.sub_explorer", "route": "memory.index", "permission": "memory.view" },
+    { "id": "graph", "title": "memory.sub_graph", "route": "memory.graph", "permission": "memory.view" },
+    { "id": "search", "title": "memory.sub_search", "route": "memory.search", "permission": "memory.view" },
+    { "id": "collections", "title": "memory.sub_collections", "route": "memory.collections", "permission": "memory.manage" }
+  ]
+}

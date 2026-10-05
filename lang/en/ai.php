@@ -1,0 +1,27 @@
+<?php
+
+return [
+    'title' => 'AI Settings',
+    'menu_title' => 'AI Settings',
+    'sub_providers' => 'Providers',
+    'sub_accounts' => 'Model Accounts',
+    'sub_pools' => 'Account Pools & Routing',
+    'sub_limits' => 'Limits & Pricing',
+    'add_account' => 'Add Account',
+    'account_name' => 'Account Name',
+    'provider' => 'Provider',
+    'api_key' => 'API Key',
+    'api_key_placeholder' => 'Paste API Key (will be encrypted)',
+    'organization_id' => 'Organization / Project ID (optional)',
+    'weight' => 'Pool Weight',
+    'rpm_limit' => 'RPM Limit (requests/min)',
+    'tpm_limit' => 'TPM Limit (tokens/min)',
+    'test_connection' => 'Test Connection',
+    'connection_success' => 'Connection successful! Latency: :latency ms.',
+    'connection_failed' => 'Connection failed: :error',
+    'account_created' => 'Account added and encrypted successfully.',
+    'account_deleted' => 'Account deleted successfully.',
+    'status_active' => 'Active',
+    'status_cooldown' => 'Cooldown',
+    'status_error' => 'Error',
+];

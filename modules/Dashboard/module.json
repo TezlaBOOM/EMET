@@ -1,0 +1,22 @@
+{
+  "name": "Dashboard",
+  "slug": "dashboard",
+  "description": "Główny pulpit telemetrii",
+  "version": "1.0.0",
+  "icon": "chart-bar",
+  "order": 1,
+  "enabled": true,
+  "permission": null,
+  "menu1": {
+    "title": "dashboard.menu_title",
+    "route": "dashboard.index",
+    "icon": "chart-pie",
+    "order": 1
+  },
+  "menu2": [
+    { "id": "overview", "title": "dashboard.sub_overview", "route": "dashboard.index" },
+    { "id": "tokens", "title": "dashboard.sub_tokens", "route": "dashboard.tokens" },
+    { "id": "performance", "title": "dashboard.sub_performance", "route": "dashboard.performance" },
+    { "id": "costs", "title": "dashboard.sub_costs", "route": "dashboard.costs" }
+  ]
+}

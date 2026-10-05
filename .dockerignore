@@ -1,0 +1,11 @@
+node_modules/
+vendor/
+.git/
+.agents/
+!Spec/
+storage/logs/*.log
+storage/framework/cache/*
+storage/framework/sessions/*
+storage/framework/views/*
+.env
+.DS_Store

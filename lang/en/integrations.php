@@ -1,0 +1,26 @@
+<?php
+
+return [
+    'title' => 'Integrations & Instances',
+    'menu_title' => 'Integrations',
+    'sub_all' => 'All Instances',
+    'sub_hermes' => 'Hermes Agent',
+    'sub_openclaw' => 'OpenClaw',
+    'sub_claude' => 'Claude Code',
+    'sub_codex' => 'Codex',
+    'provision_instance' => 'Provision New Instance',
+    'instance_name' => 'Instance Name',
+    'runtime_type' => 'Runtime Type',
+    'execution_mode' => 'Execution Mode',
+    'status' => 'Health Status',
+    'port' => 'Service Port',
+    'endpoint' => 'API Endpoint URL',
+    'status_running' => 'Running',
+    'status_stopped' => 'Stopped',
+    'status_provisioning' => 'Provisioning...',
+    'status_error' => 'Error',
+    'status_degraded' => 'Degraded',
+    'provision_queued' => 'Provisioning job has been queued.',
+    'reconciled_success' => 'Reconciliation loop completed.',
+    'instance_deleted' => 'Instance deleted.',
+];
