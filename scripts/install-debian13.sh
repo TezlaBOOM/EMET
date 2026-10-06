@@ -77,20 +77,30 @@ log "Aktualizacja listy pakietów i instalacja zależności bazowych..."
 apt-get update -y
 apt-get install -y ca-certificates curl gnupg openssl unzip git rsync cron
 
-log "Instalacja Apache, PHP-FPM i rozszerzeń PHP..."
-apt-get install -y apache2 php-fpm php-cli php-common php-mbstring php-xml php-curl \
-  php-zip php-bcmath php-intl php-gd php-redis
+mkdir -p /etc/apt/keyrings
+curl -sSLo /etc/apt/keyrings/deb.sury.org-php.gpg https://packages.sury.org/php/apt.gpg
+echo "deb [signed-by=/etc/apt/keyrings/deb.sury.org-php.gpg] https://packages.sury.org/php/ ${VERSION_CODENAME:-trixie} main" \
+  > /etc/apt/sources.list.d/php.list
+apt-get update -y
+
+PHP_VER="8.4"
+log "Instalacja Apache, najnowszego PHP ${PHP_VER} (PHP-FPM) i rozszerzeń..."
+apt-get install -y apache2 "php${PHP_VER}-fpm" "php${PHP_VER}-cli" "php${PHP_VER}-common" \
+  "php${PHP_VER}-mbstring" "php${PHP_VER}-xml" "php${PHP_VER}-curl" "php${PHP_VER}-zip" \
+  "php${PHP_VER}-bcmath" "php${PHP_VER}-intl" "php${PHP_VER}-gd" "php${PHP_VER}-redis" \
+  "php${PHP_VER}-opcache" "php${PHP_VER}-readline"
+
+update-alternatives --set php "/usr/bin/php${PHP_VER}" 2>/dev/null || true
 
 log "Instalacja Redis, Node.js, npm i Composer..."
 apt-get install -y redis-server nodejs npm composer
 systemctl enable --now redis-server
 
-PHP_VER="$(php -r 'echo PHP_MAJOR_VERSION.".".PHP_MINOR_VERSION;')"
-log "Wykryta wersja PHP: $PHP_VER"
+log "Wymuszona wersja PHP: $(php -r 'echo PHP_VERSION;')"
 
 if [[ "$DB_ENGINE" == "pgsql" ]]; then
   log "Instalacja PostgreSQL..."
-  apt-get install -y postgresql php-pgsql
+  apt-get install -y postgresql "php${PHP_VER}-pgsql"
   systemctl enable --now postgresql
   PG_MAJOR="$(pg_lsclusters -h | awk 'NR==1{print $1}')"
   if [[ "$VECTOR" == "pgvector" ]]; then
@@ -99,7 +109,7 @@ if [[ "$DB_ENGINE" == "pgsql" ]]; then
   DB_PORT=5432
 else
   log "Instalacja MariaDB (zamiennik MySQL w Debianie)..."
-  apt-get install -y mariadb-server php-mysql
+  apt-get install -y mariadb-server "php${PHP_VER}-mysql"
   systemctl enable --now mariadb
   DB_PORT=3306
 fi

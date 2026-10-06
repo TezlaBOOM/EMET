@@ -60,7 +60,7 @@ DOMAIN=""
 WEBSERVER="nginx"
 DB_ENGINE="pgsql"
 VECTOR="qdrant"
-PHP_VER="8.3"
+PHP_VER="8.4"
 WITH_DOCKER=0
 FORCE=0
 QDRANT_VERSION=""
@@ -92,7 +92,7 @@ done
 [[ "$DB_ENGINE" =~ ^(pgsql|mysql)$ ]] || die "Parametr --db musi mieć wartość pgsql lub mysql"
 [[ "$VECTOR" =~ ^(qdrant|pgvector)$ ]] || die "Parametr --vector musi mieć wartość qdrant lub pgvector"
 [[ "$WEBSERVER" =~ ^(nginx|apache)$ ]] || die "Parametr --webserver musi mieć wartość nginx lub apache"
-[[ "$PHP_VER" =~ ^(8.3|8.4)$ ]] || die "Parametr --php musi mieć wartość 8.3 lub 8.4"
+[[ "$PHP_VER" =~ ^(8\.3|8\.4|8\.5|latest)$ ]] || die "Parametr --php musi mieć wartość 8.4, 8.3 lub latest (domyślnie: 8.4)"
 [[ "$VECTOR" == "pgvector" && "$DB_ENGINE" != "pgsql" ]] && die "pgvector wymaga bazy PostgreSQL (--db=pgsql)"
 
 if [[ ! -f /etc/os-release ]]; then
@@ -238,7 +238,16 @@ wait_for_apt_lock
 apt-get update -y --allow-releaseinfo-change || apt-get update -y
 
 # ---------------- Krok 2: Instalacja PHP, serwera WWW, Node i Composera ----------------
-echo -e "\n${CLR_TITLE}>>> KROK 2/7: Instalacja PHP ${PHP_VER}, serwera ${WEBSERVER}, Node.js i Composera...${CLR_RESET}"
+if [[ "$PHP_VER" == "latest" ]]; then
+  DETECTED_PHP="$(apt-cache search '^php[0-9]\.[0-9]-cli$' 2>/dev/null | awk '{print $1}' | sed 's/php//;s/-cli//' | sort -V | tail -n1 || true)"
+  if [[ -n "$DETECTED_PHP" && "$DETECTED_PHP" =~ ^8\.[3-5]$ ]]; then
+    PHP_VER="$DETECTED_PHP"
+  else
+    PHP_VER="8.4"
+  fi
+fi
+
+echo -e "\n${CLR_TITLE}>>> KROK 2/7: Wymuszanie instalacji najnowszego PHP ${PHP_VER}, serwera ${WEBSERVER}, Node.js i Composera...${CLR_RESET}"
 
 apt-get install -y \
   "php${PHP_VER}-fpm" \
@@ -254,6 +263,25 @@ apt-get install -y \
   "php${PHP_VER}-redis" \
   "php${PHP_VER}-opcache" \
   "php${PHP_VER}-readline"
+
+# Wymuszenie najnowszej wersji PHP w CLI jako domyślnej w systemie
+log_info "Wymuszanie PHP ${PHP_VER} jako domyślnej wersji systemowej (update-alternatives)..."
+update-alternatives --set php "/usr/bin/php${PHP_VER}" 2>/dev/null || true
+update-alternatives --set phar "/usr/bin/phar${PHP_VER}" 2>/dev/null || true
+update-alternatives --set phpize "/usr/bin/phpize${PHP_VER}" 2>/dev/null || true
+update-alternatives --set php-config "/usr/bin/php-config${PHP_VER}" 2>/dev/null || true
+
+INSTALLED_PHP_VER="$(php -r 'echo PHP_VERSION;' 2>/dev/null || echo "$PHP_VER")"
+log_success "Zainstalowana i aktywna wersja PHP w systemie: ${INSTALLED_PHP_VER}"
+
+# Zatrzymanie i wyłączenie starszych wersji PHP-FPM, jeśli były obecne w systemie
+for old_fpm in $(systemctl list-unit-files 'php*-fpm.service' 2>/dev/null | awk '{print $1}' | grep -E '^php[0-9]' || true); do
+  if [[ "$old_fpm" != "php${PHP_VER}-fpm.service" ]]; then
+    log_info "Zatrzymywanie starszej usługi PHP-FPM: $old_fpm"
+    systemctl stop "$old_fpm" 2>/dev/null || true
+    systemctl disable "$old_fpm" 2>/dev/null || true
+  fi
+done
 
 # Composer
 if ! command -v composer >/dev/null 2>&1; then
