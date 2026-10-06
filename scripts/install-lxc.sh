@@ -500,44 +500,38 @@ if ! grep -q '^SERVICE_TOKEN_SECRET=.\+' .env; then
   set_env_val SERVICE_TOKEN_SECRET "$(openssl rand -hex 32)"
 fi
 
-# Uprawnienia katalogu aplikacji
-chown -R www-data:www-data "$APP_DIR"
-mkdir -p "$APP_DIR/storage" "$APP_DIR/bootstrap/cache"
-chmod -R 775 "$APP_DIR/storage" "$APP_DIR/bootstrap/cache"
-
-# Funkcja do uruchamiania poleceń jako www-data
-as_www() {
-  runuser -u www-data -- env HOME=/var/www COMPOSER_HOME=/var/www/.composer "$@"
-}
-
 # ---------------- Krok 5: Instalacja zależności i migracje ----------------
 echo -e "\n${CLR_TITLE}>>> KROK 5/7: Instalacja zależności Composer/npm, migracje i build...${CLR_RESET}"
 
+export COMPOSER_ALLOW_SUPERUSER=1
+git config --system --add safe.directory "$APP_DIR" 2>/dev/null || true
+git config --global --add safe.directory "$APP_DIR" 2>/dev/null || true
+
 log_info "Instalacja pakietów PHP (composer install)..."
-as_www composer install --no-dev --optimize-autoloader --no-interaction
+composer install --no-dev --optimize-autoloader --no-interaction
 
 if [[ -f package.json ]]; then
   log_info "Kompilacja zasobów frontendu (npm install & build)..."
-  as_www npm install --no-audit --no-fund
-  as_www npm run build
+  npm install --no-audit --no-fund
+  npm run build
 fi
 
 # Generowanie klucza aplikacji, jeśli brak
 if ! grep -q '^APP_KEY=base64:.\+' .env; then
   log_info "Generowanie klucza aplikacji (APP_KEY)..."
-  as_www php artisan key:generate --force
+  php artisan key:generate --force
 fi
 
 log_info "Wykonywanie migracji bazy danych i seedowanie danych początkowych..."
-as_www php artisan migrate --force --seed
+php artisan migrate --force --seed
 
 log_info "Tworzenie linku symbolicznego do storage..."
-as_www php artisan storage:link || true
+php artisan storage:link || true
 
 log_info "Optymalizacja cache aplikacji (config, route, views)..."
-as_www php artisan optimize || log_warn "Nie udało się zoptymalizować cache'u - kontynuuję."
+php artisan optimize || log_warn "Nie udało się zoptymalizować cache'u - kontynuuję."
 
-# Ponowne upewnienie się co do uprawnień
+# Pełne uprawnienia dla www-data
 chown -R www-data:www-data "$APP_DIR"
 chmod -R 775 "$APP_DIR/storage" "$APP_DIR/bootstrap/cache"
 
@@ -753,7 +747,7 @@ chmod 644 /etc/cron.d/agenthub
 
 # ---------------- Diagnostyka i zapis poświadczeń ----------------
 echo -e "\n${CLR_TITLE}>>> Weryfikacja instalacji (Self-Test)...${CLR_RESET}"
-as_www php artisan agenthub:selftest || log_warn "Niektóre testy diagnostyczne zgłosiły ostrzeżenia (np. brak skonfigurowanych kluczy zewnętrznych LLM)."
+php artisan agenthub:selftest || log_warn "Niektóre testy diagnostyczne zgłosiły ostrzeżenia (np. brak skonfigurowanych kluczy zewnętrznych LLM)."
 
 umask 077
 cat > "$CRED_FILE" <<TXT
