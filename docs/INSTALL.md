@@ -9,7 +9,7 @@ Platforma Projekt-Emet oferuje dwa w pełni zautomatyzowane warianty instalacji 
 Przeznaczony dla środowisk z zainstalowanym silnikiem Docker i docker compose.
 
 ```bash
-git clone <repozytorium> agenthub && cd agenthub
+git clone https://github.com/TezlaBOOM/EMET.git agenthub && cd agenthub
 ./scripts/install.sh
 ```
 
@@ -26,7 +26,7 @@ git clone <repozytorium> agenthub && cd agenthub
 Przeznaczony dla czystych serwerów dedykowanych lub maszyn wirtualnych z systemem Debian 13 (Trixie).
 
 ```bash
-git clone <repozytorium> agenthub && cd agenthub
+git clone https://github.com/TezlaBOOM/EMET.git agenthub && cd agenthub
 sudo ./scripts/install-debian13.sh [opcje]
 ```
 
@@ -42,7 +42,23 @@ Dane dostępowe i wygenerowane hasła zapisywane są w pliku: `/root/agenthub-in
 
 ---
 
-## 3. Kreator Pierwszego Uruchomienia (Setup Wizard)
+## 3. Wariant Proxmox LXC (Debian 12 / Ubuntu 24.04 / 22.04)
+
+Przeznaczony dla świeżo utworzonych kontenerów LXC w środowisku Proxmox VE. Szczegółowy przewodnik znajduje się w [docs/PROXMOX_LXC.md](PROXMOX_LXC.md).
+
+Wewnątrz kontenera LXC:
+```bash
+sudo ./scripts/install-lxc.sh
+```
+
+Lub z poziomu konsoli węzła Proxmox VE (automatyczne utworzenie kontenera i instalacja):
+```bash
+./scripts/proxmox-host-create.sh
+```
+
+---
+
+## 4. Kreator Pierwszego Uruchomienia (Setup Wizard)
 
 Po pierwszym zalogowaniu na konto `admin@admin.lan` platforma automatycznie uruchamia 7-etapowy kreator konfiguracji:
 1. **Powitanie & Język:** wybór języka interfejsu (polski/angielski) oraz motywu wizualnego.
@@ -57,7 +73,7 @@ Każdy krok można pominąć przyciskiem *Pomiń ten krok* i skonfigurować go p
 
 ---
 
-## 4. Narzędzie Diagnostyczne (Self-Test)
+## 5. Narzędzie Diagnostyczne (Self-Test)
 
 W dowolnym momencie stan całego środowiska można zweryfikować komendą:
 

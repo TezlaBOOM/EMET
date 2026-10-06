@@ -21,13 +21,25 @@
 
 ### 1. Uruchomienie w środowisku Docker
 ```bash
-git clone <repozytorium> agenthub && cd agenthub
+git clone https://github.com/TezlaBOOM/EMET.git agenthub && cd agenthub
 ./scripts/install.sh
 ```
 
 ### 2. Instalacja natywna (Debian 13)
 ```bash
+git clone https://github.com/TezlaBOOM/EMET.git agenthub && cd agenthub
 sudo ./scripts/install-debian13.sh --db=pgsql --vector=qdrant
+```
+
+### 3. Kontener Proxmox LXC (Debian 12 / Ubuntu 24.04 / 22.04)
+```bash
+# Opcja A: Szybka instalacja jednym poleceniem wewnątrz nowego kontenera LXC:
+curl -fsSL https://raw.githubusercontent.com/TezlaBOOM/EMET/main/scripts/install-lxc.sh | bash
+
+# Opcja B: Ręczne sklonowanie i uruchomienie:
+git clone https://github.com/TezlaBOOM/EMET.git /var/www/agenthub && cd /var/www/agenthub
+sudo ./scripts/install-lxc.sh
+# Szczegółowy przewodnik: docs/PROXMOX_LXC.md
 ```
 
 Domyślne dane administratora:
