@@ -352,17 +352,32 @@ QDRANT_KEY=""
 if [[ "$VECTOR" == "qdrant" ]]; then
   log_info "Instalacja bazy wektorowej Qdrant (jako serwis systemd)..."
   if [[ -z "$QDRANT_VERSION" ]]; then
-    QDRANT_VERSION="$(curl -fsSL https://api.github.com/repos/qdrant/qdrant/releases/latest 2>/dev/null \
-      | grep -m1 '"tag_name"' | sed -E 's/.*"(v[^"]+)".*/\1/' || echo 'v1.13.2')"
+    # 1. Przekierowanie nagłówka Location z GitHub Releases (omija limit API GitHub)
+    QDRANT_VERSION="$(curl -sI https://github.com/qdrant/qdrant/releases/latest 2>/dev/null | grep -i '^location:' | sed -E 's|.*/tag/(v[^/ \r\n]+).*|\1|' | tr -d '\r\n' || true)"
   fi
-  log_info "Wersja Qdrant: ${QDRANT_VERSION} (${QDRANT_ARCH})"
+  if [[ -z "$QDRANT_VERSION" ]]; then
+    # 2. Rezerwa: GitHub API
+    QDRANT_VERSION="$(curl -fsSL https://api.github.com/repos/qdrant/qdrant/releases/latest 2>/dev/null | grep -m1 '"tag_name"' | sed -E 's/.*"(v[^"]+)".*/\1/' | tr -d '\r\n' || true)"
+  fi
+  # 3. Zabezpieczenie: znana stabilna wersja
+  if [[ -z "$QDRANT_VERSION" || ! "$QDRANT_VERSION" =~ ^v[0-9] ]]; then
+    QDRANT_VERSION="v1.19.2"
+  fi
+  log_info "Wersja Qdrant do zainstalowania: ${QDRANT_VERSION} (${QDRANT_ARCH})"
 
-  id qdrant &>/dev/null || useradd -r -m -d /var/lib/qdrant -s /usr/sbin/nologin qdrant
+  id qdrant &>/dev/null || useradd -r -m -d /var/lib/qdrant -s /usr/sbin/nologin qdrant 2>/dev/null || useradd -r -m -d /var/lib/qdrant -s /bin/false qdrant
   mkdir -p /opt/qdrant /etc/qdrant /var/lib/qdrant/storage /var/lib/qdrant/snapshots
 
   TMP_QDRANT="$(mktemp -d)"
-  curl -fsSL -o "$TMP_QDRANT/qdrant.tar.gz" \
-    "https://github.com/qdrant/qdrant/releases/download/${QDRANT_VERSION}/qdrant-${QDRANT_ARCH}.tar.gz"
+  DOWNLOAD_URL="https://github.com/qdrant/qdrant/releases/download/${QDRANT_VERSION}/qdrant-${QDRANT_ARCH}.tar.gz"
+  log_info "Pobieranie archiwum Qdrant ($DOWNLOAD_URL)..."
+
+  if ! curl -fSL --connect-timeout 20 --retry 3 -o "$TMP_QDRANT/qdrant.tar.gz" "$DOWNLOAD_URL"; then
+    log_warn "Pobieranie wersji ${QDRANT_VERSION} nie powiodło się, próba pobrania sprawdzonej wersji stabilnej v1.13.2..."
+    curl -fSL --connect-timeout 20 --retry 3 -o "$TMP_QDRANT/qdrant.tar.gz" \
+      "https://github.com/qdrant/qdrant/releases/download/v1.13.2/qdrant-${QDRANT_ARCH}.tar.gz" || die "Nie udało się pobrać binarki Qdrant z serwerów GitHub."
+  fi
+
   tar -xzf "$TMP_QDRANT/qdrant.tar.gz" -C /opt/qdrant qdrant
   chmod +x /opt/qdrant/qdrant
   rm -rf "$TMP_QDRANT"
