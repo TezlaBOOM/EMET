@@ -134,30 +134,81 @@ log_info "Docelowy adres dostępowy: http://${DOMAIN} (IP: ${DETECTED_IP})"
 
 export DEBIAN_FRONTEND=noninteractive
 
+# Upewnienie się co do nazwy kodowej dystrybucji (fallback dla minimalnych kontenerów LXC)
+if [[ -z "$OS_CODENAME" ]]; then
+  if [[ "$OS_ID" == "debian" ]]; then
+    case "${OS_VERSION_ID:-}" in
+      11*) OS_CODENAME="bullseye" ;;
+      12*) OS_CODENAME="bookworm" ;;
+      13*) OS_CODENAME="trixie" ;;
+      *)   OS_CODENAME="bookworm" ;;
+    esac
+  elif [[ "$OS_ID" == "ubuntu" ]]; then
+    case "${OS_VERSION_ID:-}" in
+      20.04*) OS_CODENAME="focal" ;;
+      22.04*) OS_CODENAME="jammy" ;;
+      24.04*) OS_CODENAME="noble" ;;
+      *)      OS_CODENAME="noble" ;;
+    esac
+  fi
+fi
+
+# Funkcja czekająca na zwolnienie blokady dpkg/apt (częsty przypadek w świeżym LXC przez apt-daily)
+wait_for_apt_lock() {
+  systemctl stop apt-daily.service apt-daily.timer apt-daily-upgrade.service apt-daily-upgrade.timer 2>/dev/null || true
+  local max_wait=60
+  local waited=0
+  while fuser /var/lib/dpkg/lock-frontend >/dev/null 2>&1 || \
+        fuser /var/lib/dpkg/lock >/dev/null 2>&1 || \
+        fuser /var/lib/apt/lists/lock >/dev/null 2>&1; do
+    if [[ $waited -ge $max_wait ]]; then
+      log_warn "Przekroczono czas oczekiwania na blokadę apt. Zwalnianie procesów..."
+      killall -9 apt apt-get dpkg 2>/dev/null || true
+      rm -f /var/lib/dpkg/lock-frontend /var/lib/dpkg/lock /var/lib/apt/lists/lock 2>/dev/null || true
+      dpkg --configure -a 2>/dev/null || true
+      break
+    fi
+    log_info "Oczekiwanie na zwolnienie blokady menedżera pakietów (apt-daily)... (${waited}s)"
+    sleep 3
+    waited=$((waited + 3))
+  done
+  dpkg --configure -a 2>/dev/null || true
+}
+
 # ---------------- Krok 1: Pakiety podstawowe i repozytoria ----------------
 echo -e "\n${CLR_TITLE}>>> KROK 1/7: Instalacja narzędzi bazowych i konfiguracja repozytoriów...${CLR_RESET}"
-apt-get update -y
-apt-get install -y --no-install-recommends \
-  ca-certificates \
-  curl \
-  wget \
-  gnupg \
-  lsb-release \
-  apt-transport-https \
-  software-properties-common \
-  git \
-  rsync \
-  unzip \
-  zip \
-  tar \
-  cron \
-  openssl \
-  jq \
-  net-tools \
+
+wait_for_apt_lock
+
+log_info "Aktualizacja indeksu pakietów apt..."
+apt-get update -y --allow-releaseinfo-change || apt-get update -y
+
+log_info "Instalacja pakietów podstawowych..."
+# Podstawowe pakiety wymagane przez instalator
+CORE_DEPS=(
+  ca-certificates
+  curl
+  wget
+  gnupg
+  git
+  rsync
+  unzip
+  zip
+  tar
+  cron
+  openssl
+  jq
   iproute2
+)
+apt-get install -y "${CORE_DEPS[@]}"
+
+# Pakiety opcjonalne (instalowane bez przerywania skryptu, jeśli niedostępne w minimalnym szablonie)
+for opt_pkg in software-properties-common lsb-release net-tools apt-transport-https; do
+  apt-get install -y "$opt_pkg" 2>/dev/null || true
+done
 
 # Repozytorium PHP (Ondrej Sury dla Debiana / Ubuntu)
-log_info "Konfiguracja repozytorium PHP ($PHP_VER)..."
+log_info "Konfiguracja repozytorium PHP ($PHP_VER dla $OS_CODENAME)..."
 mkdir -p /etc/apt/keyrings
 
 if [[ "$OS_ID" == "debian" ]]; then
@@ -165,7 +216,13 @@ if [[ "$OS_ID" == "debian" ]]; then
   echo "deb [signed-by=/etc/apt/keyrings/deb.sury.org-php.gpg] https://packages.sury.org/php/ ${OS_CODENAME} main" \
     > /etc/apt/sources.list.d/php.list
 elif [[ "$OS_ID" == "ubuntu" ]]; then
-  add-apt-repository -y ppa:ondrej/php
+  if command -v add-apt-repository >/dev/null 2>&1; then
+    add-apt-repository -y ppa:ondrej/php
+  else
+    curl -sSLo /etc/apt/keyrings/deb.sury.org-php.gpg https://packages.sury.org/php/apt.gpg
+    echo "deb [signed-by=/etc/apt/keyrings/deb.sury.org-php.gpg] https://packages.sury.org/php/ ${OS_CODENAME} main" \
+      > /etc/apt/sources.list.d/php.list
+  fi
 fi
 
 # Repozytorium Node.js 20 LTS (NodeSource)
@@ -177,7 +234,8 @@ if ! command -v node >/dev/null 2>&1 || [[ "$(node -v | cut -d'.' -f1 | tr -d 'v
     > /etc/apt/sources.list.d/nodesource.list
 fi
 
-apt-get update -y
+wait_for_apt_lock
+apt-get update -y --allow-releaseinfo-change || apt-get update -y
 
 # ---------------- Krok 2: Instalacja PHP, serwera WWW, Node i Composera ----------------
 echo -e "\n${CLR_TITLE}>>> KROK 2/7: Instalacja PHP ${PHP_VER}, serwera ${WEBSERVER}, Node.js i Composera...${CLR_RESET}"
@@ -235,6 +293,8 @@ systemctl restart "php${PHP_VER}-fpm"
 
 # ---------------- Krok 3: Baza Danych i Magazyn Wektorowy ----------------
 echo -e "\n${CLR_TITLE}>>> KROK 3/7: Konfiguracja bazy danych (${DB_ENGINE}) oraz magazynu wektorowego (${VECTOR})...${CLR_RESET}"
+
+wait_for_apt_lock
 
 DB_NAME="agenthub"
 DB_USER="agenthub"
@@ -468,6 +528,8 @@ chmod -R 775 "$APP_DIR/storage" "$APP_DIR/bootstrap/cache"
 
 # ---------------- Krok 6: Konfiguracja serwera WWW ----------------
 echo -e "\n${CLR_TITLE}>>> KROK 6/7: Konfiguracja serwera WWW (${WEBSERVER})...${CLR_RESET}"
+
+wait_for_apt_lock
 
 if [[ "$WEBSERVER" == "nginx" ]]; then
   apt-get install -y nginx
