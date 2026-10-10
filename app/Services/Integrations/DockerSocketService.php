@@ -14,9 +14,39 @@ class DockerSocketService
 
     protected static array $mockFiles = [];
 
+    /**
+     * @var array<int, array<string, mixed>>
+     */
+    protected static array $defaultMockContainers = [
+        [
+            'Id' => 'cont-ollama-mock-01',
+            'Names' => ['/ollama-service'],
+            'Image' => 'ollama/ollama:latest',
+            'State' => 'running',
+            'Ports' => [['PublicPort' => 11434]],
+            'Labels' => ['agenthub.runtime' => 'ollama'],
+        ],
+        [
+            'Id' => 'cont-hermes-mock-02',
+            'Names' => ['/hermes-agent'],
+            'Image' => 'nousresearch/hermes-agent:v1.2',
+            'State' => 'running',
+            'Ports' => [['PublicPort' => 8080]],
+            'Labels' => ['agenthub.runtime' => 'hermes'],
+        ],
+        [
+            'Id' => 'cont-openclaw-mock-03',
+            'Names' => ['/openclaw-worker'],
+            'Image' => 'openclaw/agent:latest',
+            'State' => 'running',
+            'Ports' => [['PublicPort' => 3000]],
+            'Labels' => ['agenthub.runtime' => 'openclaw'],
+        ],
+    ];
+
     public function __construct(?string $socketPath = null)
     {
-        $this->socketPath = $socketPath ?? (string) config('integrations.docker_socket', '/var/run/docker.sock');
+        $this->socketPath = $socketPath ?? (string) config('integrations.docker_socket', env('DOCKER_SOCKET_PATH', '/var/run/docker.sock'));
     }
 
     public static function setMockContainers(?array $containers): void
@@ -27,6 +57,25 @@ class DockerSocketService
     public static function getMockContainers(): ?array
     {
         return self::$mockContainers;
+    }
+
+    public static function enableMockDriver(?array $containers = null): void
+    {
+        self::$mockContainers = $containers ?? self::$defaultMockContainers;
+    }
+
+    public static function disableMockDriver(): void
+    {
+        self::$mockContainers = null;
+    }
+
+    public function isMock(): bool
+    {
+        if (self::$mockContainers !== null) {
+            return true;
+        }
+
+        return (bool) config('integrations.docker_mock', env('DOCKER_MOCK', env('CONTAINERS_MOCK', false)));
     }
 
     public static function setMockFile(string $containerId, string $path, string $content): void
@@ -41,7 +90,7 @@ class DockerSocketService
 
     public function isAvailable(): bool
     {
-        if (self::$mockContainers !== null) {
+        if ($this->isMock()) {
             return true;
         }
 
@@ -55,6 +104,10 @@ class DockerSocketService
     {
         if (self::$mockContainers !== null) {
             return self::$mockContainers;
+        }
+
+        if ($this->isMock()) {
+            return self::$defaultMockContainers;
         }
 
         if (! $this->isAvailable()) {
@@ -74,8 +127,9 @@ class DockerSocketService
      */
     public function inspectContainer(string $containerId): array
     {
-        if (self::$mockContainers !== null) {
-            foreach (self::$mockContainers as $c) {
+        $mockContainers = self::$mockContainers ?? ($this->isMock() ? self::$defaultMockContainers : null);
+        if ($mockContainers !== null) {
+            foreach ($mockContainers as $c) {
                 if (($c['Id'] ?? $c['container_id'] ?? '') === $containerId || ($c['Names'][0] ?? '') === "/{$containerId}") {
                     return $c;
                 }
@@ -106,7 +160,7 @@ class DockerSocketService
     {
         $this->assertCommandAllowed($command, $allowlist);
 
-        if (self::$mockContainers !== null) {
+        if ($this->isMock()) {
             return [
                 'exit_code' => 0,
                 'output' => "Executed allowlisted command [{$command}] in mock container {$containerId}",
@@ -144,7 +198,7 @@ class DockerSocketService
     {
         $this->assertPathWritable($path, $writablePaths);
 
-        if (self::$mockContainers !== null) {
+        if ($this->isMock()) {
             self::setMockFile($containerId, $path, $content);
 
             return true;
@@ -156,7 +210,7 @@ class DockerSocketService
 
     public function connectNetwork(string $containerId, string $network = 'agenthub-net'): bool
     {
-        if (self::$mockContainers !== null) {
+        if ($this->isMock()) {
             return true;
         }
 
@@ -169,7 +223,7 @@ class DockerSocketService
 
     public function restartContainer(string $containerId): bool
     {
-        if (self::$mockContainers !== null) {
+        if ($this->isMock()) {
             return true;
         }
 

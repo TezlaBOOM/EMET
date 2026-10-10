@@ -9,6 +9,7 @@ use App\Contracts\Scenarios\ScenarioEngineInterface;
 use App\Contracts\Telemetry\TelemetryCollectorInterface;
 use App\Services\Chat\GroupChatOrchestrator;
 use App\Services\LlmGateway\LlmGateway;
+use App\Services\MemoryService\MockVectorStore;
 use App\Services\MemoryService\PgVectorStore;
 use App\Services\MemoryService\QdrantVectorStore;
 use App\Services\Scenarios\ScenarioEngine;
@@ -37,6 +38,7 @@ class AppServiceProvider extends ServiceProvider
 
             return match ($driver) {
                 'pgvector' => new PgVectorStore,
+                'mock', 'null' => new MockVectorStore,
                 default => new QdrantVectorStore,
             };
         });

@@ -76,16 +76,58 @@ if [[ -f "$REPO_ROOT/artisan" ]]; then
   if php "$REPO_ROOT/artisan" migrate --pretend >/dev/null 2>&1; then
     log_ok "Symulacja migracji bazy danych (artisan migrate --pretend) powiodła się"
   else
-    log_warn "Nie udało się przeprowadzić symulacji migracji (baza offline lub brak konfiguracji)"
+    log_warn "Nie udało się przeprowadzić symulacji migracji (baza offline lub brak konfiguracji). Napraw: ./scripts/repairkit.sh"
   fi
+fi
+
+# 7. Weryfikacja gniazda Docker lub aktywnego sterownika mock (v1.5.0)
+DOCKER_SOCK="/var/run/docker.sock"
+if [[ -f "$REPO_ROOT/.env" ]]; then
+  ENV_DOCKER_SOCK="$(grep -E '^DOCKER_SOCKET_PATH=' "$REPO_ROOT/.env" | cut -d '=' -f2- | tr -d '"'\'' ' || true)"
+  if [[ -n "$ENV_DOCKER_SOCK" ]]; then
+    DOCKER_SOCK="$ENV_DOCKER_SOCK"
+  fi
+fi
+
+DOCKER_MOCK_VAL=""
+if [[ -f "$REPO_ROOT/.env" ]]; then
+  DOCKER_MOCK_VAL="$(grep -E '^(DOCKER_MOCK|CONTAINERS_MOCK)=' "$REPO_ROOT/.env" | head -n1 | cut -d '=' -f2- | tr -d '"'\'' ' || true)"
+fi
+
+if [[ -S "$DOCKER_SOCK" && -r "$DOCKER_SOCK" ]]; then
+  log_ok "Docker: socket $DOCKER_SOCK dostępny"
+elif [[ "$DOCKER_MOCK_VAL" =~ ^(true|1)$ ]]; then
+  log_ok "Docker: aktywny sterownik mock (tryb symulacji bez demona Docker)"
+else
+  log_warn "Docker socket niedostępny i brak aktywnego sterownika mock (uruchom: ./scripts/repairkit.sh)"
+fi
+
+# 8. Weryfikacja magazynu wektorowego (Qdrant / Mock)
+QDRANT_MOCK_VAL=""
+VECTOR_DRIVER=""
+if [[ -f "$REPO_ROOT/.env" ]]; then
+  QDRANT_MOCK_VAL="$(grep -E '^QDRANT_MOCK=' "$REPO_ROOT/.env" | cut -d '=' -f2- | tr -d '"'\'' ' || true)"
+  VECTOR_DRIVER="$(grep -E '^VECTOR_STORE_DRIVER=' "$REPO_ROOT/.env" | cut -d '=' -f2- | tr -d '"'\'' ' || true)"
+fi
+
+if [[ "$QDRANT_MOCK_VAL" =~ ^(true|1)$ || "$VECTOR_DRIVER" == "mock" || "$VECTOR_DRIVER" == "null" ]]; then
+  log_ok "Magazyn wektorowy: aktywny sterownik mock"
+elif curl -s -m 2 http://127.0.0.1:6333/collections >/dev/null 2>&1; then
+  log_ok "Magazyn wektorowy: Qdrant dostępny na porcie 6333"
+else
+  log_warn "Sterownik Qdrant nie odpowiada na ping (uruchom: ./scripts/repairkit.sh)"
 fi
 
 echo "-------------------------------------------------"
 if [[ $FAIL_COUNT -gt 0 ]]; then
   printf "\033[1;31mTest zgodności zakończony niepowodzeniem: %d błędów krytycznych, %d ostrzeżeń.\033[0m\n" "$FAIL_COUNT" "$WARN_COUNT"
+  printf "\033[1;36mPodpowiedź: Uruchom ./scripts/repairkit.sh aby automatycznie naprawić wykryte problemy.\033[0m\n"
   echo "Aktualizacja została zablokowana ze względów bezpieczeństwa."
   exit 1
 else
   printf "\033[1;32mTest zgodności zakończony sukcesem (%d ostrzeżeń). Środowisko gotowe do aktualizacji.\033[0m\n" "$WARN_COUNT"
+  if [[ $WARN_COUNT -gt 0 ]]; then
+    printf "\033[1;36mPodpowiedź: Możesz uruchomić ./scripts/repairkit.sh aby wyeliminować ostrzeżenia środowiskowe.\033[0m\n"
+  fi
   exit 0
 fi

@@ -13,6 +13,7 @@ use App\Models\User;
 use App\Services\Config\ConfigTransferManager;
 use App\Services\IntegrationManager\IntegrationService;
 use App\Services\Integrations\DockerSocketService;
+use App\Services\MemoryService\MockVectorStore;
 use App\Services\MemoryService\QdrantVectorStore;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Cache;
@@ -124,12 +125,23 @@ class SelfTestCommand extends Command
 
         // 4. Magazyn Wektorowy
         try {
+            /** @var VectorStoreInterface $vectorStore */
             $vectorStore = app(VectorStoreInterface::class);
             $isPingOk = $vectorStore->ping();
-            $driverName = $vectorStore instanceof QdrantVectorStore ? 'Qdrant' : 'PgVector';
+            $isMock = ($vectorStore instanceof QdrantVectorStore && $vectorStore->isMock())
+                || ($vectorStore instanceof MockVectorStore);
+
+            $driverName = match (true) {
+                $isMock => 'Qdrant (Mock)',
+                $vectorStore instanceof QdrantVectorStore => 'Qdrant',
+                default => 'PgVector',
+            };
+
             $checks['vector_store'] = [
                 'status' => $isPingOk ? 'ok' : 'warn',
-                'message' => "Sterownik {$driverName}: ".($isPingOk ? 'Dostępny i odpowiada' : 'Brak odpowiedzi na ping'),
+                'message' => $isPingOk
+                    ? "Sterownik {$driverName}: Dostępny i odpowiada".($isMock ? ' (aktywny tryb mock)' : '')
+                    : "Sterownik {$driverName}: Brak odpowiedzi na ping (włącz QDRANT_MOCK=true lub uruchom ./scripts/repairkit.sh)",
             ];
         } catch (\Throwable $e) {
             $checks['vector_store'] = [
@@ -228,9 +240,22 @@ class SelfTestCommand extends Command
             /** @var DockerSocketService $dockerSocket */
             $dockerSocket = app(DockerSocketService::class);
             $isAvailable = $dockerSocket->isAvailable();
+            $isMock = $dockerSocket->isMock();
+
+            if ($isAvailable && ! $isMock) {
+                $status = 'ok';
+                $message = 'Docker socket aktywny (unix:///var/run/docker.sock)';
+            } elseif ($isMock) {
+                $status = 'ok';
+                $message = 'Aktywny sterownik mock Docker (symulacja kontenerów Ollama, Hermes, OpenClaw)';
+            } else {
+                $status = 'warn';
+                $message = 'Docker socket niedostępny i brak aktywnego sterownika mock (włącz DOCKER_MOCK=true lub uruchom ./scripts/repairkit.sh)';
+            }
+
             $checks['docker_socket'] = [
-                'status' => $isAvailable ? 'ok' : 'warn',
-                'message' => $isAvailable ? 'Docker socket aktywny' : 'Docker socket niedostępny (aktywny sterownik mock)',
+                'status' => $status,
+                'message' => $message,
             ];
         } catch (\Throwable $e) {
             $checks['docker_socket'] = ['status' => 'warn', 'message' => $e->getMessage()];

@@ -57,7 +57,9 @@ return [
         'qdrant' => [
             'host' => env('QDRANT_HOST', '127.0.0.1'),
             'port' => (int) env('QDRANT_PORT', 6333),
+            'url' => env('QDRANT_URL'),
             'api_key' => env('QDRANT_API_KEY', null),
+            'mock' => (bool) env('QDRANT_MOCK', false),
         ],
         'similarity_threshold' => (float) env('VECTOR_SIMILARITY_THRESHOLD', 0.70),
         'default_dimensions' => (int) env('VECTOR_DEFAULT_DIMENSIONS', 1536),

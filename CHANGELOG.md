@@ -5,6 +5,29 @@ Format opiera się na [Keep a Changelog](https://keepachangelog.com/pl/1.0.0/).
 
 ## [Unreleased]
 
+### Dodano (Added)
+- **Skrypt naprawczy środowiska `scripts/repairkit.sh`** (oraz dowiązanie symboliczne `repairkit.sh` w katalogu głównym):
+  - Automatyczna diagnoza i naprawa problemów z symulacją migracji bazy danych (`migrate --pretend`), w tym auto-konfiguracja lokalnego SQLite w razie niedostępności relacyjnego serwera bazy danych.
+  - Wykrywanie stanu demona Docker i automatyczna aktywacja sterownika mock (`DOCKER_MOCK=true`, `CONTAINERS_MOCK=true`) przy braku socketu `docker.sock`.
+  - Diagnoza magazynu wektorowego Qdrant, próba startu usługi lub aktywacja trybu symulacji (`QDRANT_MOCK=true`).
+  - Naprawa uprawnień do katalogów `storage/` i `bootstrap/cache/` oraz czyszczenie pamięci podręcznej.
+  - Obsługa trybów `--auto`, `--dry-run`, `--sqlite` oraz `--mock-all`.
+- **Sterownik Mock dla Magazynu Wektorowego**:
+  - Klasa `App\Services\MemoryService\MockVectorStore` z obsługą operacji wektorowych w pamięci i odpowiedzi na `ping()`.
+  - Obsługa `QDRANT_MOCK=true` oraz `VECTOR_STORE_DRIVER=mock` w `QdrantVectorStore` i `AppServiceProvider`.
+- **Aktywny Sterownik Mock dla Docker**:
+  - Wzbogacenie `DockerSocketService` o wbudowany zestaw kontenerów symulacyjnych (Ollama, Hermes, OpenClaw) oraz metody `enableMockDriver()` i `isMock()`.
+  - Plik konfiguracyjny `config/integrations.php`.
+
+### Naprawiono (Fixed)
+- **Symulacja migracji w `scripts/compat-check.sh`**:
+  - Wyświetlanie czytelnej instrukcji naprawy z odniesieniem do `repairkit.sh` w przypadku niepowodzenia testu `migrate --pretend`.
+- **Odpowiedzi na ping sterownika Qdrant**:
+  - Poprawiono odczyt parametrów URL, hosta i portu Qdrant z konfiguracji `agenthub.memory.qdrant`.
+  - Poprawna obsługa nagłówka `api-key` przy autoryzowanych zapytaniach do Qdrant.
+  - Integracja statusu mock w poleceniu `agenthub:selftest`.
+
+
 ## [1.5.0] - 2026-10-10
 
 ### Dodano (Added)

@@ -5,8 +5,10 @@
 1. **Wymagane uprawnienia**:
    - `integrations.manage` – wykrywanie, adopcja i konfiguracja kontenerów Docker oraz instancji zewnętrznych.
 
-2. **Dostęp do Docker Socket**:
+2. **Dostęp do Docker Socket i tryb Mock**:
    - AgentHub komunikuje się z demonem Docker przez dedykowany socket: `unix:///var/run/docker.sock` (konfiguracja: `DOCKER_SOCKET_PATH`).
+   - W środowiskach deweloperskich lub bez demona Docker dostępny jest aktywny sterownik mock (`DOCKER_MOCK=true` lub `CONTAINERS_MOCK=true`), symulujący obecność kontenerów runtime'ów (Ollama, Hermes, OpenClaw).
+   - W razie problemów ze środowiskiem lub socketem, automatyczną konfigurację wykonuje skrypt: `./scripts/repairkit.sh`.
    - Brak terminala interaktywnego – wszelkie polecenia wewnątrz kontenerów są ograniczone przez ścisłą białą listę `execAllowlist()`.
    - Ścieżki zapisu konfiguracji są ograniczone przez `configWritablePaths()`.
 
