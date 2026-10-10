@@ -80,9 +80,24 @@ Usługa `App\Services\ModuleManager` automatycznie:
 
 ---
 
-## 4. Referencyjny Moduł `modules/Hello/`
+## 4. Wymagania v1.5.0 (Reguła Dokumentacji i Sekcje Konfiguracji)
 
-W repozytorium znajduje się moduł demonstracyjny `modules/Hello/`, który demonstruje:
-- Rejestrację nowej pozycji w Menu 1 i Menu 2.
-- Użycie layoutu bazowego `<x-layouts.app>`.
-- Brak jakichkolwiek modyfikacji w plikach rdzenia Laravel.
+Od wersji 1.5.0 każdy moduł musi spełniać reguły spójności architektonicznej:
+- **`docs/first-setup.md`**: Każdy moduł musi zawierać fragment instrukcji pierwszej konfiguracji. Spójność jest weryfikowana w CI poleceniem `php artisan docs:check`.
+- **`config_section` / `config_sections`**: Moduły przechowujące dane biznesowe rejestrują klasy implementujące `App\Contracts\Config\ConfigSectionInterface` w manifeście `module.json`. Pozwala to na pełny, deklaratywny eksport i import konfiguracji.
+
+---
+
+## 5. Moduły Platformy w wersji 1.5.0
+
+- `modules/Agents` – Zarządzanie agentami AI, zdolnościami internet/kontekst oraz Magazyn Skilli.
+- `modules/AiSettings` – Bramka LLM i poświadczenia dostawców.
+- `modules/Chat` – Czat pojedynczy i wieloagentowy z orkiestracją dialogową.
+- `modules/Dashboard` – Główny pulpit i status platformy.
+- `modules/Integrations` – Provisioning instancji oraz adopcja kontenerów Docker.
+- `modules/Logs` – Audyt zdarzeń i telemetria.
+- `modules/Memory` – Magazyn wektorowy i pamięć semantyczna.
+- `modules/Scenarios` – Wizualny edytor blokowy Drawflow i silnik Horizon.
+- `modules/System` – Eksport/import konfiguracji, kopie zapasowe i instrukcja wdrożenia.
+- `modules/Users` – Użytkownicy i kontrola dostępu RBAC.
+- `modules/Hello` – Moduł demonstracyjny / referencyjny.

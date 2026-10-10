@@ -36,8 +36,8 @@ else
   log_fail "Brak zainstalowanego interpretera PHP na hoście."
 fi
 
-# 2. Weryfikacja wymaganych rozszerzeń PHP
-REQUIRED_EXTS=(bcmath curl mbstring openssl pdo tokenizer xml intl json)
+# 2. Weryfikacja wymaganych rozszerzeń PHP (w tym sodium i zip dla v1.5.0)
+REQUIRED_EXTS=(bcmath curl mbstring openssl pdo tokenizer xml intl json sodium zip)
 for ext in "${REQUIRED_EXTS[@]}"; do
   if php -r "exit(extension_loaded('$ext') ? 0 : 1);" 2>/dev/null; then
     log_ok "Rozszerzenie PHP: $ext"

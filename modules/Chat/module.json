@@ -1,8 +1,8 @@
 {
   "name": "Czat AI",
   "slug": "chat",
-  "description": "Zunifikowany interfejs czatu z agentami, strumieniowanie odpowiedzi i historia rozmów",
-  "version": "1.0.0",
+  "description": "Zunifikowany interfejs czatu z agentami, czat grupowy, orkiestracja i historia rozmów",
+  "version": "1.5.0",
   "icon": "chat-bubble-left-right",
   "order": 3,
   "enabled": true,
@@ -16,5 +16,8 @@
   "menu2": [
     { "id": "new", "title": "chat.new_conversation", "route": "chat.index", "permission": "agents.chat" },
     { "id": "history", "title": "chat.history", "route": "chat.history", "permission": "agents.chat" }
+  ],
+  "config_sections": [
+    "Modules\\Chat\\Config\\ChatConfigSection"
   ]
 }

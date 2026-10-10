@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services;
 
+use App\Contracts\Config\ConfigSectionInterface;
 use App\Models\User;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\File;
@@ -30,7 +31,7 @@ class ModuleManager
             File::makeDirectory($modulesPath, 0755, true);
         }
 
-        $manifests = File::glob($modulesPath . '/*/module.json');
+        $manifests = File::glob($modulesPath.'/*/module.json');
 
         foreach ($manifests as $manifestPath) {
             $content = json_decode(File::get($manifestPath), true);
@@ -87,7 +88,7 @@ class ModuleManager
                     'slug' => $module['slug'],
                     'name' => $module['name'],
                     'icon' => $module['icon'] ?? 'cube',
-                    'route' => $module['menu1']['route'] ?? $module['slug'] . '.index',
+                    'route' => $module['menu1']['route'] ?? $module['slug'].'.index',
                     'order' => $module['menu1']['order'] ?? ($module['order'] ?? 99),
                 ];
             })
@@ -123,5 +124,36 @@ class ModuleManager
             })
             ->values()
             ->all();
+    }
+
+    /**
+     * Zwraca zarejestrowane sekcje konfiguracyjne ze wszystkich aktywnych modułów.
+     *
+     * @return Collection<string, ConfigSectionInterface>
+     */
+    public function getConfigSections(): Collection
+    {
+        $sections = collect();
+
+        foreach ($this->enabled() as $module) {
+            $configured = $module['config_sections'] ?? [];
+            if (! is_array($configured)) {
+                $configured = [$configured];
+            }
+            if (! empty($module['config_section'])) {
+                $configured[] = $module['config_section'];
+            }
+
+            foreach ($configured as $sectionClass) {
+                if (is_string($sectionClass) && class_exists($sectionClass)) {
+                    $instance = app($sectionClass);
+                    if ($instance instanceof ConfigSectionInterface) {
+                        $sections->put($instance->key(), $instance);
+                    }
+                }
+            }
+        }
+
+        return $sections;
     }
 }

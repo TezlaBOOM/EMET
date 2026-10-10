@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Services\IntegrationManager\Adapters;
 
 use App\Contracts\Integrations\AgentRuntimeAdapter;
+use App\Contracts\Integrations\ContainerAdapterInterface;
 use App\Contracts\Integrations\HealthStatus;
 use App\Contracts\Integrations\ProvisionRequest;
 use App\Contracts\Integrations\ProvisionSpec;
@@ -16,7 +17,7 @@ use Illuminate\Support\Str;
 
 // TODO: SDK Pending - using mocked driver
 // Spec: https://github.com/openclaw/openclaw
-class OpenClawAdapter implements AgentRuntimeAdapter
+class OpenClawAdapter implements AgentRuntimeAdapter, ContainerAdapterInterface
 {
     public function type(): string
     {
@@ -61,7 +62,7 @@ class OpenClawAdapter implements AgentRuntimeAdapter
         return new RunHandle(
             runId: $runId,
             status: 'completed',
-            output: "OpenClaw web crawler output for: " . $input->prompt,
+            output: 'OpenClaw web crawler output for: '.$input->prompt,
             metadata: ['agent_id' => $agent->id, 'runtime' => 'openclaw']
         );
     }
@@ -113,5 +114,97 @@ class OpenClawAdapter implements AgentRuntimeAdapter
         return [
             "/opt/agenthub/instances/openclaw/{$instance->slug}",
         ];
+    }
+
+    // --- ContainerAdapterInterface Implementation ---
+
+    public function containerSignatures(): array
+    {
+        return [
+            'images' => ['openclaw/openclaw*', 'openclaw*'],
+            'labels' => ['agenthub.runtime=openclaw'],
+            'ports' => [8090],
+        ];
+    }
+
+    public function inspectContainer(string $containerId): array
+    {
+        return [
+            'name' => "openclaw-{$containerId}",
+            'image' => 'openclaw/openclaw:latest',
+            'status' => 'running',
+            'ports' => [8090],
+            'detected_type' => 'openclaw',
+            'is_compatible' => true,
+            'details' => [
+                'version' => '0.9.4',
+                'headless_browser' => 'chromium',
+            ],
+        ];
+    }
+
+    public function configWritablePaths(): array
+    {
+        return [
+            '/opt/agenthub/instances/openclaw',
+            '/etc/openclaw',
+        ];
+    }
+
+    public function execAllowlist(): array
+    {
+        return [
+            'openclaw --status',
+            'openclaw --version',
+            'openclaw reload',
+        ];
+    }
+
+    public function configSchema(): array
+    {
+        return [
+            'type' => 'object',
+            'properties' => [
+                'port' => ['type' => 'integer', 'default' => 8090],
+                'headless' => ['type' => 'boolean', 'default' => true],
+                'concurrency' => ['type' => 'integer', 'default' => 4],
+            ],
+            'required' => ['port'],
+        ];
+    }
+
+    public function configureContainer(string $containerId, array $config): array
+    {
+        $diff = [
+            'before' => ['port' => 8090, 'concurrency' => 2],
+            'after' => $config,
+        ];
+
+        return [
+            'success' => true,
+            'diff' => $diff,
+            'error' => null,
+        ];
+    }
+
+    public function autoConfigure(string $containerId, array $profileSteps): array
+    {
+        $log = "Applying OpenClaw auto-configuration steps for container {$containerId}...\n";
+        foreach ($profileSteps as $step) {
+            $name = $step['name'] ?? 'Step';
+            $log .= "- Executed: {$name}\n";
+        }
+        $log .= "OpenClaw container {$containerId} configured successfully.";
+
+        return [
+            'success' => true,
+            'log' => $log,
+            'error' => null,
+        ];
+    }
+
+    public function listContainerModels(string $containerId): array
+    {
+        return [];
     }
 }

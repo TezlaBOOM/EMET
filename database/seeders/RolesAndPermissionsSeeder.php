@@ -34,6 +34,20 @@ class RolesAndPermissionsSeeder extends Seeder
             'telemetry.view',
             'audit.view',
             'system.update',
+            // Nowe uprawnienia v1.5.0
+            'skills.view',
+            'skills.manage',
+            'chat.group.create',
+            'chat.group.manage',
+            'scenarios.view',
+            'scenarios.manage',
+            'scenarios.run',
+            'integrations.containers.view',
+            'integrations.containers.manage',
+            'system.config.export',
+            'system.config.import',
+            'system.setup.view',
+            'system.manage',
         ];
 
         foreach ($permissions as $permissionName) {
@@ -50,6 +64,14 @@ class RolesAndPermissionsSeeder extends Seeder
             'agents.manage',
             'agents.view',
             'agents.chat',
+            'skills.view',
+            'skills.manage',
+            'chat.group.create',
+            'chat.group.manage',
+            'scenarios.view',
+            'scenarios.manage',
+            'scenarios.run',
+            'integrations.containers.view',
             'memory.manage',
             'memory.view',
             'integrations.provision',
@@ -61,8 +83,12 @@ class RolesAndPermissionsSeeder extends Seeder
         $viewerRole->syncPermissions([
             'agents.view',
             'agents.chat',
+            'skills.view',
+            'scenarios.view',
+            'integrations.containers.view',
             'telemetry.view',
             'memory.view',
+            'system.setup.view',
         ]);
     }
 }

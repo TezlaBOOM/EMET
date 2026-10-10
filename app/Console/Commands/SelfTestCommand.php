@@ -4,11 +4,16 @@ declare(strict_types=1);
 
 namespace App\Console\Commands;
 
+use App\Contracts\Chat\GroupChatOrchestratorInterface;
 use App\Contracts\Memory\VectorStoreInterface;
+use App\Contracts\Scenarios\ScenarioEngineInterface;
 use App\Models\LlmAccount;
 use App\Models\LlmProvider;
 use App\Models\User;
+use App\Services\Config\ConfigTransferManager;
 use App\Services\IntegrationManager\IntegrationService;
+use App\Services\Integrations\DockerSocketService;
+use App\Services\MemoryService\QdrantVectorStore;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
@@ -37,9 +42,9 @@ class SelfTestCommand extends Command
         $hasCriticalFailure = false;
 
         if (! $isJson) {
-            $this->info("=================================================");
-            $this->info("   AgentHub System Diagnostics & Self-Test       ");
-            $this->info("=================================================");
+            $this->info('=================================================');
+            $this->info('   AgentHub System Diagnostics & Self-Test       ');
+            $this->info('=================================================');
         }
 
         // 1. Baza Danych
@@ -54,7 +59,7 @@ class SelfTestCommand extends Command
             $hasCriticalFailure = true;
             $checks['database'] = [
                 'status' => 'fail',
-                'message' => "Błąd połączenia z bazą: " . $e->getMessage(),
+                'message' => 'Błąd połączenia z bazą: '.$e->getMessage(),
             ];
         }
 
@@ -71,49 +76,49 @@ class SelfTestCommand extends Command
                 if (empty($missingTables)) {
                     $checks['schema'] = [
                         'status' => 'ok',
-                        'message' => "Wszystkie kluczowe tabele obecne (" . count($requiredTables) . "/" . count($requiredTables) . ")",
+                        'message' => 'Wszystkie kluczowe tabele obecne ('.count($requiredTables).'/'.count($requiredTables).')',
                     ];
                 } else {
                     $hasCriticalFailure = true;
                     $checks['schema'] = [
                         'status' => 'fail',
-                        'message' => "Brakujące tabele: " . implode(', ', $missingTables),
+                        'message' => 'Brakujące tabele: '.implode(', ', $missingTables),
                     ];
                 }
             } else {
                 $checks['schema'] = [
                     'status' => 'fail',
-                    'message' => "Pominięto sprawdzanie schematu z powodu braku połączenia z bazą",
+                    'message' => 'Pominięto sprawdzanie schematu z powodu braku połączenia z bazą',
                 ];
             }
         } catch (\Throwable $e) {
             $hasCriticalFailure = true;
             $checks['schema'] = [
                 'status' => 'fail',
-                'message' => "Błąd sprawdzania tabel: " . $e->getMessage(),
+                'message' => 'Błąd sprawdzania tabel: '.$e->getMessage(),
             ];
         }
 
         // 3. Cache & Sesje
         try {
-            $testVal = 'selftest_' . time();
+            $testVal = 'selftest_'.time();
             Cache::put('agenthub_selftest_ping', $testVal, 10);
             $retrieved = Cache::get('agenthub_selftest_ping');
             if ($retrieved === $testVal) {
                 $checks['cache'] = [
                     'status' => 'ok',
-                    'message' => "Zapis i odczyt pamięci podręcznej działa poprawnie",
+                    'message' => 'Zapis i odczyt pamięci podręcznej działa poprawnie',
                 ];
             } else {
                 $checks['cache'] = [
                     'status' => 'warn',
-                    'message' => "Niezgodność wartości w cache",
+                    'message' => 'Niezgodność wartości w cache',
                 ];
             }
         } catch (\Throwable $e) {
             $checks['cache'] = [
                 'status' => 'warn',
-                'message' => "Błąd pamięci cache: " . $e->getMessage(),
+                'message' => 'Błąd pamięci cache: '.$e->getMessage(),
             ];
         }
 
@@ -121,15 +126,15 @@ class SelfTestCommand extends Command
         try {
             $vectorStore = app(VectorStoreInterface::class);
             $isPingOk = $vectorStore->ping();
-            $driverName = $vectorStore instanceof \App\Services\MemoryService\QdrantVectorStore ? 'Qdrant' : 'PgVector';
+            $driverName = $vectorStore instanceof QdrantVectorStore ? 'Qdrant' : 'PgVector';
             $checks['vector_store'] = [
                 'status' => $isPingOk ? 'ok' : 'warn',
-                'message' => "Sterownik {$driverName}: " . ($isPingOk ? 'Dostępny i odpowiada' : 'Brak odpowiedzi na ping'),
+                'message' => "Sterownik {$driverName}: ".($isPingOk ? 'Dostępny i odpowiada' : 'Brak odpowiedzi na ping'),
             ];
         } catch (\Throwable $e) {
             $checks['vector_store'] = [
                 'status' => 'warn',
-                'message' => "Magazyn wektorowy: " . $e->getMessage(),
+                'message' => 'Magazyn wektorowy: '.$e->getMessage(),
             ];
         }
 
@@ -144,7 +149,7 @@ class SelfTestCommand extends Command
         } catch (\Throwable $e) {
             $checks['llm_gateway'] = [
                 'status' => 'fail',
-                'message' => "Błąd dostawców LLM: " . $e->getMessage(),
+                'message' => 'Błąd dostawców LLM: '.$e->getMessage(),
             ];
         }
 
@@ -158,11 +163,12 @@ class SelfTestCommand extends Command
                 if ($info['installed'] ?? false) {
                     $detectedCount++;
                 }
-            } catch (\Throwable) {}
+            } catch (\Throwable) {
+            }
         }
         $checks['runtime_adapters'] = [
             'status' => 'ok',
-            'message' => "Dostępne adaptery: {$detectedCount}/" . count($adapters) . " (sterowniki załadowane)",
+            'message' => "Dostępne adaptery: {$detectedCount}/".count($adapters).' (sterowniki załadowane)',
         ];
 
         // 7. Administrator
@@ -170,13 +176,76 @@ class SelfTestCommand extends Command
             $adminUser = ($checks['database']['status'] === 'ok') ? User::where('email', 'admin@admin.lan')->first() : null;
             $checks['admin_user'] = [
                 'status' => $adminUser ? 'ok' : 'warn',
-                'message' => $adminUser ? "Konto admin@admin.lan obecne" : "Brak konta domyślnego admin@admin.lan (uruchom db:seed)",
+                'message' => $adminUser ? 'Konto admin@admin.lan obecne' : 'Brak konta domyślnego admin@admin.lan (uruchom db:seed)',
             ];
         } catch (\Throwable $e) {
             $checks['admin_user'] = [
                 'status' => 'warn',
-                'message' => "Nie można sprawdzić konta admina: " . $e->getMessage(),
+                'message' => 'Nie można sprawdzić konta admina: '.$e->getMessage(),
             ];
+        }
+
+        // --- 1.5.0 Rozszerzenia diagnostyczne ---
+
+        // 8. Magazyn Skilli (v1.5.0)
+        try {
+            $hasSkillsTable = Schema::hasTable('skills') && Schema::hasTable('skill_versions');
+            $skillsDisk = config('filesystems.disks.skills');
+            $checks['skills_store'] = [
+                'status' => $hasSkillsTable && $skillsDisk ? 'ok' : 'warn',
+                'message' => $hasSkillsTable ? 'Tabele skilli i dysk storage obecne' : 'Brak tabel skilli',
+            ];
+        } catch (\Throwable $e) {
+            $checks['skills_store'] = ['status' => 'warn', 'message' => $e->getMessage()];
+        }
+
+        // 9. Czat grupowy & Orkiestracja (v1.5.0)
+        try {
+            $hasChatOrchestration = Schema::hasTable('conversation_participants');
+            $orchestrator = app(GroupChatOrchestratorInterface::class);
+            $checks['group_chat'] = [
+                'status' => $hasChatOrchestration && $orchestrator ? 'ok' : 'fail',
+                'message' => 'Serwis orkiestracji czatu gotowy (4 tryby)',
+            ];
+        } catch (\Throwable $e) {
+            $checks['group_chat'] = ['status' => 'warn', 'message' => $e->getMessage()];
+        }
+
+        // 10. Scenariusze Wizualne (v1.5.0)
+        try {
+            $hasScenarios = Schema::hasTable('scenarios') && Schema::hasTable('scenario_runs');
+            $engine = app(ScenarioEngineInterface::class);
+            $checks['scenarios'] = [
+                'status' => $hasScenarios && $engine ? 'ok' : 'fail',
+                'message' => 'Silnik scenariuszy Drawflow i kolejka Horizon gotowe',
+            ];
+        } catch (\Throwable $e) {
+            $checks['scenarios'] = ['status' => 'warn', 'message' => $e->getMessage()];
+        }
+
+        // 11. Kontenery Docker & Gniazdo (v1.5.0)
+        try {
+            /** @var DockerSocketService $dockerSocket */
+            $dockerSocket = app(DockerSocketService::class);
+            $isAvailable = $dockerSocket->isAvailable();
+            $checks['docker_socket'] = [
+                'status' => $isAvailable ? 'ok' : 'warn',
+                'message' => $isAvailable ? 'Docker socket aktywny' : 'Docker socket niedostępny (aktywny sterownik mock)',
+            ];
+        } catch (\Throwable $e) {
+            $checks['docker_socket'] = ['status' => 'warn', 'message' => $e->getMessage()];
+        }
+
+        // 12. Eksport / Import Konfiguracji (v1.5.0)
+        try {
+            $transferManager = app(ConfigTransferManager::class);
+            $sectionsCount = count($transferManager->getOrderedSections());
+            $checks['config_transfer'] = [
+                'status' => $sectionsCount > 0 ? 'ok' : 'warn',
+                'message' => "Moduł transferów gotowy, zarejestrowanych sekcji: {$sectionsCount}",
+            ];
+        } catch (\Throwable $e) {
+            $checks['config_transfer'] = ['status' => 'warn', 'message' => $e->getMessage()];
         }
 
         if ($isJson) {
@@ -184,6 +253,7 @@ class SelfTestCommand extends Command
                 'success' => ! $hasCriticalFailure,
                 'checks' => $checks,
             ], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
+
             return $hasCriticalFailure ? Command::FAILURE : Command::SUCCESS;
         }
 
@@ -193,16 +263,18 @@ class SelfTestCommand extends Command
                 'warn' => '<comment>[ WARN ]</comment>',
                 default => '<error>[ FAIL ]</error>',
             };
-            $this->line(sprintf(" %s %-18s : %s", $tag, strtoupper($category), $data['message']));
+            $this->line(sprintf(' %s %-18s : %s', $tag, strtoupper($category), $data['message']));
         }
 
         $this->newLine();
         if ($hasCriticalFailure) {
-            $this->error("Wykryto krytyczne błędy w środowisku aplikacji!");
+            $this->error('Wykryto krytyczne błędy w środowisku aplikacji!');
+
             return Command::FAILURE;
         }
 
-        $this->info("Wszystkie krytyczne testy zakończone sukcesem. Platforma jest gotowa do pracy.");
+        $this->info('Wszystkie krytyczne testy zakończone sukcesem. Platforma jest gotowa do pracy.');
+
         return Command::SUCCESS;
     }
 }

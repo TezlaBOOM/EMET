@@ -10,6 +10,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Agent;
 use App\Models\ChatConversation;
 use App\Models\ChatMessage;
+use App\Services\AgentContextBuilder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -45,7 +46,7 @@ class ChatController extends Controller
                     'id' => (string) Str::uuid(),
                     'user_id' => $userId,
                     'agent_id' => $agent->id,
-                    'title' => 'Rozmowa z ' . $agent->name,
+                    'title' => 'Rozmowa z '.$agent->name,
                 ]);
                 $activeConversation->load(['agent', 'messages']);
             }
@@ -83,7 +84,7 @@ class ChatController extends Controller
             'id' => (string) Str::uuid(),
             'user_id' => Auth::id(),
             'agent_id' => $agent->id,
-            'title' => 'Rozmowa z ' . $agent->name,
+            'title' => 'Rozmowa z '.$agent->name,
         ]);
 
         if (! empty($validated['initial_message'])) {
@@ -171,7 +172,7 @@ class ChatController extends Controller
 
             foreach ($stream as $chunk) {
                 $fullContent .= $chunk;
-                echo "data: " . json_encode(['chunk' => $chunk]) . "\n\n";
+                echo 'data: '.json_encode(['chunk' => $chunk])."\n\n";
                 if (ob_get_level() > 0) {
                     ob_flush();
                 }
@@ -214,7 +215,9 @@ class ChatController extends Controller
     protected function processAssistantResponse(ChatConversation $conversation, string $latestUserContent): ChatMessage
     {
         $agent = $conversation->agent;
-        $messages = $this->buildMessageContext($conversation);
+        /** @var AgentContextBuilder $contextBuilder */
+        $contextBuilder = app(AgentContextBuilder::class);
+        $messages = $contextBuilder->build($agent, $latestUserContent, $conversation);
 
         $completionRequest = new CompletionRequest(
             messages: $messages,

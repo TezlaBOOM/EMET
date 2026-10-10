@@ -1,0 +1,21 @@
+{
+  "name": "System",
+  "slug": "system",
+  "description": "Zarządzanie konfiguracją systemu, eksport i import oraz instrukcja pierwszej konfiguracji",
+  "version": "1.5.0",
+  "icon": "cog",
+  "order": 10,
+  "enabled": true,
+  "permission": "system.manage",
+  "config_section": "Modules\\System\\Config\\SystemConfigSection",
+  "menu1": {
+    "title": "system.menu_title",
+    "route": "system.transfers.index",
+    "icon": "cog",
+    "order": 10
+  },
+  "menu2": [
+    { "id": "transfers", "title": "system.sub_transfers", "route": "system.transfers.index", "permission": "system.manage" },
+    { "id": "first_setup", "title": "system.sub_first_setup", "route": "system.first-setup.index", "permission": "system.manage" }
+  ]
+}

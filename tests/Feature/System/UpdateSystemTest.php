@@ -39,13 +39,15 @@ class UpdateSystemTest extends TestCase
     {
         $response = $this->actingAs($this->admin)->get('/users/system');
 
+        $version = trim((string) file_get_contents(base_path('VERSION')));
         $response->assertStatus(200);
         $response->assertSee(__('users.system_title'));
-        $response->assertSee('v1.0.0');
+        $response->assertSee('v'.$version);
     }
 
     public function test_check_update_command_execution(): void
     {
+        $version = trim((string) file_get_contents(base_path('VERSION')));
         $exitCode = Artisan::call('agenthub:check-update', ['--json' => true]);
         $this->assertEquals(0, $exitCode);
 
@@ -53,7 +55,7 @@ class UpdateSystemTest extends TestCase
         $this->assertJson($output);
 
         $data = json_decode($output, true);
-        $this->assertEquals('1.0.0', $data['current_version']);
+        $this->assertEquals($version, $data['current_version']);
         $this->assertEquals('stable', $data['channel']);
         $this->assertArrayHasKey('update_available', $data);
     }
@@ -67,7 +69,7 @@ class UpdateSystemTest extends TestCase
         $exitCode = 0;
         exec("bash {$script} 2>&1", $output, $exitCode);
 
-        $this->assertEquals(0, $exitCode, "Compat-check output: " . implode("\n", $output));
+        $this->assertEquals(0, $exitCode, 'Compat-check output: '.implode("\n", $output));
     }
 
     public function test_admin_can_trigger_compat_check_via_http(): void

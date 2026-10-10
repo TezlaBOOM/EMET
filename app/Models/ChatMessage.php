@@ -17,6 +17,11 @@ class ChatMessage extends Model
     protected $fillable = [
         'id',
         'conversation_id',
+        'participant_id',
+        'turn_id',
+        'round',
+        'reply_to_message_id',
+        'kind',
         'role',
         'content',
         'tokens_used',
@@ -27,6 +32,7 @@ class ChatMessage extends Model
     protected function casts(): array
     {
         return [
+            'round' => 'integer',
             'tokens_used' => 'integer',
             'metadata' => 'array',
             'created_at' => 'datetime',
@@ -36,5 +42,15 @@ class ChatMessage extends Model
     public function conversation(): BelongsTo
     {
         return $this->belongsTo(ChatConversation::class, 'conversation_id');
+    }
+
+    public function participant(): BelongsTo
+    {
+        return $this->belongsTo(ConversationParticipant::class, 'participant_id');
+    }
+
+    public function replyTo(): BelongsTo
+    {
+        return $this->belongsTo(self::class, 'reply_to_message_id');
     }
 }

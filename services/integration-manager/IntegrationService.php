@@ -5,15 +5,16 @@ declare(strict_types=1);
 namespace App\Services\IntegrationManager;
 
 use App\Contracts\Integrations\AgentRuntimeAdapter;
+use App\Contracts\Integrations\ContainerAdapterInterface;
 use App\Contracts\Integrations\ProvisionRequest;
 use App\Models\IntegrationInstance;
 use App\Models\ProvisioningJob;
 use App\Services\IntegrationManager\Adapters\ClaudeCodeAdapter;
 use App\Services\IntegrationManager\Adapters\CodexAdapter;
 use App\Services\IntegrationManager\Adapters\HermesAdapter;
+use App\Services\IntegrationManager\Adapters\OllamaAdapter;
 use App\Services\IntegrationManager\Adapters\OpenClawAdapter;
 use Exception;
-use Illuminate\Support\Str;
 
 class IntegrationService
 {
@@ -25,10 +26,11 @@ class IntegrationService
     public function __construct()
     {
         $this->adapters = [
-            'hermes' => new HermesAdapter(),
-            'openclaw' => new OpenClawAdapter(),
-            'claude_code' => new ClaudeCodeAdapter(),
-            'codex' => new CodexAdapter(),
+            'hermes' => new HermesAdapter,
+            'openclaw' => new OpenClawAdapter,
+            'claude_code' => new ClaudeCodeAdapter,
+            'codex' => new CodexAdapter,
+            'ollama' => new OllamaAdapter,
         ];
     }
 
@@ -40,6 +42,31 @@ class IntegrationService
         }
 
         return $this->adapters[$key];
+    }
+
+    /**
+     * @return array<string, ContainerAdapterInterface>
+     */
+    public function getContainerAdapters(): array
+    {
+        $result = [];
+        foreach ($this->adapters as $key => $adapter) {
+            if ($adapter instanceof ContainerAdapterInterface) {
+                $result[$key] = $adapter;
+            }
+        }
+
+        return $result;
+    }
+
+    public function getContainerAdapter(string $type): ContainerAdapterInterface
+    {
+        $adapter = $this->getAdapter($type);
+        if (! ($adapter instanceof ContainerAdapterInterface)) {
+            throw new Exception("Adapter [{$type}] nie implementuje ContainerAdapterInterface.");
+        }
+
+        return $adapter;
     }
 
     /**
@@ -96,7 +123,7 @@ class IntegrationService
 
             // Symulacja błędu dla testów rollbacku, jeśli wpisano 'fail-probe'
             if (str_contains($instance->slug, 'fail-probe')) {
-                throw new Exception("Symulowany błąd uruchomienia instancji (Health probe timeout)");
+                throw new Exception('Symulowany błąd uruchomienia instancji (Health probe timeout)');
             }
 
             // 4. Test zdrowia (Health probe)
@@ -123,8 +150,8 @@ class IntegrationService
             return true;
         } catch (Exception $e) {
             // Procedura Rollbacku (T044)
-            $job->appendLog("BŁĄD: " . $e->getMessage());
-            $job->appendLog("Uruchamianie procedury automatycznego rollbacku...");
+            $job->appendLog('BŁĄD: '.$e->getMessage());
+            $job->appendLog('Uruchamianie procedury automatycznego rollbacku...');
 
             $this->rollback($instance, $job, $e->getMessage());
 
@@ -147,7 +174,7 @@ class IntegrationService
             'error_message' => $errorMessage,
             'completed_at' => now(),
         ]);
-        $job->appendLog("Rollback zakończony. Zasoby zostały zwolnione.");
+        $job->appendLog('Rollback zakończony. Zasoby zostały zwolnione.');
     }
 
     /**

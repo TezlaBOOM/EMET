@@ -90,12 +90,14 @@ fi
 log "Krok 5/7: Wykonywanie migracji bazy danych..."
 if [[ -f "$REPO_ROOT/artisan" ]]; then
   php "$REPO_ROOT/artisan" migrate --force || true
+  php "$REPO_ROOT/artisan" db:seed --class=RolesAndPermissionsSeeder --force || true
 fi
 
 # 6. Optymalizacja i czyszczenie pamięci podręcznej
-log "Krok 6/7: Przeładowanie pamięci podręcznej i buforów aplikacji..."
+log "Krok 6/7: Przeładowanie pamięci podręcznej i kompilacja podręcznika v1.5.0..."
 if [[ -f "$REPO_ROOT/artisan" ]]; then
   php "$REPO_ROOT/artisan" optimize:clear >/dev/null 2>&1 || true
+  php "$REPO_ROOT/artisan" docs:first-setup --build >/dev/null 2>&1 || true
 fi
 
 # 7. Diagnostyka selftest

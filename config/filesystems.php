@@ -38,6 +38,12 @@ return [
             'report' => false,
         ],
 
+        'skills' => [
+            'driver' => 'local',
+            'root' => storage_path('app/skills'),
+            'throw' => true,
+        ],
+
         'public' => [
             'driver' => 'local',
             'root' => storage_path('app/public'),

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Services\IntegrationManager\Adapters;
 
 use App\Contracts\Integrations\AgentRuntimeAdapter;
+use App\Contracts\Integrations\ContainerAdapterInterface;
 use App\Contracts\Integrations\HealthStatus;
 use App\Contracts\Integrations\ProvisionRequest;
 use App\Contracts\Integrations\ProvisionSpec;
@@ -17,7 +18,7 @@ use Illuminate\Support\Str;
 
 // TODO: SDK Pending - using mocked driver
 // Spec: https://github.com/nousresearch/hermes-agent
-class HermesAdapter implements AgentRuntimeAdapter
+class HermesAdapter implements AgentRuntimeAdapter, ContainerAdapterInterface
 {
     public function type(): string
     {
@@ -75,7 +76,7 @@ class HermesAdapter implements AgentRuntimeAdapter
         return new RunHandle(
             runId: $runId,
             status: 'completed',
-            output: "Hermes autonomous execution output for: " . $input->prompt,
+            output: 'Hermes autonomous execution output for: '.$input->prompt,
             metadata: ['agent_id' => $agent->id, 'runtime' => 'hermes']
         );
     }
@@ -112,7 +113,7 @@ class HermesAdapter implements AgentRuntimeAdapter
             environment: [
                 'HERMES_PORT' => (string) $port,
                 'HERMES_AGENT_ID' => $slug,
-                'AGRNTHUB_GATEWAY_URL' => config('app.url', 'http://localhost') . '/api/v1/gateway',
+                'AGRNTHUB_GATEWAY_URL' => config('app.url', 'http://localhost').'/api/v1/gateway',
             ],
             renderedFiles: [
                 "{$workDir}/config.yaml" => "port: {$port}\nname: {$request->name}\nmode: autonomous\n",
@@ -130,6 +131,103 @@ class HermesAdapter implements AgentRuntimeAdapter
     {
         return [
             "/opt/agenthub/instances/hermes/{$instance->slug}",
+        ];
+    }
+
+    // --- ContainerAdapterInterface Implementation ---
+
+    public function containerSignatures(): array
+    {
+        return [
+            'images' => ['nousresearch/hermes-agent*', 'hermes-agent*'],
+            'labels' => ['agenthub.runtime=hermes'],
+            'ports' => [8080, 8000],
+        ];
+    }
+
+    public function inspectContainer(string $containerId): array
+    {
+        return [
+            'name' => "hermes-{$containerId}",
+            'image' => 'nousresearch/hermes-agent:latest',
+            'status' => 'running',
+            'ports' => [8080],
+            'detected_type' => 'hermes',
+            'is_compatible' => true,
+            'details' => [
+                'version' => '1.2.0',
+                'models_loaded' => ['hermes-3-llama-3.1-8b'],
+            ],
+        ];
+    }
+
+    public function configWritablePaths(): array
+    {
+        return [
+            '/opt/agenthub/instances/hermes',
+            '/etc/hermes',
+        ];
+    }
+
+    public function execAllowlist(): array
+    {
+        return [
+            'hermes --check',
+            'hermes --version',
+            'hermes status',
+            'hermes reload',
+            'hermes model pull *',
+        ];
+    }
+
+    public function configSchema(): array
+    {
+        return [
+            'type' => 'object',
+            'properties' => [
+                'port' => ['type' => 'integer', 'default' => 8080],
+                'model' => ['type' => 'string', 'default' => 'hermes-3-llama-3.1-8b'],
+                'autonomous_mode' => ['type' => 'boolean', 'default' => true],
+            ],
+            'required' => ['model'],
+        ];
+    }
+
+    public function configureContainer(string $containerId, array $config): array
+    {
+        $diff = [
+            'before' => ['model' => 'default'],
+            'after' => $config,
+        ];
+
+        return [
+            'success' => true,
+            'diff' => $diff,
+            'error' => null,
+        ];
+    }
+
+    public function autoConfigure(string $containerId, array $profileSteps): array
+    {
+        $log = "Applying Hermes auto-configuration steps for container {$containerId}...\n";
+        foreach ($profileSteps as $step) {
+            $name = $step['name'] ?? 'Step';
+            $log .= "- Executed: {$name}\n";
+        }
+        $log .= "Hermes container {$containerId} configured successfully.";
+
+        return [
+            'success' => true,
+            'log' => $log,
+            'error' => null,
+        ];
+    }
+
+    public function listContainerModels(string $containerId): array
+    {
+        return [
+            ['id' => 'hermes-3-llama-3.1-8b', 'name' => 'Hermes 3 (Llama 3.1 8B)', 'size_bytes' => 4500000000],
+            ['id' => 'hermes-3-llama-3.1-70b', 'name' => 'Hermes 3 (Llama 3.1 70B)', 'size_bytes' => 38000000000],
         ];
     }
 }

@@ -3,6 +3,52 @@
 Wszystkie istotne zmiany w projekcie Projekt-Emet są dokumentowane w tym pliku.
 Format opiera się na [Keep a Changelog](https://keepachangelog.com/pl/1.0.0/).
 
+## [Unreleased]
+
+## [1.5.0] - 2026-10-10
+
+### Dodano (Added)
+- **Zdolności Agenta & Egress Proxy** (Etap 11):
+  - Tryby dostępu do sieci `internet_mode` (`off`, `allowlist`, `open`) z filtrowaniem domen i ochroną przed SSRF.
+  - Tryby kontekstu `context_mode` (`stateful`, `stateless`) oraz limit wiadomości `context_window_messages`.
+  - Wirtualne pole kompatybilności `internet_enabled`.
+  - Reguła dokumentacyjna v1.5 §0 i weryfikator `php artisan docs:check`.
+- **Magazyn Skilli, Wersjonowanie & Sandbox** (Etap 12):
+  - Zakładka *Agenci AI → Skille* z wyszukiwaniem, filtrowaniem i historią wersji.
+  - Kreator dodawania skilla: formularz, paczki ZIP, repozytoria Git z allowlisty, import z adapterów Hermes/OpenClaw.
+  - Bezpieczny sandbox wykonawczy dla skilli (`SkillSandboxService`) z ochroną Zip-Slip i weryfikacją SHA-256.
+  - Blokada przypisywania skilli wymagających zdolności przewyższających uprawnienia agenta (`SkillPermissionGuard`).
+- **Czat z Wieloma Agentami & Orkiestracja** (Etap 13):
+  - Konwersacje grupowe z 2..8 agentami w 4 trybach (`mention`, `broadcast`, `round_robin`, `moderator`).
+  - Dynamiczne dołączanie/odłączanie agentów z politykami kontekstu (`full`, `summary`, `last_n`, `none`).
+  - Zabezpieczenia: detektor zapętlenia dialogu, twardy licznik `max_turns`, budżet tokenów/kosztów, oznaczanie wypowiedzi jako `untrusted_source`.
+  - Endpointy REST API `/api/v1/conversations`.
+- **Scenariusze – Wizualny Edytor Blokowy & Telemetria** (Etap 14):
+  - Nowy moduł `modules/Scenarios` z edytorem Drawflow na dedykowanym layoutcie `/scenarios/{id}/editor`.
+  - Obsługa 12 typów węzłów (`start`, `agent`, `skill`, `memory`, `condition`, `parallel`, `join`, `loop`, `human`, `transform`, `delay`, `end`).
+  - Walidator grafu z limitem `SCENARIO_MAX_NODES=200` i acyklicznością.
+  - Asynchroniczny silnik `ScenarioEngine` na kolejce Horizon z idempotentnym wznawianiem kroków.
+  - Bezpieczny parser warunków logicznych `symfony/expression-language` (całkowity zakaz PHP `eval`).
+  - Telemetria na schemacie w czasie rzeczywistym przez Reverb `scenarios.{run_id}` i odtwarzacz runów.
+  - Wyzwalacze: formularz ręczny, cron oraz webhooki `POST /api/v1/hooks/scenarios/{token}`.
+- **Integracje – Adopcja & Auto-Konfiguracja Kontenerów Docker** (Etap 15):
+  - Zakładka *Integracje → Kontenery* z detekcją lokalnych kontenerów Docker przez socket `unix:///var/run/docker.sock`.
+  - Tryby adopcji: `observe`, `configure`, `managed` (dołączenie do sieci `agenthub-net`).
+  - Bezpieczna konfiguracja ręczna ze schematem `configSchema()` i podglądem diffa.
+  - Profile auto-konfiguracji (`AutoConfigProfile`) z automatycznym rollbackiem przy awarii health-checka.
+  - Twardy zakaz terminala interaktywnego i filtrowanie komend przez `execAllowlist()` adaptera.
+- **Eksport i Import Całej Konfiguracji** (Etap 16):
+  - Nowy moduł `modules/System` z obsługą transferów konfiguracji w oparciu o kontrakt `ConfigSectionInterface`.
+  - Topologiczne sortowanie sekcji według grafu zależności `dependsOn()`.
+  - Szyfrowanie sekretów `secrets.enc` za pomocą `libsodium` (Argon2id + XChaCha20-Poly1305) z hasłem podanym przez administratora.
+  - Podgląd importu dry-run z wizualnym diffem oraz automatyczny backup w `storage/backups/config-<timestamp>.zip`.
+  - Komendy konsolowe `php artisan config:export` i `php artisan config:import`.
+- **Instrukcja Konfiguracji, Diagnostyka & Hardening** (Etap 17):
+  - Podręcznik pierwszej konfiguracji w interfejsie *System → Instrukcja konfiguracji* z paskiem postępu.
+  - Generator dokumentacji `php artisan docs:first-setup --build` tworzący `docs/FIRST_SETUP.md`.
+  - Rozszerzona diagnostyka `php artisan agenthub:selftest` o testy weryfikacyjne 1.5.0.
+  - Aktualizacja skryptów wdrożeniowych `scripts/compat-check.sh` oraz `scripts/update.sh`.
+
 ## [1.0.0] - 2026-10-04
 
 ### [Etap 10: Dokumentacja, Bezpieczeństwo & Wersja 1.0.0] - 2026-10-04

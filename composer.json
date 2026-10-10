@@ -10,10 +10,12 @@
         "laravel/framework": "^13.17",
         "laravel/tinker": "^3.0",
         "livewire/livewire": "^4.4",
-        "spatie/laravel-permission": "^8.3"
+        "spatie/laravel-permission": "^8.3",
+        "symfony/expression-language": "^8.1"
     },
     "require-dev": {
         "fakerphp/faker": "^1.23",
+        "laravel/boost": "^2.10",
         "laravel/pail": "^1.2.5",
         "laravel/pao": "^1.0.6",
         "laravel/pint": "^1.27",
@@ -28,6 +30,7 @@
             "App\\Services\\MemoryService\\": "services/memory-service/",
             "App\\Services\\IntegrationManager\\": "services/integration-manager/",
             "App\\Services\\TelemetryCollector\\": "services/telemetry-collector/",
+            "Modules\\": "modules/",
             "Database\\Factories\\": "database/factories/",
             "Database\\Seeders\\": "database/seeders/"
         }

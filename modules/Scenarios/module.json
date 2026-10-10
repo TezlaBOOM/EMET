@@ -1,0 +1,23 @@
+{
+  "name": "Scenariusze",
+  "slug": "scenarios",
+  "description": "Wizualny edytor blokowy schematów AI (Drawflow), automatyzacja procesów wieloagentowych i telemetria na żywo",
+  "version": "1.5.0",
+  "icon": "rectangle-stack",
+  "order": 4,
+  "enabled": true,
+  "permission": "scenarios.view",
+  "menu1": {
+    "title": "scenarios.menu_title",
+    "route": "scenarios.index",
+    "icon": "rectangle-stack",
+    "order": 4
+  },
+  "menu2": [
+    { "id": "all", "title": "scenarios.sub_all", "route": "scenarios.index", "permission": "scenarios.view" },
+    { "id": "create", "title": "scenarios.sub_create", "route": "scenarios.create", "permission": "scenarios.manage" }
+  ],
+  "config_sections": [
+    "Modules\\Scenarios\\Config\\ScenariosConfigSection"
+  ]
+}
