@@ -46,6 +46,7 @@ class CheckUpdateCommand extends Command
 
         if ($isJson) {
             $this->output->writeln(json_encode($payload, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
+
             return Command::SUCCESS;
         }
 
@@ -53,9 +54,9 @@ class CheckUpdateCommand extends Command
         $this->info("Najnowsza wersja na kanale [{$channel}]: {$latestVersion}");
 
         if ($updateAvailable) {
-            $this->comment("Dostępna jest nowa wersja! Aby zaktualizować, uruchom ./scripts/update.sh");
+            $this->comment('Dostępna jest nowa wersja! Aby zaktualizować, uruchom ./scripts/update.sh');
         } else {
-            $this->info("Platforma AgentHub jest zaktualizowana do najnowszej wersji.");
+            $this->info('Platforma AgentHub jest zaktualizowana do najnowszej wersji.');
         }
 
         return Command::SUCCESS;

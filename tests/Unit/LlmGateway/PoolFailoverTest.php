@@ -26,6 +26,7 @@ class PoolFailoverTest extends TestCase
     use RefreshDatabase;
 
     protected LlmGateway $gateway;
+
     protected LlmProvider $provider;
 
     protected function setUp(): void
@@ -75,7 +76,7 @@ class PoolFailoverTest extends TestCase
         $accounts = $pool->accounts()->get();
 
         // 1. Test RoundRobinStrategy
-        $rr = new RoundRobinStrategy();
+        $rr = new RoundRobinStrategy;
         $first = $rr->selectAccount($accounts, $pool);
         $second = $rr->selectAccount($accounts, $pool);
         $this->assertNotNull($first);
@@ -83,18 +84,18 @@ class PoolFailoverTest extends TestCase
         $this->assertNotEquals($first->id, $second->id);
 
         // 2. Test PriorityFallbackStrategy (powinien wybrać o priorytecie 1 -> Account A)
-        $priorityStrategy = new PriorityFallbackStrategy();
+        $priorityStrategy = new PriorityFallbackStrategy;
         $selectedPriority = $priorityStrategy->selectAccount($accounts, $pool);
         $this->assertEquals($accountA->id, $selectedPriority->id);
 
         // 3. Test LeastUsedStrategy (Account A nigdy nieużyty, Account B użyty 5 min temu)
         $accountB->update(['last_used_at' => now()->subMinutes(5)]);
-        $leastUsedStrategy = new LeastUsedStrategy();
+        $leastUsedStrategy = new LeastUsedStrategy;
         $selectedLeast = $leastUsedStrategy->selectAccount($pool->accounts()->get(), $pool);
         $this->assertEquals($accountA->id, $selectedLeast->id);
 
         // 4. Test WeightedStrategy
-        $weighted = new WeightedStrategy();
+        $weighted = new WeightedStrategy;
         $selectedWeighted = $weighted->selectAccount($accounts, $pool);
         $this->assertContains($selectedWeighted->id, [$accountA->id, $accountB->id]);
     }

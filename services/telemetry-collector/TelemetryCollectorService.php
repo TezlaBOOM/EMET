@@ -9,10 +9,10 @@ use App\Events\AgentTelemetryBroadcastEvent;
 use App\Models\Agent;
 use App\Models\IntegrationInstance;
 use App\Models\LlmCall;
+use App\Models\LlmProvider;
 use App\Models\TelemetryEvent;
 use App\Models\TelemetryRollup;
 use Carbon\Carbon;
-use Illuminate\Support\Facades\DB;
 
 class TelemetryCollectorService implements TelemetryCollectorInterface
 {
@@ -62,7 +62,7 @@ class TelemetryCollectorService implements TelemetryCollectorInterface
                     $currentTask = $lastEvent->payload['task'] ?? $lastEvent->payload['tool'] ?? 'Wykonywanie zadania';
                 } elseif ($lastEvent->type === 'error') {
                     $status = 'error';
-                    $currentTask = 'Wystąpił błąd: ' . ($lastEvent->payload['message'] ?? 'Nieznany');
+                    $currentTask = 'Wystąpił błąd: '.($lastEvent->payload['message'] ?? 'Nieznany');
                 }
             }
 
@@ -112,7 +112,8 @@ class TelemetryCollectorService implements TelemetryCollectorInterface
 
         // Podział na dostawców
         $byProvider = $calls->groupBy('provider_id')->map(function ($group, $providerId) {
-            $provider = \App\Models\LlmProvider::find($providerId);
+            $provider = LlmProvider::find($providerId);
+
             return [
                 'provider_id' => $providerId,
                 'provider_name' => $provider?->name ?? "Provider #{$providerId}",

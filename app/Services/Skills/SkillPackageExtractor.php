@@ -102,6 +102,11 @@ class SkillPackageExtractor
         $manifestPath = $destinationDir.DIRECTORY_SEPARATOR.'skill.json';
         if (File::exists($manifestPath)) {
             $manifest = json_decode(File::get($manifestPath), true);
+        } else {
+            $found = File::glob($destinationDir.DIRECTORY_SEPARATOR.'*'.DIRECTORY_SEPARATOR.'skill.json');
+            if (! empty($found) && File::exists($found[0])) {
+                $manifest = json_decode(File::get($found[0]), true);
+            }
         }
 
         return [

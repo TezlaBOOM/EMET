@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Tests\Feature\Integrations;
 
-use App\Models\AuditLog;
 use App\Models\IntegrationInstance;
 use App\Models\ProvisioningJob;
 use App\Models\User;
@@ -20,6 +19,7 @@ class InstanceProvisioningTest extends TestCase
     use RefreshDatabase;
 
     protected User $admin;
+
     protected IntegrationService $service;
 
     protected function setUp(): void

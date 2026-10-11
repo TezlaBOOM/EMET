@@ -7,8 +7,8 @@ namespace App\Contracts\Llm;
 class CompletionResponse
 {
     /**
-     * @param array<mixed> $toolCalls
-     * @param array<string, mixed> $raw
+     * @param  array<mixed>  $toolCalls
+     * @param  array<string, mixed>  $raw
      */
     public function __construct(
         public string $content,

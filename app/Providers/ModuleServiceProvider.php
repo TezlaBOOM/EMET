@@ -16,7 +16,7 @@ class ModuleServiceProvider extends ServiceProvider
     public function register(): void
     {
         $this->app->singleton(ModuleManager::class, function () {
-            return new ModuleManager();
+            return new ModuleManager;
         });
     }
 
@@ -32,19 +32,19 @@ class ModuleServiceProvider extends ServiceProvider
             }
 
             // Ładowanie tras modułu
-            $routesPath = $modulePath . '/routes/web.php';
+            $routesPath = $modulePath.'/routes/web.php';
             if (File::exists($routesPath)) {
                 $this->loadRoutesFrom($routesPath);
             }
 
             // Ładowanie widoków modułu
-            $viewsPath = $modulePath . '/resources/views';
+            $viewsPath = $modulePath.'/resources/views';
             if (File::isDirectory($viewsPath)) {
-                $this->loadViewsFrom($viewsPath, 'module-' . $slug);
+                $this->loadViewsFrom($viewsPath, 'module-'.$slug);
             }
 
             // Ładowanie migracji modułu
-            $migrationsPath = $modulePath . '/database/migrations';
+            $migrationsPath = $modulePath.'/database/migrations';
             if (File::isDirectory($migrationsPath)) {
                 $this->loadMigrationsFrom($migrationsPath);
             }

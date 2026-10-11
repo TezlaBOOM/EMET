@@ -57,7 +57,7 @@ class ClaudeCodeAdapter implements AgentRuntimeAdapter
         return new RunHandle(
             runId: $runId,
             status: 'completed',
-            output: "Claude Code terminal execution for: " . $input->prompt,
+            output: 'Claude Code terminal execution for: '.$input->prompt,
             metadata: ['agent_id' => $agent->id, 'runtime' => 'claude_code']
         );
     }

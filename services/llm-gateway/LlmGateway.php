@@ -14,7 +14,6 @@ use App\Contracts\Llm\LlmGatewayInterface;
 use App\Models\LlmAccount;
 use App\Models\LlmAccountPool;
 use App\Models\LlmCall;
-use App\Models\LlmProvider;
 use App\Models\ModelPricing;
 use App\Services\LlmGateway\Drivers\AnthropicDriver;
 use App\Services\LlmGateway\Drivers\GeminiDriver;
@@ -47,18 +46,18 @@ class LlmGateway implements LlmGatewayInterface
     public function __construct()
     {
         $this->drivers = [
-            'gemini' => new GeminiDriver(),
-            'openai' => new OpenAiDriver(),
-            'anthropic' => new AnthropicDriver(),
-            'ollama' => new OllamaDriver(),
-            'openrouter' => new OpenRouterDriver(),
+            'gemini' => new GeminiDriver,
+            'openai' => new OpenAiDriver,
+            'anthropic' => new AnthropicDriver,
+            'ollama' => new OllamaDriver,
+            'openrouter' => new OpenRouterDriver,
         ];
 
         $this->strategies = [
-            'round_robin' => new RoundRobinStrategy(),
-            'weighted' => new WeightedStrategy(),
-            'least_used' => new LeastUsedStrategy(),
-            'priority_fallback' => new PriorityFallbackStrategy(),
+            'round_robin' => new RoundRobinStrategy,
+            'weighted' => new WeightedStrategy,
+            'least_used' => new LeastUsedStrategy,
+            'priority_fallback' => new PriorityFallbackStrategy,
         ];
     }
 

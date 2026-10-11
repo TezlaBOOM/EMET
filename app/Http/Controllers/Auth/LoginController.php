@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Models\AuditLog;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -39,7 +40,7 @@ class LoginController extends Controller
         if (Auth::attempt($credentials, $remember)) {
             $request->session()->regenerate();
 
-            \App\Models\AuditLog::record('user.login', 'User', (string) Auth::id(), [
+            AuditLog::record('user.login', 'User', (string) Auth::id(), [
                 'email' => $credentials['email'],
             ]);
 
@@ -57,7 +58,7 @@ class LoginController extends Controller
     public function logout(Request $request): RedirectResponse
     {
         if (Auth::check()) {
-            \App\Models\AuditLog::record('user.logout', 'User', (string) Auth::id());
+            AuditLog::record('user.logout', 'User', (string) Auth::id());
         }
 
         Auth::logout();

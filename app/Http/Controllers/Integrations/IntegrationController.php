@@ -120,7 +120,7 @@ class IntegrationController extends Controller
             'changed_count' => count($changes),
         ]);
 
-        return back()->with('success', __('integrations.reconciled_success') . ' Zmian: ' . count($changes));
+        return back()->with('success', __('integrations.reconciled_success').' Zmian: '.count($changes));
     }
 
     public function destroy(IntegrationInstance $instance): RedirectResponse

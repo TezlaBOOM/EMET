@@ -7,8 +7,8 @@ namespace App\Contracts\Integrations;
 class TaskInput
 {
     /**
-     * @param array<string, mixed> $context
-     * @param list<string> $tools
+     * @param  array<string, mixed>  $context
+     * @param  list<string>  $tools
      */
     public function __construct(
         public string $prompt,

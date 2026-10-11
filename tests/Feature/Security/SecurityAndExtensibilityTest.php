@@ -19,6 +19,7 @@ class SecurityAndExtensibilityTest extends TestCase
     use RefreshDatabase;
 
     protected User $user;
+
     protected LlmProvider $provider;
 
     protected function setUp(): void

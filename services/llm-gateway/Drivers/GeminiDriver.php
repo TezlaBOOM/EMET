@@ -27,8 +27,9 @@ class GeminiDriver implements LlmDriverInterface
 
         if (str_starts_with($apiKey, 'mock-') || str_starts_with($apiKey, 'test-')) {
             $latency = (int) round((microtime(true) - $startTime) * 1000);
+
             return new CompletionResponse(
-                content: "Mocked Gemini response for: " . ($request->messages[count($request->messages) - 1]['content'] ?? ''),
+                content: 'Mocked Gemini response for: '.($request->messages[count($request->messages) - 1]['content'] ?? ''),
                 model: $model,
                 promptTokens: 20,
                 completionTokens: 30,
@@ -64,14 +65,14 @@ class GeminiDriver implements LlmDriverInterface
         if ($response->status() === 429) {
             $retryAfter = (int) ($response->header('Retry-After') ?: 60);
             throw new RateLimitExceededException(
-                message: 'Gemini rate limit exceeded: ' . $response->body(),
+                message: 'Gemini rate limit exceeded: '.$response->body(),
                 retryAfterSeconds: $retryAfter,
                 accountId: $account->id,
             );
         }
 
         if (! $response->successful()) {
-            throw new LlmDriverException('Gemini API error (' . $response->status() . '): ' . $response->body());
+            throw new LlmDriverException('Gemini API error ('.$response->status().'): '.$response->body());
         }
 
         $data = $response->json();
@@ -97,7 +98,7 @@ class GeminiDriver implements LlmDriverInterface
         $words = explode(' ', $response->content);
 
         foreach ($words as $i => $word) {
-            yield ($i > 0 ? ' ' : '') . $word;
+            yield ($i > 0 ? ' ' : '').$word;
             usleep(20000);
         }
     }
@@ -136,7 +137,7 @@ class GeminiDriver implements LlmDriverInterface
         }
 
         if (! $response->successful()) {
-            throw new LlmDriverException('Gemini embedding error: ' . $response->body());
+            throw new LlmDriverException('Gemini embedding error: '.$response->body());
         }
 
         $data = $response->json();
@@ -161,16 +162,17 @@ class GeminiDriver implements LlmDriverInterface
         }
 
         try {
-            $response = Http::timeout(10)->get('https://generativelanguage.googleapis.com/v1beta/models?key=' . $apiKey);
+            $response = Http::timeout(10)->get('https://generativelanguage.googleapis.com/v1beta/models?key='.$apiKey);
             $latency = (int) round((microtime(true) - $startTime) * 1000);
 
             if ($response->successful()) {
                 return new ConnectionTestResult(true, $latency, 'Połączenie pomyślne');
             }
 
-            return new ConnectionTestResult(false, $latency, 'HTTP ' . $response->status() . ': ' . substr($response->body(), 0, 100));
+            return new ConnectionTestResult(false, $latency, 'HTTP '.$response->status().': '.substr($response->body(), 0, 100));
         } catch (\Exception $e) {
             $latency = (int) round((microtime(true) - $startTime) * 1000);
+
             return new ConnectionTestResult(false, $latency, $e->getMessage());
         }
     }

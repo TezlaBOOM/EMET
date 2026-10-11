@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Users;
 
 use App\Http\Controllers\Controller;
+use App\Models\AuditLog;
 use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -50,7 +51,7 @@ class UserController extends Controller
 
         $user->assignRole($validated['role']);
 
-        \App\Models\AuditLog::record('user.created', 'User', (string) $user->id, [
+        AuditLog::record('user.created', 'User', (string) $user->id, [
             'name' => $user->name,
             'email' => $user->email,
             'role' => $validated['role'],
@@ -84,7 +85,7 @@ class UserController extends Controller
 
         $user->syncRoles([$validated['role']]);
 
-        \App\Models\AuditLog::record('user.updated', 'User', (string) $user->id, [
+        AuditLog::record('user.updated', 'User', (string) $user->id, [
             'name' => $user->name,
             'email' => $user->email,
         ]);
@@ -107,7 +108,7 @@ class UserController extends Controller
 
         $user->delete();
 
-        \App\Models\AuditLog::record('user.deleted', 'User', $id, [
+        AuditLog::record('user.deleted', 'User', $id, [
             'name' => $name,
             'email' => $email,
         ]);
@@ -182,7 +183,7 @@ class UserController extends Controller
         $backups = [];
         $backupDir = storage_path('backups');
         if (is_dir($backupDir)) {
-            $dirs = glob($backupDir . '/*', GLOB_ONLYDIR);
+            $dirs = glob($backupDir.'/*', GLOB_ONLYDIR);
             if ($dirs) {
                 rsort($dirs);
                 foreach ($dirs as $d) {
@@ -218,9 +219,9 @@ class UserController extends Controller
         $message = implode("\n", $output);
 
         if ($exitCode === 0) {
-            return back()->with('success', __('users.compat_check_success') . "\n" . $message);
+            return back()->with('success', __('users.compat_check_success')."\n".$message);
         }
 
-        return back()->with('error', __('users.compat_check_failed') . "\n" . $message);
+        return back()->with('error', __('users.compat_check_failed')."\n".$message);
     }
 }

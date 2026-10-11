@@ -11,7 +11,7 @@ interface TelemetryCollectorInterface
     /**
      * Rejestruje pojedyncze zdarzenie telemetryczne agenta lub runtime'u
      *
-     * @param array<string, mixed> $payload
+     * @param  array<string, mixed>  $payload
      */
     public function recordEvent(string $type, ?int $agentId = null, ?string $runId = null, array $payload = []): TelemetryEvent;
 

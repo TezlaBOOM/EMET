@@ -13,7 +13,7 @@ interface RoutingStrategyInterface
     /**
      * Wybiera konto z listy dostępnych (niebędących w cooldown/błędzie) kont w puli.
      *
-     * @param Collection<int, LlmAccount> $availableAccounts
+     * @param  Collection<int, LlmAccount>  $availableAccounts
      */
     public function selectAccount(Collection $availableAccounts, LlmAccountPool $pool): ?LlmAccount;
 }

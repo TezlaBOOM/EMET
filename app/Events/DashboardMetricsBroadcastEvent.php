@@ -15,7 +15,7 @@ class DashboardMetricsBroadcastEvent implements ShouldBroadcast
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
     /**
-     * @param array<string, mixed> $metrics
+     * @param  array<string, mixed>  $metrics
      */
     public function __construct(
         public array $metrics

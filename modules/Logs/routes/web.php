@@ -6,6 +6,7 @@ use Illuminate\Support\Facades\Route;
 Route::middleware(['web', 'auth'])->prefix('logs')->group(function () {
     Route::get('/', function () {
         $logs = AuditLog::with('user')->latest('id')->paginate(25);
+
         return view('module-logs::index', compact('logs'));
     })->name('logs.index')->middleware('permission:audit.view');
 

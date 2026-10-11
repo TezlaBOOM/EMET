@@ -60,7 +60,29 @@ class SkillsController extends Controller
 
         if ($importSource === 'zip') {
             $request->validate([
-                'package' => ['required', 'file', 'mimes:zip', 'max:20480'],
+                'package' => [
+                    'required',
+                    'file',
+                    'max:20480',
+                    function ($attribute, $value, $fail) {
+                        $ext = strtolower($value->getClientOriginalExtension());
+                        $mime = (string) $value->getMimeType();
+                        $allowedMimes = [
+                            'application/zip',
+                            'application/x-zip',
+                            'application/x-zip-compressed',
+                            'multipart/x-zip',
+                            'application/octet-stream',
+                        ];
+                        if ($ext !== 'zip' && ! in_array($mime, $allowedMimes, true)) {
+                            $fail('Przesłany plik musi być poprawnym archiwum ZIP (.zip).');
+                        }
+                    },
+                ],
+            ], [
+                'package.required' => 'Wybierz plik paczki ZIP.',
+                'package.file' => 'Wskazany obiekt nie jest prawidłowym plikiem.',
+                'package.max' => 'Rozmiar pliku archiwum ZIP nie może przekraczać 20MB.',
             ]);
 
             $file = $request->file('package');
@@ -69,11 +91,23 @@ class SkillsController extends Controller
             $storagePath = $file->storeAs('packages', Str::random(20).'.zip', 'skills');
             $destDir = storage_path('app/skills/unpacked/'.Str::random(16));
 
-            $extracted = $this->extractor->extract($file->getRealPath(), $destDir);
+            try {
+                $extracted = $this->extractor->extract($file->getRealPath(), $destDir);
+            } catch (\Throwable $e) {
+                return back()->withInput()->withErrors([
+                    'package' => 'Nie udało się przetworzyć lub rozpakować paczki ZIP: '.$e->getMessage(),
+                ]);
+            }
+
             $manifest = $extracted['manifest'] ?? [];
 
             $name = $manifest['name'] ?? pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME);
-            $slug = Str::slug($manifest['slug'] ?? $name);
+            $baseSlug = Str::slug($manifest['slug'] ?? $name) ?: 'skill';
+            $slug = $baseSlug;
+            $counter = 1;
+            while (Skill::where('slug', $slug)->exists()) {
+                $slug = "{$baseSlug}-".(++$counter);
+            }
 
             $skill = Skill::create([
                 'name' => $name,
@@ -109,11 +143,23 @@ class SkillsController extends Controller
             'description' => ['nullable', 'string'],
             'readme_md' => ['nullable', 'string'],
             'requires' => ['nullable', 'array'],
+        ], [
+            'name.required' => 'Nazwa skilla jest wymagana.',
+            'name.max' => 'Nazwa skilla może mieć maksymalnie 150 znaków.',
+            'type.required' => 'Typ skilla jest wymagany.',
+            'type.in' => 'Wybrano nieprawidłowy typ skilla.',
         ]);
+
+        $baseSlug = Str::slug($validated['name']) ?: 'skill';
+        $slug = $baseSlug;
+        $counter = 1;
+        while (Skill::where('slug', $slug)->exists()) {
+            $slug = "{$baseSlug}-".(++$counter);
+        }
 
         $skill = Skill::create([
             'name' => $validated['name'],
-            'slug' => Str::slug($validated['name']),
+            'slug' => $slug,
             'description' => $validated['description'] ?? null,
             'readme_md' => $validated['readme_md'] ?? null,
             'type' => $validated['type'],

@@ -28,8 +28,9 @@ class OllamaDriver implements LlmDriverInterface
 
         if (str_starts_with($apiKey, 'mock-') || str_starts_with($apiKey, 'test-')) {
             $latency = (int) round((microtime(true) - $startTime) * 1000);
+
             return new CompletionResponse(
-                content: "Mocked Ollama local response for: " . ($request->messages[count($request->messages) - 1]['content'] ?? ''),
+                content: 'Mocked Ollama local response for: '.($request->messages[count($request->messages) - 1]['content'] ?? ''),
                 model: $model,
                 promptTokens: 15,
                 completionTokens: 25,
@@ -40,7 +41,7 @@ class OllamaDriver implements LlmDriverInterface
             );
         }
 
-        $response = Http::timeout(60)->post($baseUrl . '/api/chat', [
+        $response = Http::timeout(60)->post($baseUrl.'/api/chat', [
             'model' => $model,
             'messages' => $request->messages,
             'stream' => false,
@@ -57,7 +58,7 @@ class OllamaDriver implements LlmDriverInterface
         }
 
         if (! $response->successful()) {
-            throw new LlmDriverException('Ollama API error: ' . $response->body());
+            throw new LlmDriverException('Ollama API error: '.$response->body());
         }
 
         $data = $response->json();
@@ -84,7 +85,7 @@ class OllamaDriver implements LlmDriverInterface
         $words = explode(' ', $response->content);
 
         foreach ($words as $i => $word) {
-            yield ($i > 0 ? ' ' : '') . $word;
+            yield ($i > 0 ? ' ' : '').$word;
             usleep(20000);
         }
     }
@@ -98,6 +99,7 @@ class OllamaDriver implements LlmDriverInterface
 
         if (str_starts_with($apiKey, 'mock-') || str_starts_with($apiKey, 'test-')) {
             $mockVec = array_fill(0, $request->dimensions ?: 768, 0.02);
+
             return new EmbeddingResponse(
                 embeddings: is_array($request->input) ? [$mockVec] : $mockVec,
                 model: $model,
@@ -109,7 +111,7 @@ class OllamaDriver implements LlmDriverInterface
 
         $prompt = is_array($request->input) ? implode("\n", $request->input) : (string) $request->input;
 
-        $response = Http::timeout(30)->post($baseUrl . '/api/embeddings', [
+        $response = Http::timeout(30)->post($baseUrl.'/api/embeddings', [
             'model' => $model,
             'prompt' => $prompt,
         ]);
@@ -117,7 +119,7 @@ class OllamaDriver implements LlmDriverInterface
         $latency = (int) round((microtime(true) - $startTime) * 1000);
 
         if (! $response->successful()) {
-            throw new LlmDriverException('Ollama embedding error: ' . $response->body());
+            throw new LlmDriverException('Ollama embedding error: '.$response->body());
         }
 
         $data = $response->json();
@@ -143,16 +145,17 @@ class OllamaDriver implements LlmDriverInterface
         }
 
         try {
-            $response = Http::timeout(5)->get($baseUrl . '/api/tags');
+            $response = Http::timeout(5)->get($baseUrl.'/api/tags');
             $latency = (int) round((microtime(true) - $startTime) * 1000);
 
             if ($response->successful()) {
                 return new ConnectionTestResult(true, $latency, 'Połączenie pomyślne (Ollama lokalny)');
             }
 
-            return new ConnectionTestResult(false, $latency, 'HTTP ' . $response->status() . ': ' . substr($response->body(), 0, 100));
+            return new ConnectionTestResult(false, $latency, 'HTTP '.$response->status().': '.substr($response->body(), 0, 100));
         } catch (\Exception $e) {
             $latency = (int) round((microtime(true) - $startTime) * 1000);
+
             return new ConnectionTestResult(false, $latency, $e->getMessage());
         }
     }

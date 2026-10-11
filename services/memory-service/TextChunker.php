@@ -38,22 +38,22 @@ class TextChunker
 
             if (mb_strlen($currentChunk) + mb_strlen($section) > $maxChunkLength && mb_strlen($currentChunk) > 0) {
                 $chunks[] = [
-                    'title' => $currentTitle ?: ('Fragment ' . ($index + 1)),
+                    'title' => $currentTitle ?: ('Fragment '.($index + 1)),
                     'content' => trim($currentChunk),
                     'index' => $index++,
                 ];
 
                 // Zachowanie fragmentu z overlap
                 $overlapContent = mb_substr($currentChunk, max(0, mb_strlen($currentChunk) - $overlap));
-                $currentChunk = $overlapContent . "\n" . $section;
+                $currentChunk = $overlapContent."\n".$section;
             } else {
-                $currentChunk .= ($currentChunk === '' ? '' : "\n\n") . $section;
+                $currentChunk .= ($currentChunk === '' ? '' : "\n\n").$section;
             }
         }
 
         if (trim($currentChunk) !== '') {
             $chunks[] = [
-                'title' => $currentTitle ?: ('Fragment ' . ($index + 1)),
+                'title' => $currentTitle ?: ('Fragment '.($index + 1)),
                 'content' => trim($currentChunk),
                 'index' => $index,
             ];

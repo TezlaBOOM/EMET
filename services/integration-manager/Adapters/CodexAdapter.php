@@ -57,7 +57,7 @@ class CodexAdapter implements AgentRuntimeAdapter
         return new RunHandle(
             runId: $runId,
             status: 'completed',
-            output: "Codex code synthesis output for: " . $input->prompt,
+            output: 'Codex code synthesis output for: '.$input->prompt,
             metadata: ['agent_id' => $agent->id, 'runtime' => 'codex']
         );
     }

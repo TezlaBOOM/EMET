@@ -7,7 +7,7 @@ namespace App\Contracts\Integrations;
 class ProvisionRequest
 {
     /**
-     * @param array<string, mixed> $config
+     * @param  array<string, mixed>  $config
      */
     public function __construct(
         public string $type, // 'hermes', 'openclaw', 'claude_code', 'codex'

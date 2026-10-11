@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Console\Commands;
 
 use App\Services\TelemetryCollector\TelemetryCollectorService;
-use Carbon\Carbon;
 use Illuminate\Console\Command;
 
 class TelemetryRollupCommand extends Command

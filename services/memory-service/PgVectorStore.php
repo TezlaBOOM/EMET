@@ -6,7 +6,6 @@ namespace App\Services\MemoryService;
 
 use App\Contracts\Memory\VectorStoreInterface;
 use App\Models\MemoryCollection;
-use Illuminate\Support\Facades\Cache;
 
 class PgVectorStore implements VectorStoreInterface
 {
@@ -75,8 +74,8 @@ class PgVectorStore implements VectorStoreInterface
     /**
      * Oblicza podobieństwo kosinusowe między dwoma wektorami
      *
-     * @param list<float> $a
-     * @param list<float> $b
+     * @param  list<float>  $a
+     * @param  list<float>  $b
      */
     protected function cosineSimilarity(array $a, array $b): float
     {

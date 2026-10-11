@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Memory;
 
-use App\Contracts\Llm\LlmGatewayInterface;
 use App\Models\LlmAccount;
 use App\Models\LlmProvider;
 use App\Models\MemoryCollection;
@@ -21,7 +20,9 @@ class VectorSearchTest extends TestCase
     use RefreshDatabase;
 
     protected EmbeddingService $embeddingService;
+
     protected LlmProvider $provider;
+
     protected MemoryCollection $collection;
 
     protected function setUp(): void
@@ -63,9 +64,9 @@ class VectorSearchTest extends TestCase
 
     public function test_text_chunker_splits_markdown_properly(): void
     {
-        $chunker = new TextChunker();
+        $chunker = new TextChunker;
 
-        $markdown = <<<MD
+        $markdown = <<<'MD'
 # Wprowadzenie do Architektury
 To jest pierwszy akapit dokumentu wprowadzający do architektury platformy.
 
@@ -87,7 +88,7 @@ MD;
 
     public function test_vector_store_upsert_and_cosine_similarity_search(): void
     {
-        $store = new PgVectorStore();
+        $store = new PgVectorStore;
         $store->createCollection($this->collection);
 
         // Zapis 2 wektorów o znanej geometrii
@@ -115,7 +116,7 @@ MD;
 
     public function test_embedding_service_ingest_and_search(): void
     {
-        $content = <<<MD
+        $content = <<<'MD'
 # Standard Bezpieczeństwa
 Wszystkie klucze API w platformie AgentHub są szyfrowane przy użyciu algorytmu AES-256-CBC.
 Nigdy nie przechowujemy kluczy w postaci jawnej (plaintext).

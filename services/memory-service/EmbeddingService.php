@@ -128,14 +128,14 @@ class EmbeddingService
 
         // Główny węzeł kolekcji
         $nodes[] = [
-            'id' => 'col_' . $collection->id,
+            'id' => 'col_'.$collection->id,
             'name' => $collection->name,
             'group' => 'collection',
             'val' => 20,
         ];
 
         foreach ($chunks as $chunk) {
-            $nodeId = 'chunk_' . $chunk->id;
+            $nodeId = 'chunk_'.$chunk->id;
             $nodes[] = [
                 'id' => $nodeId,
                 'name' => Str::limit($chunk->title, 25),
@@ -146,7 +146,7 @@ class EmbeddingService
 
             // Krawędź do kolekcji
             $links[] = [
-                'source' => 'col_' . $collection->id,
+                'source' => 'col_'.$collection->id,
                 'target' => $nodeId,
             ];
         }

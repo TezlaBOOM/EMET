@@ -7,7 +7,7 @@ namespace App\Contracts\Integrations;
 class HealthStatus
 {
     /**
-     * @param array<string, mixed> $details
+     * @param  array<string, mixed>  $details
      */
     public function __construct(
         public bool $isHealthy,

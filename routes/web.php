@@ -24,4 +24,3 @@ Route::middleware(['web', 'auth'])->prefix('setup')->group(function () {
     Route::post('/step/{step}/skip', [SetupWizardController::class, 'skip'])->name('setup.skip');
     Route::post('/finish', [SetupWizardController::class, 'finish'])->name('setup.finish');
 });
-

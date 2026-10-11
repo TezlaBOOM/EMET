@@ -28,8 +28,9 @@ class OpenRouterDriver implements LlmDriverInterface
 
         if (str_starts_with($apiKey, 'mock-') || str_starts_with($apiKey, 'test-')) {
             $latency = (int) round((microtime(true) - $startTime) * 1000);
+
             return new CompletionResponse(
-                content: "Mocked OpenRouter response for: " . ($request->messages[count($request->messages) - 1]['content'] ?? ''),
+                content: 'Mocked OpenRouter response for: '.($request->messages[count($request->messages) - 1]['content'] ?? ''),
                 model: $model,
                 promptTokens: 22,
                 completionTokens: 35,
@@ -41,11 +42,11 @@ class OpenRouterDriver implements LlmDriverInterface
         }
 
         $response = Http::withHeaders([
-            'Authorization' => 'Bearer ' . $apiKey,
+            'Authorization' => 'Bearer '.$apiKey,
             'HTTP-Referer' => config('app.url', 'http://localhost'),
             'X-Title' => 'Projekt-Emet Gateway',
             'Content-Type' => 'application/json',
-        ])->timeout(60)->post($baseUrl . '/chat/completions', [
+        ])->timeout(60)->post($baseUrl.'/chat/completions', [
             'model' => $model,
             'messages' => $request->messages,
             'temperature' => $request->temperature,
@@ -64,7 +65,7 @@ class OpenRouterDriver implements LlmDriverInterface
         }
 
         if (! $response->successful()) {
-            throw new LlmDriverException('OpenRouter API error (' . $response->status() . '): ' . $response->body());
+            throw new LlmDriverException('OpenRouter API error ('.$response->status().'): '.$response->body());
         }
 
         $data = $response->json();
@@ -90,7 +91,7 @@ class OpenRouterDriver implements LlmDriverInterface
         $words = explode(' ', $response->content);
 
         foreach ($words as $i => $word) {
-            yield ($i > 0 ? ' ' : '') . $word;
+            yield ($i > 0 ? ' ' : '').$word;
             usleep(20000);
         }
     }
@@ -99,6 +100,7 @@ class OpenRouterDriver implements LlmDriverInterface
     {
         $dim = $request->dimensions;
         $mockVec = array_fill(0, $dim, 0.04);
+
         return new EmbeddingResponse(
             embeddings: is_array($request->input) ? [$mockVec] : $mockVec,
             model: $request->model ?: 'openrouter-embedding-mock',
@@ -119,16 +121,17 @@ class OpenRouterDriver implements LlmDriverInterface
         }
 
         try {
-            $response = Http::withToken($apiKey)->timeout(10)->get($baseUrl . '/models');
+            $response = Http::withToken($apiKey)->timeout(10)->get($baseUrl.'/models');
             $latency = (int) round((microtime(true) - $startTime) * 1000);
 
             if ($response->successful()) {
                 return new ConnectionTestResult(true, $latency, 'Połączenie pomyślne');
             }
 
-            return new ConnectionTestResult(false, $latency, 'HTTP ' . $response->status() . ': ' . substr($response->body(), 0, 100));
+            return new ConnectionTestResult(false, $latency, 'HTTP '.$response->status().': '.substr($response->body(), 0, 100));
         } catch (\Exception $e) {
             $latency = (int) round((microtime(true) - $startTime) * 1000);
+
             return new ConnectionTestResult(false, $latency, $e->getMessage());
         }
     }

@@ -7,7 +7,7 @@ namespace App\Contracts\Llm;
 class ConnectionTestResult
 {
     /**
-     * @param array<string, mixed> $details
+     * @param  array<string, mixed>  $details
      */
     public function __construct(
         public bool $success,

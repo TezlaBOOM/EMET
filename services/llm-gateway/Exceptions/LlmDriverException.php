@@ -6,6 +6,4 @@ namespace App\Services\LlmGateway\Exceptions;
 
 use RuntimeException;
 
-class LlmDriverException extends RuntimeException
-{
-}
+class LlmDriverException extends RuntimeException {}

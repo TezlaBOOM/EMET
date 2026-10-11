@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace Tests\Feature\Setup;
 
-use App\Models\Agent;
-use App\Models\LlmAccount;
 use App\Models\LlmProvider;
 use App\Models\User;
 use Database\Seeders\RolesAndPermissionsSeeder;
@@ -20,6 +18,7 @@ class SetupWizardAndSelfTestTest extends TestCase
     use RefreshDatabase;
 
     protected User $admin;
+
     protected LlmProvider $provider;
 
     protected function setUp(): void

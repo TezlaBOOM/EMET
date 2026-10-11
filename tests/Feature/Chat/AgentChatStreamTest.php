@@ -6,7 +6,6 @@ namespace Tests\Feature\Chat;
 
 use App\Models\Agent;
 use App\Models\ChatConversation;
-use App\Models\ChatMessage;
 use App\Models\LlmAccount;
 use App\Models\LlmProvider;
 use App\Models\User;
@@ -14,6 +13,7 @@ use Database\Seeders\ModelPricingSeeder;
 use Database\Seeders\RolesAndPermissionsSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 use Tests\TestCase;
 
 class AgentChatStreamTest extends TestCase
@@ -21,7 +21,9 @@ class AgentChatStreamTest extends TestCase
     use RefreshDatabase;
 
     protected User $admin;
+
     protected LlmProvider $provider;
+
     protected LlmAccount $account;
 
     protected function setUp(): void
@@ -174,7 +176,7 @@ class AgentChatStreamTest extends TestCase
         ]);
 
         $conversation = ChatConversation::create([
-            'id' => (string) \Illuminate\Support\Str::uuid(),
+            'id' => (string) Str::uuid(),
             'user_id' => $this->admin->id,
             'agent_id' => $agent->id,
             'title' => 'Strumieniowana rozmowa',

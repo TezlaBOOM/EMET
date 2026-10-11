@@ -7,7 +7,7 @@ namespace App\Contracts\Llm;
 class EmbeddingResponse
 {
     /**
-     * @param list<float>|list<list<float>> $embeddings
+     * @param  list<float>|list<list<float>>  $embeddings
      */
     public function __construct(
         public array $embeddings,

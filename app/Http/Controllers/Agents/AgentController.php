@@ -140,7 +140,7 @@ class AgentController extends Controller
                 'runtime_type' => 'native',
                 'primary_model' => 'claude-3-5-sonnet',
                 'temperature' => 0.3,
-                'system_prompt' => "Jesteś analitykiem wiedzy. Odpowiadaj rzeczowo, podając źródła i logiczne uzasadnienie.",
+                'system_prompt' => 'Jesteś analitykiem wiedzy. Odpowiadaj rzeczowo, podając źródła i logiczne uzasadnienie.',
             ],
             [
                 'name' => 'Inżynier Oprogramowania (Coder)',
@@ -148,7 +148,7 @@ class AgentController extends Controller
                 'runtime_type' => 'native',
                 'primary_model' => 'gpt-4o',
                 'temperature' => 0.2,
-                'system_prompt' => "Jesteś ekspertem inżynierii oprogramowania. Twórz czysty, bezpieczny kod zgodny z zasadami SOLID i DRY.",
+                'system_prompt' => 'Jesteś ekspertem inżynierii oprogramowania. Twórz czysty, bezpieczny kod zgodny z zasadami SOLID i DRY.',
             ],
             [
                 'name' => 'Hermes Autonomiczny Asystent',
@@ -156,7 +156,7 @@ class AgentController extends Controller
                 'runtime_type' => 'hermes',
                 'primary_model' => 'gemini-2.5-flash',
                 'temperature' => 0.7,
-                'system_prompt' => "Jesteś autonomicznym agentem wykonawczym Hermes.",
+                'system_prompt' => 'Jesteś autonomicznym agentem wykonawczym Hermes.',
             ],
         ];
 

@@ -7,7 +7,7 @@ namespace App\Contracts\Llm;
 class EmbeddingRequest
 {
     /**
-     * @param string|list<string> $input
+     * @param  string|list<string>  $input
      */
     public function __construct(
         public string|array $input,

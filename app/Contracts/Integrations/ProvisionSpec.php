@@ -7,8 +7,8 @@ namespace App\Contracts\Integrations;
 class ProvisionSpec
 {
     /**
-     * @param array<string, string> $environment
-     * @param array<string, string> $renderedFiles
+     * @param  array<string, string>  $environment
+     * @param  array<string, string>  $renderedFiles
      */
     public function __construct(
         public string $serviceName,

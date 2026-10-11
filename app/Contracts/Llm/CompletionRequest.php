@@ -7,10 +7,10 @@ namespace App\Contracts\Llm;
 class CompletionRequest
 {
     /**
-     * @param array<array{role: string, content: string}> $messages
-     * @param list<string> $stop
-     * @param array<mixed> $tools
-     * @param array<string, mixed> $metadata
+     * @param  array<array{role: string, content: string}>  $messages
+     * @param  list<string>  $stop
+     * @param  array<mixed>  $tools
+     * @param  array<string, mixed>  $metadata
      */
     public function __construct(
         public array $messages,

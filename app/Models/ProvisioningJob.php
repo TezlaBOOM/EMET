@@ -39,7 +39,7 @@ class ProvisioningJob extends Model
     public function appendLog(string $message): void
     {
         $timestamp = now()->format('Y-m-d H:i:s');
-        $this->logs = ($this->logs ?? '') . "[{$timestamp}] {$message}\n";
+        $this->logs = ($this->logs ?? '')."[{$timestamp}] {$message}\n";
         $this->save();
     }
 }

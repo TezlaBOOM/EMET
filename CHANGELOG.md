@@ -20,6 +20,11 @@ Format opiera się na [Keep a Changelog](https://keepachangelog.com/pl/1.0.0/).
   - Plik konfiguracyjny `config/integrations.php`.
 
 ### Naprawiono (Fixed)
+- **Formularz dodawania skilli (ręczny oraz import z paczki ZIP)**:
+  - Dołączono bibliotekę Alpine.js do głównego layoutu `app.blade.php`, usuwając problem braku renderowania pól formularza opartych o tagi `<template>`.
+  - Przebudowano widok `create.blade.php`: usunięto ukrywające pola `<template x-if>`, dodano pełną obsługę zakładek (Alpine.js + fallback Vanilla JS), synchronizację atrybutów `disabled` i `required` (zapobiegającą blokadzie wysyłania formularza przez ukryte pola w walidacji HTML5), zachowanie stanu `old('source_type')` oraz baner błędów walidacji.
+  - Usprawniono `SkillsController::store`: rozszerzono walidację MIME type paczek ZIP (w tym `application/x-zip-compressed` i `application/octet-stream`), dodano bezpieczną obsługę błędów wypakowywania z czytelnym komunikatem oraz automatyczną deduplikację slugów skilla.
+  - Rozszerzono `SkillPackageExtractor` o automatyczne wykrywanie pliku `skill.json` w bezpośrednich podkatalogach archiwum (gdy zip został spakowany jako folder).
 - **Symulacja migracji w `scripts/compat-check.sh`**:
   - Wyświetlanie czytelnej instrukcji naprawy z odniesieniem do `repairkit.sh` w przypadku niepowodzenia testu `migrate --pretend`.
 - **Odpowiedzi na ping sterownika Qdrant**:

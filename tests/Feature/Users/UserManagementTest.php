@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Tests\Feature\Users;
 
-use App\Models\AuditLog;
 use App\Models\LlmAccount;
 use App\Models\LlmProvider;
 use App\Models\User;
@@ -19,6 +18,7 @@ class UserManagementTest extends TestCase
     use RefreshDatabase;
 
     protected User $admin;
+
     protected User $viewer;
 
     protected function setUp(): void
@@ -143,7 +143,7 @@ class UserManagementTest extends TestCase
         // Mock testu połączenia z OpenAI API
         Http::fake([
             'https://api.openai.com/v1/models' => Http::response([
-                'data' => [['id' => 'gpt-4o']]
+                'data' => [['id' => 'gpt-4o']],
             ], 200),
         ]);
 

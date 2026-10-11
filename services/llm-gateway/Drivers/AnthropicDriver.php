@@ -28,8 +28,9 @@ class AnthropicDriver implements LlmDriverInterface
 
         if (str_starts_with($apiKey, 'mock-') || str_starts_with($apiKey, 'test-')) {
             $latency = (int) round((microtime(true) - $startTime) * 1000);
+
             return new CompletionResponse(
-                content: "Mocked Claude response for: " . ($request->messages[count($request->messages) - 1]['content'] ?? ''),
+                content: 'Mocked Claude response for: '.($request->messages[count($request->messages) - 1]['content'] ?? ''),
                 model: $model,
                 promptTokens: 30,
                 completionTokens: 40,
@@ -68,21 +69,21 @@ class AnthropicDriver implements LlmDriverInterface
             'x-api-key' => $apiKey,
             'anthropic-version' => '2023-06-01',
             'content-type' => 'application/json',
-        ])->timeout(60)->post($baseUrl . '/messages', $payload);
+        ])->timeout(60)->post($baseUrl.'/messages', $payload);
 
         $latency = (int) round((microtime(true) - $startTime) * 1000);
 
         if ($response->status() === 429) {
             $retryAfter = (int) ($response->header('Retry-After') ?: 60);
             throw new RateLimitExceededException(
-                message: 'Anthropic rate limit exceeded: ' . $response->body(),
+                message: 'Anthropic rate limit exceeded: '.$response->body(),
                 retryAfterSeconds: $retryAfter,
                 accountId: $account->id,
             );
         }
 
         if (! $response->successful()) {
-            throw new LlmDriverException('Anthropic API error (' . $response->status() . '): ' . $response->body());
+            throw new LlmDriverException('Anthropic API error ('.$response->status().'): '.$response->body());
         }
 
         $data = $response->json();
@@ -110,7 +111,7 @@ class AnthropicDriver implements LlmDriverInterface
         $words = explode(' ', $response->content);
 
         foreach ($words as $i => $word) {
-            yield ($i > 0 ? ' ' : '') . $word;
+            yield ($i > 0 ? ' ' : '').$word;
             usleep(20000);
         }
     }
@@ -120,6 +121,7 @@ class AnthropicDriver implements LlmDriverInterface
         // Anthropic nie oferuje natywnych embeddingów bezpośrednio w API wiadomości;
         // Zwracamy wektor zastępczy (mock) lub rzucamy wyjątek o braku obsługi embeddingów
         $mockVec = array_fill(0, $request->dimensions, 0.01);
+
         return new EmbeddingResponse(
             embeddings: is_array($request->input) ? [$mockVec] : $mockVec,
             model: 'claude-embedding-fallback',
@@ -143,7 +145,7 @@ class AnthropicDriver implements LlmDriverInterface
             $response = Http::withHeaders([
                 'x-api-key' => $apiKey,
                 'anthropic-version' => '2023-06-01',
-            ])->timeout(10)->get($baseUrl . '/models');
+            ])->timeout(10)->get($baseUrl.'/models');
 
             $latency = (int) round((microtime(true) - $startTime) * 1000);
 
@@ -151,9 +153,10 @@ class AnthropicDriver implements LlmDriverInterface
                 return new ConnectionTestResult(true, $latency, 'Połączenie pomyślne');
             }
 
-            return new ConnectionTestResult(false, $latency, 'HTTP ' . $response->status() . ': ' . substr($response->body(), 0, 100));
+            return new ConnectionTestResult(false, $latency, 'HTTP '.$response->status().': '.substr($response->body(), 0, 100));
         } catch (\Exception $e) {
             $latency = (int) round((microtime(true) - $startTime) * 1000);
+
             return new ConnectionTestResult(false, $latency, $e->getMessage());
         }
     }

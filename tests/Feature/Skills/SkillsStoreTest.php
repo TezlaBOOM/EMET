@@ -13,7 +13,9 @@ use App\Services\Skills\SkillPermissionGuard;
 use App\Services\Skills\SkillSandboxService;
 use Database\Seeders\RolesAndPermissionsSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Storage;
 use InvalidArgumentException;
 use Modules\Agents\Config\SkillsConfigSection;
 use Tests\TestCase;
@@ -191,5 +193,121 @@ class SkillsStoreTest extends TestCase
         $this->actingAs($this->admin)
             ->get(route('agents.skills.index'))
             ->assertStatus(200);
+    }
+
+    public function test_user_can_view_skills_create_form(): void
+    {
+        $this->actingAs($this->admin)
+            ->get(route('agents.skills.create'))
+            ->assertStatus(200)
+            ->assertSee('Nowy Skill')
+            ->assertSee('Formularz ręczny')
+            ->assertSee('Paczka ZIP');
+    }
+
+    public function test_user_can_create_skill_manually(): void
+    {
+        $response = $this->actingAs($this->admin)
+            ->post(route('agents.skills.store'), [
+                'source_type' => 'manual',
+                'name' => 'Custom Tool Skill',
+                'type' => 'tool',
+                'description' => 'A custom manual tool',
+                'readme_md' => '# Documentation',
+            ]);
+
+        $skill = Skill::where('slug', 'custom-tool-skill')->first();
+        $this->assertNotNull($skill);
+        $this->assertSame('Custom Tool Skill', $skill->name);
+        $this->assertSame('tool', $skill->type);
+        $this->assertNotNull($skill->currentVersion);
+
+        $response->assertRedirect(route('agents.skills.show', $skill));
+        $response->assertSessionHas('success');
+    }
+
+    public function test_user_can_create_skill_manually_with_deduplicated_slug(): void
+    {
+        Skill::create([
+            'name' => 'My Duplicate Tool',
+            'slug' => 'my-duplicate-tool',
+            'type' => 'tool',
+        ]);
+
+        $this->actingAs($this->admin)
+            ->post(route('agents.skills.store'), [
+                'source_type' => 'manual',
+                'name' => 'My Duplicate Tool',
+                'type' => 'tool',
+            ]);
+
+        $this->assertDatabaseHas('skills', [
+            'slug' => 'my-duplicate-tool-2',
+        ]);
+    }
+
+    public function test_user_can_import_skill_from_zip_package(): void
+    {
+        Storage::fake('skills');
+
+        $zipPath = $this->tempDir.'/imported_skill.zip';
+        $zip = new ZipArchive;
+        $zip->open($zipPath, ZipArchive::CREATE);
+        $manifest = [
+            'name' => 'Package Zip Skill',
+            'slug' => 'package-zip-skill',
+            'version' => '1.0.0',
+            'type' => 'package',
+            'description' => 'Imported via ZIP',
+        ];
+        $zip->addFromString('skill.json', json_encode($manifest));
+        $zip->addFromString('index.js', 'console.log("hello");');
+        $zip->close();
+
+        $uploadedFile = new UploadedFile(
+            $zipPath,
+            'imported_skill.zip',
+            'application/zip',
+            null,
+            true
+        );
+
+        $response = $this->actingAs($this->admin)
+            ->post(route('agents.skills.store'), [
+                'source_type' => 'zip',
+                'package' => $uploadedFile,
+            ]);
+
+        $skill = Skill::where('slug', 'package-zip-skill')->first();
+        $this->assertNotNull($skill);
+        $this->assertSame('Package Zip Skill', $skill->name);
+        $this->assertSame('package', $skill->type);
+        $this->assertNotNull($skill->currentVersion);
+        $this->assertNotEmpty($skill->currentVersion->package_path);
+
+        $response->assertRedirect(route('agents.skills.show', $skill));
+        $response->assertSessionHas('success');
+    }
+
+    public function test_manual_skill_validation_fails_when_fields_missing(): void
+    {
+        $response = $this->actingAs($this->admin)
+            ->post(route('agents.skills.store'), [
+                'source_type' => 'manual',
+                'name' => '',
+                'type' => '',
+            ]);
+
+        $response->assertSessionHasErrors(['name', 'type']);
+    }
+
+    public function test_zip_skill_validation_fails_when_file_missing(): void
+    {
+        $response = $this->actingAs($this->admin)
+            ->post(route('agents.skills.store'), [
+                'source_type' => 'zip',
+            ]);
+
+        $response->assertSessionHasErrors(['package']);
     }
 }

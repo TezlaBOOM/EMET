@@ -27,6 +27,7 @@ class TelemetryDashboardTest extends TestCase
     use RefreshDatabase;
 
     protected User $admin;
+
     protected TelemetryCollectorService $service;
 
     protected function setUp(): void
