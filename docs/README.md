@@ -30,7 +30,8 @@ Witaj w oficjalnej dokumentacji platformy **Projekt-Emet** – zunifikowanego sy
    - [Hermes Agent (integrations/hermes.md)](integrations/hermes.md)
    - [OpenClaw (integrations/openclaw.md)](integrations/openclaw.md)
    - Claude Code CLI & Codex CLI
-6. [System automatycznych aktualizacji](../CHANGELOG.md)
+6. [System automatycznych aktualizacji i wersjonowania](../CHANGELOG.md)
+   - Wersjonowanie SemVer (`VERSION`, `config/agenthub.php`) i aktualizacja wersji w dashboardzie przy większych zmianach
    - Test zgodności środowiska `scripts/compat-check.sh`
    - Proces aktualizacji `scripts/update.sh`
    - Awaryjne przywracanie stanu `scripts/rollback.sh`

@@ -5,6 +5,7 @@
 ## Lista kontrolna reguły dokumentacyjnej (v1.5 §0)
 
 - [ ] Zaktualizowano sekcję `[Unreleased]` w pliku `CHANGELOG.md`
+- [ ] W przypadku większych zmian lub nowego wydania zaktualizowano numer wersji projektu w dashboardzie (`VERSION` oraz `config/agenthub.php`)
 - [ ] Zaktualizowano lub utworzono fragment `first-setup.md` w odpowiednich modułach (`modules/<Module>/docs/first-setup.md`)
 - [ ] Zaktualizowano klasę `ConfigSectionInterface` modułu w przypadku zmian w schemacie danych
 - [ ] Zaktualizowano dokumentację techniczną w `docs/` oraz w manifeście `module.json`

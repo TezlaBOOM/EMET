@@ -38,6 +38,7 @@ This project has domain-specific skills available in `**/skills/**`. You MUST ac
 
 - Any functional or architectural change must update the corresponding module and project documentation.
 - Update `CHANGELOG.md` under `[Unreleased]` with clear user-facing and technical notes.
+- When making major or significant project changes (releases, major/minor features, architectural milestones), update the project version number displayed in the dashboard (both in `VERSION` file and in `config/agenthub.php` under `'version'`).
 - If a change impacts first-time setup or configuration, update `modules/<Module>/docs/first-setup.md`.
 - If data models change, update or provide the corresponding `ConfigSectionInterface`.
 - Always run `php artisan docs:check` before submitting changes.

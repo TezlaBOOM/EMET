@@ -9,7 +9,7 @@ return [
     |--------------------------------------------------------------------------
     */
     'name' => env('APP_NAME', 'Projekt-Emet'),
-    'version' => '1.0.0',
+    'version' => file_exists(base_path('VERSION')) ? trim((string) file_get_contents(base_path('VERSION'))) : '1.5.0',
     'setup_completed' => (bool) env('SETUP_COMPLETED', false),
 
     /*

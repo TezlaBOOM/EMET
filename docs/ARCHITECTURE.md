@@ -26,7 +26,7 @@ Projekt-Emet to modularna platforma orkiestracji agentów AI, zaprojektowana w o
 ## 1. 7-Blokowy Layout UI
 
 Interfejs Projekt-Emet opiera się na stałej 7-blokowej strukturze prezentacji:
-- **Blok 1 (Pasek Górny):** logo platformy, wskaźnik stanu systemu, selektor języka (PL/EN), przełącznik motywu ciemny/jasny oraz profil użytkownika.
+- **Blok 1 (Pasek Boczny / Logo i Wersja):** logo platformy, nazwa aplikacji oraz numer wersji projektu (`v{{ config('agenthub.version') }}`). **Zasada wersjonowania:** przy wprowadzaniu większych zmian w projekcie (wersje major/minor, nowe kluczowe moduły lub wydania) numer wersji musi zostać zaktualizowany w pliku `VERSION` oraz `config/agenthub.php` (`version`), aby dashboard zawsze odzwierciedlał aktualny stan systemu.
 - **Blok 2 (Nawigacja Modułów - Menu 1):** ikony i etykiety głównych obszarów: Dashboard, Agenci AI, Pamięć, Integracje, Ustawienia AI, Użytkownicy, Logi, Czat.
 - **Blok 3 (Podkategorie - Menu 2):** kontekstowe zakładki wybranego modułu.
 - **Blok 4 (Okruszki chleba i filtry):** lokalizacja użytkownika, wyszukiwarka i filtry zakresu czasowego.

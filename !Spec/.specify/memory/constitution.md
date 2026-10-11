@@ -23,7 +23,7 @@ Jakość kodu jest egzekwowana automatycznie i bezkompromisowo:
 - **Styl kodu**: PSR-12, formatowanie przez Laravel Pint.
 - **Analiza statyczna**: PHPStan na poziomie minimum 6 (docelowo level 8 dla krytycznych serwisów `llm-gateway` i `memory-service`).
 - **Testy**: Pest / PHPUnit – pokrycie testami jednostkowymi modeli, serwisów, sterowników oraz testami integracyjnymi endpointów API i zadań asynchronicznych.
-- **Dziennik zmian**: Każda zmiana funkcjonalna wymaga odnotowania w `CHANGELOG.md` oraz powiązanego testu automatycznego.
+- **Dziennik zmian i wersjonowanie**: Każda zmiana funkcjonalna wymaga odnotowania w `CHANGELOG.md` oraz powiązanego testu automatycznego. Przy większych zmianach architektonicznych i wydaniach (wersje major/minor) bezwzględnie aktualizowany jest numer wersji projektu wyświetlany w dashboardzie (`VERSION` oraz `config/agenthub.php`).
 
 ### IV. Bezpieczeństwo i poufność danych (Security by Design)
 - **Szyfrowanie sekretów**: Wszystkie klucze API, tokeny dostępowe oraz poświadczenia kont są bezwzględnie szyfrowane w bazie danych za pomocą mechanizmu `encrypted` w Eloquent.

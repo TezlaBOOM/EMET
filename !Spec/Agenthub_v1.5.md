@@ -17,6 +17,7 @@ Obowiązują wszystkie zasady z v1 §0. Dodatkowo, od 1.5.0:
 8. Reguła z pkt 7 ma być zapisana **w repozytorium w pliku reguł dla AI** (`AGENTS.md` w katalogu głównym; `CLAUDE.md` zawiera tylko odwołanie do `AGENTS.md`) oraz w szablonie PR (`.github/pull_request_template.md` z listą kontrolną). Plik reguł zawiera też: stack, komendy testów, zakaz hardkodowania tekstów, zakaz logowania sekretów.
 9. CI uruchamia `php artisan docs:check` (sekcja 6.5) i **blokuje merge**, gdy wykryje zmianę modułu bez aktualizacji dokumentacji/CHANGELOG.
 10. Wszystkie nowe elementy konfiguracji muszą od razu implementować kontrakt eksportu (`ConfigSection`, sekcja 8.3) – inaczej nie przejdą testu kompletności eksportu.
+11. **Aktualizacja wersji projektu w dashboardzie:** przy dokonywaniu większych zmian architektonicznych, funkcjonalnych lub wydaniach (major/minor) należy bezwzględnie zaktualizować numer wersji projektu wyświetlany w dashboardzie (w pliku `VERSION` oraz `config/agenthub.php` pod kluczem `version`) oraz opisać wydanie w `CHANGELOG.md`.
 
 ---
 

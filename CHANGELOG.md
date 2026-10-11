@@ -6,6 +6,9 @@ Format opiera się na [Keep a Changelog](https://keepachangelog.com/pl/1.0.0/).
 ## [Unreleased]
 
 ### Dodano (Added)
+- **Reguła dokumentacyjna aktualizacji wersji projektu w dashboardzie**:
+  - Dodano do `AGENTS.md`, `CLAUDE.md`, `.github/pull_request_template.md`, `!Spec/Agenthub_v1.5.md` oraz dokumentacji (`docs/ARCHITECTURE.md`, `docs/UPDATE.md`, `docs/README.md`) bezwzględny wymóg aktualizacji numeru wersji projektu wyświetlanego w dashboardzie (`VERSION` oraz `config/agenthub.php`) przy dokonywaniu większych zmian w projekcie (nowe wydania, wersje major/minor, istotne moduły/funkcjonalności).
+  - Zsynchronizowano wersję w `config/agenthub.php` z `VERSION` (1.5.0) wraz z mechanizmem dynamicznego odczytu z pliku `VERSION`.
 - **Integracja z LM Studio (`LmStudioDriver`)**:
   - Dedykowany sterownik `App\Services\LlmGateway\Drivers\LmStudioDriver` implementujący `LlmDriverInterface` dla lokalnego serwera inferencyjnego LM Studio (OpenAI-compatible API).
   - Obsługa synchronicznego wnioskowania (`complete`), strumieniowania odpowiedzi (`stream`), wektoryzacji (`embed`) oraz automatycznego testowania połączenia (`testConnection`) wraz z odpytywaniem o załadowane modele (`/v1/models`).

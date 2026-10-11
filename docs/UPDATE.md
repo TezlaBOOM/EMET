@@ -73,3 +73,12 @@ php artisan docs:check
 - **Scenariusze Blokowe**: Wizualny edytor schematów Drawflow na trasie `/scenarios/{id}/editor` z telemetrią na żywo i silnikiem Horizon.
 - **Adopcja Kontenerów Docker**: Skanowanie, tryby adopcji (`observe`, `configure`, `managed`), auto-konfiguracja modeli z rollbackiem oraz egzekwowanie `execAllowlist()`.
 - **Eksport i Import Konfiguracji**: Pełny transfer konfiguracji w paczkach ZIP z szyfrowaniem sekretów Argon2id + XChaCha20-Poly1305.
+
+---
+
+## 5. Zasada Wersjonowania i Numer Wersji w Dashboardzie
+
+Platforma AgentHub stosuje wersjonowanie semantyczne (**SemVer**):
+- **Główny numer wersji projektu** jest zdefiniowany w pliku `VERSION` oraz w pliku konfiguracyjnym `config/agenthub.php` (`'version'`).
+- **Dashboard UI**: Wersja prezentowana jest użytkownikom w lewym panelu bocznym pod logo platformy (`v{{ config('agenthub.version') }}`) oraz w zakładce `/users/system`.
+- **Reguła dla deweloperów**: W przypadku wprowadzania większych zmian w projekcie (nowe wydania, wersje major/minor, nowe kluczowe moduły lub przełomowe funkcjonalności), **należy bezwzględnie zaktualizować numer wersji w pliku `VERSION` oraz `config/agenthub.php`**, a także dodać podsumowanie zmian w `CHANGELOG.md`.
