@@ -36,7 +36,7 @@
 
             @php
                 $defaultSteps = [
-                    ['key' => 'llm_credentials', 'title' => 'Poświadczenia modeli LLM (OpenAI, Anthropic lub Ollama)', 'module' => 'ai_settings', 'route' => 'ai-settings.index'],
+                    ['key' => 'llm_credentials', 'title' => 'Poświadczenia modeli LLM (OpenAI, Anthropic, Ollama lub LM Studio)', 'module' => 'ai_settings', 'route' => 'ai-settings.index'],
                     ['key' => 'first_agent', 'title' => 'Utworzenie pierwszego Agenta ze zdolnościami internet_mode i context_mode', 'module' => 'agents', 'route' => 'agents.index'],
                     ['key' => 'skills_store', 'title' => 'Import i aktywacja skilli w Magazynie Skilli (sandbox)', 'module' => 'agents', 'route' => 'agents.skills.index'],
                     ['key' => 'group_chat', 'title' => 'Inicjalizacja czatu wieloagentowego z orkiestracją', 'module' => 'chat', 'route' => 'chat.index'],

@@ -24,4 +24,10 @@ return [
     'status_active' => 'Aktywne',
     'status_cooldown' => 'Cooldown',
     'status_error' => 'Błąd',
+    'custom_base_url' => 'Niestandardowy adres serwera (Base URL)',
+    'custom_base_url_help' => 'Opcjonalne. Np. http://localhost:1234/v1 lub adres IP w sieci LAN: http://192.168.0.x:1234/v1.',
+    'edit_provider' => 'Edytuj endpoint',
+    'provider_updated' => 'Dostawca :name został zaktualizowany.',
+    'default_endpoint' => 'Domyślny endpoint (Base URL)',
+    'default_model' => 'Domyślny model',
 ];

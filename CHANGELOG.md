@@ -6,6 +6,17 @@ Format opiera się na [Keep a Changelog](https://keepachangelog.com/pl/1.0.0/).
 ## [Unreleased]
 
 ### Dodano (Added)
+- **Integracja z LM Studio (`LmStudioDriver`)**:
+  - Dedykowany sterownik `App\Services\LlmGateway\Drivers\LmStudioDriver` implementujący `LlmDriverInterface` dla lokalnego serwera inferencyjnego LM Studio (OpenAI-compatible API).
+  - Obsługa synchronicznego wnioskowania (`complete`), strumieniowania odpowiedzi (`stream`), wektoryzacji (`embed`) oraz automatycznego testowania połączenia (`testConnection`) wraz z odpytywaniem o załadowane modele (`/v1/models`).
+  - Rejestracja dostawcy w bazie danych (`slug`: `lmstudio`, nazwa: `LM Studio (Lokalny)`, domyślny URL: `http://localhost:1234/v1`) oraz w `DefaultProvidersSeeder`.
+  - Inteligentne wykrywanie modeli LM Studio w `LlmGateway` (dla modeli zawierających `lmstudio`, `lm-studio` lub powiązanych z kontami dostawcy).
+  - Obsługa konfigurowalnego adresu serwera:
+    - Możliwość edycji domyślnego `base_url` i modelu w widoku dostawców (`ai-settings.index`) przez modal edycji endpointu (`PUT /ai-settings/providers/{provider}`).
+    - Nowa kolumna `custom_base_url` w tabeli `llm_accounts` pozwalająca przypisać do konta niestandardowy adres hosta LM Studio w sieci LAN (np. `http://192.168.0.x:1234/v1`).
+    - Opcjonalny klucz API w formularzu konta (domyślnie `lm-studio` dla połączeń lokalnych).
+  - Rozszerzenie testu łączności `LlmConnectionTester` o obsługę LM Studio oraz prezentację aktywnych modeli.
+  - Testy jednostkowe i integracyjne: `tests/Unit/LlmGateway/LmStudioDriverTest.php` oraz `tests/Feature/AiSettings/LmStudioIntegrationTest.php`.
 - **Skrypt szybkiego pobierania aktualizacji `scripts/gitup.sh`** (oraz dowiązanie `gitup.sh` w katalogu głównym):
   - Umożliwia pobranie najnowszych zmian z repozytorium GitHub (`git pull`) z obsługą bezpiecznego katalogu w LXC (`safe.directory`), stasha lokalnych zmian i czyszczenia pamięci podręcznej Laravel (`optimize:clear`, `view:clear`).
 - **Skrypt naprawczy środowiska `scripts/repairkit.sh`** (oraz dowiązanie symboliczne `repairkit.sh` w katalogu głównym):

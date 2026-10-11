@@ -40,7 +40,7 @@ Interfejs Projekt-Emet opiera się na stałej 7-blokowej strukturze prezentacji:
 
 Zlokalizowany w `services/llm-gateway/` i dostępny przez `App\Contracts\Llm\LlmGatewayInterface`.
 
-- **Obsługiwane sterowniki:** `GeminiDriver`, `OpenAiDriver`, `AnthropicDriver`, `OllamaDriver`, `OpenRouterDriver`.
+- **Obsługiwane sterowniki:** `GeminiDriver`, `OpenAiDriver`, `AnthropicDriver`, `OllamaDriver`, `OpenRouterDriver`, `LmStudioDriver`.
 - **Zarządzanie kontami:** model *wiele kont na jednego dostawcę* (`llm_accounts`) z wagami (`weight`) i priorytetami.
 - **Strategie routingu puli:**
   - `RoundRobinStrategy` – rotacyjne przełączanie kolejnych kont w puli.

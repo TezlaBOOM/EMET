@@ -15,6 +15,7 @@ class LlmAccount extends Model
         'api_key',
         'api_secret',
         'organization_id',
+        'custom_base_url',
         'weight',
         'rpm_limit',
         'tpm_limit',
@@ -86,5 +87,14 @@ class LlmAccount extends Model
             'last_error_message' => null,
             'last_tested_at' => now(),
         ]);
+    }
+
+    public function getEffectiveBaseUrl(): string
+    {
+        if (! empty($this->custom_base_url)) {
+            return rtrim($this->custom_base_url, '/');
+        }
+
+        return rtrim($this->provider?->base_url ?: '', '/');
     }
 }

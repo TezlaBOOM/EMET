@@ -72,7 +72,12 @@
                         </div>
                     </div>
 
-                    <div class="mt-6 pt-4 border-t border-slate-100 dark:border-slate-800 flex justify-end">
+                    <div class="mt-6 pt-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
+                        <button type="button"
+                                onclick="openEditProviderModal({{ $provider->id }}, @js($provider->name), @js($provider->base_url ?? ''), @js($provider->default_model ?? ''), {{ $provider->is_active ? 'true' : 'false' }})"
+                                class="text-xs font-semibold text-slate-500 hover:text-indigo-600 dark:text-slate-400 dark:hover:text-indigo-400 transition-colors">
+                            {{ __('ai.edit_provider') }}
+                        </button>
                         <a href="{{ route('ai-settings.accounts') }}?provider={{ $provider->id }}" class="text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:underline inline-flex items-center gap-1">
                             Zarządzaj kontami &rarr;
                         </a>
@@ -81,4 +86,68 @@
             @endforeach
         </div>
     </div>
+
+    <!-- Modal: Edytuj dostawcę -->
+    <div id="modal-edit-provider" class="hidden fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4">
+        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl max-w-lg w-full p-6 space-y-4 shadow-xl">
+            <h2 class="text-lg font-bold text-slate-900 dark:text-white" id="edit-provider-title">
+                {{ __('ai.edit_provider') }}
+            </h2>
+            <form id="form-edit-provider" method="POST" action="" class="space-y-4">
+                @csrf
+                @method('PUT')
+                <div>
+                    <label class="block text-xs font-semibold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1">
+                        Nazwa dostawcy
+                    </label>
+                    <input type="text" id="edit-provider-name" name="name" required class="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1">
+                        {{ __('ai.default_endpoint') }}
+                    </label>
+                    <input type="text" id="edit-provider-base-url" name="base_url" placeholder="np. http://localhost:1234/v1 lub http://192.168.0.50:1234/v1" class="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm font-mono">
+                    <p class="text-[11px] text-slate-400 mt-1">
+                        Dla LM Studio podaj adres hosta (np. http://localhost:1234/v1 lub IP maszyny z LM Studio w sieci LAN).
+                    </p>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1">
+                        {{ __('ai.default_model') }}
+                    </label>
+                    <input type="text" id="edit-provider-default-model" name="default_model" placeholder="np. local-model lub qwen2.5-7b-instruct" class="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm font-mono">
+                </div>
+                <div class="flex items-center gap-2 pt-1">
+                    <input type="checkbox" id="edit-provider-is-active" name="is_active" value="1" class="rounded border-slate-300 dark:border-slate-700 text-indigo-600 focus:ring-indigo-500">
+                    <label for="edit-provider-is-active" class="text-xs font-medium text-slate-700 dark:text-slate-300">
+                        {{ __('ai.status_active') }}
+                    </label>
+                </div>
+
+                <div class="flex justify-end gap-2 pt-2">
+                    <button type="button" onclick="document.getElementById('modal-edit-provider').classList.add('hidden')"
+                            class="px-4 py-2 rounded-xl border border-slate-300 dark:border-slate-700 text-sm font-medium hover:bg-slate-100 dark:hover:bg-slate-800">
+                        {{ __('common.cancel') }}
+                    </button>
+                    <button type="submit" class="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-semibold">
+                        {{ __('common.save') }}
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        function openEditProviderModal(id, name, baseUrl, defaultModel, isActive) {
+            const modal = document.getElementById('modal-edit-provider');
+            const form = document.getElementById('form-edit-provider');
+            form.action = `/ai-settings/providers/${id}`;
+            document.getElementById('edit-provider-name').value = name;
+            document.getElementById('edit-provider-base-url').value = baseUrl;
+            document.getElementById('edit-provider-default-model').value = defaultModel;
+            document.getElementById('edit-provider-is-active').checked = isActive;
+            document.getElementById('edit-provider-title').innerText = `Edycja: ${name}`;
+            modal.classList.remove('hidden');
+        }
+    </script>
 </x-layouts.app>

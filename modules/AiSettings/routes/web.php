@@ -5,6 +5,7 @@ use Illuminate\Support\Facades\Route;
 
 Route::middleware(['web', 'auth', 'permission:ai_settings.manage'])->prefix('ai-settings')->group(function () {
     Route::get('/', [AiSettingsController::class, 'index'])->name('ai-settings.index');
+    Route::put('/providers/{provider}', [AiSettingsController::class, 'updateProvider'])->name('ai-settings.providers.update');
     Route::get('/accounts', [AiSettingsController::class, 'accounts'])->name('ai-settings.accounts');
     Route::post('/accounts', [AiSettingsController::class, 'storeAccount'])->name('ai-settings.accounts.store');
     Route::delete('/accounts/{account}', [AiSettingsController::class, 'destroyAccount'])->name('ai-settings.accounts.destroy');

@@ -24,4 +24,10 @@ return [
     'status_active' => 'Active',
     'status_cooldown' => 'Cooldown',
     'status_error' => 'Error',
+    'custom_base_url' => 'Custom Server Base URL',
+    'custom_base_url_help' => 'Optional. E.g. http://localhost:1234/v1 or LAN host IP: http://192.168.0.x:1234/v1.',
+    'edit_provider' => 'Edit Endpoint',
+    'provider_updated' => 'Provider :name has been updated.',
+    'default_endpoint' => 'Default Endpoint (Base URL)',
+    'default_model' => 'Default Model',
 ];

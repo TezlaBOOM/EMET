@@ -17,6 +17,7 @@ use App\Models\LlmCall;
 use App\Models\ModelPricing;
 use App\Services\LlmGateway\Drivers\AnthropicDriver;
 use App\Services\LlmGateway\Drivers\GeminiDriver;
+use App\Services\LlmGateway\Drivers\LmStudioDriver;
 use App\Services\LlmGateway\Drivers\OllamaDriver;
 use App\Services\LlmGateway\Drivers\OpenAiDriver;
 use App\Services\LlmGateway\Drivers\OpenRouterDriver;
@@ -51,6 +52,7 @@ class LlmGateway implements LlmGatewayInterface
             'anthropic' => new AnthropicDriver,
             'ollama' => new OllamaDriver,
             'openrouter' => new OpenRouterDriver,
+            'lmstudio' => new LmStudioDriver,
         ];
 
         $this->strategies = [
@@ -104,6 +106,7 @@ class LlmGateway implements LlmGatewayInterface
                     str_contains($modelLower, 'gemini') => 'gemini',
                     str_contains($modelLower, 'gpt') || str_contains($modelLower, 'o1') || str_contains($modelLower, 'o3') => 'openai',
                     str_contains($modelLower, 'claude') => 'anthropic',
+                    str_contains($modelLower, 'lmstudio') || str_contains($modelLower, 'lm-studio') => 'lmstudio',
                     str_contains($modelLower, 'llama') || str_contains($modelLower, 'mistral') || str_contains($modelLower, 'qwen') || str_contains($modelLower, 'deepseek') => 'ollama',
                     default => null,
                 };
@@ -226,6 +229,7 @@ class LlmGateway implements LlmGatewayInterface
                     str_contains($modelLower, 'gemini') => 'gemini',
                     str_contains($modelLower, 'gpt') || str_contains($modelLower, 'o1') || str_contains($modelLower, 'o3') => 'openai',
                     str_contains($modelLower, 'claude') => 'anthropic',
+                    str_contains($modelLower, 'lmstudio') || str_contains($modelLower, 'lm-studio') => 'lmstudio',
                     str_contains($modelLower, 'llama') || str_contains($modelLower, 'mistral') || str_contains($modelLower, 'qwen') || str_contains($modelLower, 'deepseek') => 'ollama',
                     default => null,
                 };

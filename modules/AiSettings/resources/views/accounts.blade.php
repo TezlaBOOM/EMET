@@ -55,9 +55,16 @@
                                     </div>
                                 </td>
                                 <td class="px-6 py-4">
-                                    <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
-                                        {{ $account->provider->name }}
-                                    </span>
+                                    <div class="space-y-0.5">
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
+                                            {{ $account->provider->name }}
+                                        </span>
+                                        @if($account->custom_base_url)
+                                            <div class="text-[10px] text-indigo-600 dark:text-indigo-400 font-mono truncate max-w-[200px]" title="{{ $account->custom_base_url }}">
+                                                {{ $account->custom_base_url }}
+                                            </div>
+                                        @endif
+                                    </div>
                                 </td>
                                 <td class="px-6 py-4 font-mono text-xs">
                                     {{ $account->weight }}
@@ -130,8 +137,15 @@
                     <label class="block text-xs font-semibold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1">
                         {{ __('ai.api_key') }}
                     </label>
-                    <input type="password" name="api_key" placeholder="{{ __('ai.api_key_placeholder') }}" required class="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm font-mono">
-                    <p class="text-[11px] text-slate-400 mt-1">Klucz zostanie zaszyfrowany w locie za pomocą klucza aplikacji (AES-256).</p>
+                    <input type="password" name="api_key" placeholder="Wklej klucz API (dla LM Studio można zostawić puste)" class="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm font-mono">
+                    <p class="text-[11px] text-slate-400 mt-1">Dla modeli chmurowych klucz zostanie zaszyfrowany (AES-256). Dla LM Studio pole jest opcjonalne.</p>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1">
+                        {{ __('ai.custom_base_url') }}
+                    </label>
+                    <input type="text" name="custom_base_url" placeholder="np. http://localhost:1234/v1 lub http://192.168.0.50:1234/v1" class="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm font-mono">
+                    <p class="text-[11px] text-slate-400 mt-1">{{ __('ai.custom_base_url_help') }}</p>
                 </div>
                 <div>
                     <label class="block text-xs font-semibold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1">

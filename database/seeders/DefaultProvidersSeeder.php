@@ -55,6 +55,14 @@ class DefaultProvidersSeeder extends Seeder
                 'default_model' => 'auto',
                 'is_active' => true,
             ],
+            [
+                'name' => 'LM Studio (Lokalny)',
+                'slug' => 'lmstudio',
+                'driver' => 'lmstudio',
+                'base_url' => 'http://localhost:1234/v1',
+                'default_model' => 'local-model',
+                'is_active' => true,
+            ],
         ];
 
         foreach ($providers as $providerData) {
