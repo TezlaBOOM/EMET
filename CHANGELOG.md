@@ -6,6 +6,8 @@ Format opiera się na [Keep a Changelog](https://keepachangelog.com/pl/1.0.0/).
 ## [Unreleased]
 
 ### Dodano (Added)
+- **Skrypt szybkiego pobierania aktualizacji `scripts/gitup.sh`** (oraz dowiązanie `gitup.sh` w katalogu głównym):
+  - Umożliwia pobranie najnowszych zmian z repozytorium GitHub (`git pull`) z obsługą bezpiecznego katalogu w LXC (`safe.directory`), stasha lokalnych zmian i czyszczenia pamięci podręcznej Laravel (`optimize:clear`, `view:clear`).
 - **Skrypt naprawczy środowiska `scripts/repairkit.sh`** (oraz dowiązanie symboliczne `repairkit.sh` w katalogu głównym):
   - Automatyczna diagnoza i naprawa problemów z symulacją migracji bazy danych (`migrate --pretend`), w tym auto-konfiguracja lokalnego SQLite w razie niedostępności relacyjnego serwera bazy danych.
   - Wykrywanie stanu demona Docker i automatyczna aktywacja sterownika mock (`DOCKER_MOCK=true`, `CONTAINERS_MOCK=true`) przy braku socketu `docker.sock`.
