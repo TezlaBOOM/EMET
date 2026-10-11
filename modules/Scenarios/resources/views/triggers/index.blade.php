@@ -1,6 +1,14 @@
 <x-layouts.app active-module="scenarios" active-subcategory="all" :title="'Harmonogramy: ' . $scenario->name">
+    <style>
+        [x-cloak] { display: none !important; }
+    </style>
+
     <div class="space-y-6 max-w-6xl mx-auto" x-data="{
         showModal: false,
+        isEdit: false,
+        modalTitle: 'Nowy wyzwalacz czasowy',
+        formAction: '{{ route('scenarios.triggers.store', $scenario) }}',
+        name: '',
         type: 'daily',
         runAt: '',
         intervalMinutes: 60,
@@ -9,8 +17,53 @@
         dayOfMonth: 1,
         cronExpr: '0 * * * *',
         timezone: 'Europe/Warsaw',
+        maxRuns: '',
         previews: [],
         loadingPreview: false,
+
+        openCreate() {
+            this.isEdit = false;
+            this.modalTitle = 'Nowy wyzwalacz czasowy';
+            this.formAction = '{{ route('scenarios.triggers.store', $scenario) }}';
+            this.name = '';
+            this.type = 'daily';
+            this.runAt = '';
+            this.intervalMinutes = 60;
+            this.time = '09:00';
+            this.days = ['monday'];
+            this.dayOfMonth = 1;
+            this.cronExpr = '0 * * * *';
+            this.timezone = 'Europe/Warsaw';
+            this.maxRuns = '';
+            this.showModal = true;
+            this.fetchPreview();
+        },
+
+        openEdit(t) {
+            this.isEdit = true;
+            this.modalTitle = 'Edycja harmonogramu: ' + t.name;
+            this.formAction = '/scenarios/{{ $scenario->id }}/triggers/' + t.id;
+            this.name = t.name;
+            this.type = t.schedule_type;
+            this.timezone = t.timezone || 'Europe/Warsaw';
+            this.maxRuns = t.max_runs || '';
+
+            const s = t.schedule || {};
+            this.runAt = s.run_at || '';
+            this.intervalMinutes = s.interval_minutes || 60;
+            this.time = s.time || '09:00';
+            this.days = Array.isArray(s.days) ? s.days : (Array.isArray(s.days_of_week) ? s.days_of_week : ['monday']);
+            this.dayOfMonth = s.day_of_month || 1;
+            this.cronExpr = s.cron_expression || s.expression || '0 * * * *';
+
+            this.showModal = true;
+            this.fetchPreview();
+        },
+
+        closeModal() {
+            this.showModal = false;
+        },
+
         fetchPreview() {
             this.loadingPreview = true;
             let schedule = {};
@@ -65,8 +118,8 @@
                    class="px-3.5 py-2 rounded-xl border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 text-sm font-medium transition-all">
                     &larr; Wróć do edycji
                 </a>
-                <button type="button" @click="showModal = true; fetchPreview()"
-                        class="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-sm shadow-md shadow-indigo-600/20 transition-all flex items-center gap-1.5">
+                <button type="button" @click="openCreate()"
+                        class="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-sm shadow-md shadow-indigo-600/20 transition-all flex items-center gap-1.5 cursor-pointer">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
                     <span>Nowy harmonogram</span>
                 </button>
@@ -141,11 +194,19 @@
                         </div>
 
                         <div class="flex items-center gap-2 self-start md:self-center">
+                            {{-- Edytuj harmonogram --}}
+                            <button type="button"
+                                    @click='openEdit(@json($trigger))'
+                                    class="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-xs font-semibold transition-all flex items-center gap-1 cursor-pointer">
+                                <svg class="w-3.5 h-3.5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                                <span>Edytuj</span>
+                            </button>
+
                             {{-- Uruchom teraz --}}
                             <form method="POST" action="{{ route('scenarios.triggers.run-now', [$scenario, $trigger]) }}">
                                 @csrf
                                 <button type="submit"
-                                        class="px-3 py-1.5 rounded-lg bg-indigo-50 dark:bg-indigo-950/50 hover:bg-indigo-100 dark:hover:bg-indigo-900 border border-indigo-200 dark:border-indigo-800 text-indigo-700 dark:text-indigo-300 text-xs font-semibold transition-all flex items-center gap-1">
+                                        class="px-3 py-1.5 rounded-lg bg-indigo-50 dark:bg-indigo-950/50 hover:bg-indigo-100 dark:hover:bg-indigo-900 border border-indigo-200 dark:border-indigo-800 text-indigo-700 dark:text-indigo-300 text-xs font-semibold transition-all flex items-center gap-1 cursor-pointer">
                                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                                     <span>Uruchom teraz</span>
                                 </button>
@@ -155,7 +216,7 @@
                             <form method="POST" action="{{ route('scenarios.triggers.toggle', [$scenario, $trigger]) }}">
                                 @csrf
                                 <button type="submit"
-                                        class="px-3 py-1.5 rounded-lg border text-xs font-semibold transition-all
+                                        class="px-3 py-1.5 rounded-lg border text-xs font-semibold transition-all cursor-pointer
                                         {{ $trigger->enabled ? 'border-amber-200 dark:border-amber-800 text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/50 hover:bg-amber-100' : 'border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/50 hover:bg-emerald-100' }}">
                                     {{ $trigger->enabled ? 'Wstrzymaj' : 'Wznów' }}
                                 </button>
@@ -166,7 +227,7 @@
                                 @csrf
                                 @method('DELETE')
                                 <button type="submit"
-                                        class="px-2.5 py-1.5 rounded-lg border border-rose-200 dark:border-rose-900/50 text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 text-xs font-semibold transition-all">
+                                        class="px-2.5 py-1.5 rounded-lg border border-rose-200 dark:border-rose-900/50 text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 text-xs font-semibold transition-all cursor-pointer">
                                     Usuń
                                 </button>
                             </form>
@@ -182,20 +243,30 @@
             </div>
         </div>
 
-        {{-- Modal tworzenia nowego harmonogramu --}}
+        {{-- Modal tworzenia / edycji harmonogramu --}}
         <div x-show="showModal"
              x-cloak
+             id="triggerModal"
              class="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4"
-             @keydown.escape.window="showModal = false">
-            <div class="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 w-full max-w-2xl overflow-hidden shadow-2xl"
-                 @click.outside="showModal = false">
-                <form method="POST" action="{{ route('scenarios.triggers.store', $scenario) }}" class="p-6 space-y-5">
+             @click.self="closeModal()"
+             @keydown.escape.window="closeModal()">
+            <div class="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 w-full max-w-2xl overflow-hidden shadow-2xl relative"
+                 @click.stop>
+                <form method="POST" :action="formAction" class="p-6 space-y-5">
                     @csrf
+                    <template x-if="isEdit">
+                        <input type="hidden" name="_method" value="PUT">
+                    </template>
+
                     <div class="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
-                        <h3 class="text-lg font-bold text-slate-900 dark:text-white">
+                        <h3 class="text-lg font-bold text-slate-900 dark:text-white" x-text="modalTitle">
                             Nowy wyzwalacz czasowy
                         </h3>
-                        <button type="button" @click="showModal = false" class="text-slate-400 hover:text-slate-600">
+                        <button type="button"
+                                @click="closeModal()"
+                                data-close-modal
+                                class="p-1.5 rounded-xl text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+                                aria-label="Zamknij okno">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
                         </button>
                     </div>
@@ -205,7 +276,7 @@
                             <label class="block text-xs font-semibold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1">
                                 Nazwa harmonogramu
                             </label>
-                            <input type="text" name="name" required placeholder="np. Poranny raport codzienny"
+                            <input type="text" name="name" x-model="name" required placeholder="np. Poranny raport codzienny"
                                    class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-sm focus:ring-2 focus:ring-indigo-500" />
                         </div>
 
@@ -269,13 +340,13 @@
                                 <div class="space-y-2">
                                     <label class="block text-xs font-medium text-slate-700 dark:text-slate-300">Dni tygodnia</label>
                                     <div class="grid grid-cols-4 gap-2 text-xs">
-                                        <label class="flex items-center gap-1.5"><input type="checkbox" name="days[]" value="monday" checked @change="fetchPreview()"> Poniedziałek</label>
-                                        <label class="flex items-center gap-1.5"><input type="checkbox" name="days[]" value="tuesday" @change="fetchPreview()"> Wtorek</label>
-                                        <label class="flex items-center gap-1.5"><input type="checkbox" name="days[]" value="wednesday" @change="fetchPreview()"> Środa</label>
-                                        <label class="flex items-center gap-1.5"><input type="checkbox" name="days[]" value="thursday" @change="fetchPreview()"> Czwartek</label>
-                                        <label class="flex items-center gap-1.5"><input type="checkbox" name="days[]" value="friday" @change="fetchPreview()"> Piątek</label>
-                                        <label class="flex items-center gap-1.5"><input type="checkbox" name="days[]" value="saturday" @change="fetchPreview()"> Sobota</label>
-                                        <label class="flex items-center gap-1.5"><input type="checkbox" name="days[]" value="sunday" @change="fetchPreview()"> Niedziela</label>
+                                        <label class="flex items-center gap-1.5"><input type="checkbox" name="days[]" value="monday" :checked="days.includes('monday')" @change="days = days.includes('monday') ? days.filter(d => d !== 'monday') : [...days, 'monday']; fetchPreview()"> Poniedziałek</label>
+                                        <label class="flex items-center gap-1.5"><input type="checkbox" name="days[]" value="tuesday" :checked="days.includes('tuesday')" @change="days = days.includes('tuesday') ? days.filter(d => d !== 'tuesday') : [...days, 'tuesday']; fetchPreview()"> Wtorek</label>
+                                        <label class="flex items-center gap-1.5"><input type="checkbox" name="days[]" value="wednesday" :checked="days.includes('wednesday')" @change="days = days.includes('wednesday') ? days.filter(d => d !== 'wednesday') : [...days, 'wednesday']; fetchPreview()"> Środa</label>
+                                        <label class="flex items-center gap-1.5"><input type="checkbox" name="days[]" value="thursday" :checked="days.includes('thursday')" @change="days = days.includes('thursday') ? days.filter(d => d !== 'thursday') : [...days, 'thursday']; fetchPreview()"> Czwartek</label>
+                                        <label class="flex items-center gap-1.5"><input type="checkbox" name="days[]" value="friday" :checked="days.includes('friday')" @change="days = days.includes('friday') ? days.filter(d => d !== 'friday') : [...days, 'friday']; fetchPreview()"> Piątek</label>
+                                        <label class="flex items-center gap-1.5"><input type="checkbox" name="days[]" value="saturday" :checked="days.includes('saturday')" @change="days = days.includes('saturday') ? days.filter(d => d !== 'saturday') : [...days, 'saturday']; fetchPreview()"> Sobota</label>
+                                        <label class="flex items-center gap-1.5"><input type="checkbox" name="days[]" value="sunday" :checked="days.includes('sunday')" @change="days = days.includes('sunday') ? days.filter(d => d !== 'sunday') : [...days, 'sunday']; fetchPreview()"> Niedziela</label>
                                     </div>
                                     <div class="pt-2">
                                         <label class="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">Godzina wykonania (HH:MM)</label>
@@ -334,23 +405,44 @@
                             <label class="block text-xs font-semibold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1">
                                 Maksymalna liczba wykonań (opcjonalne)
                             </label>
-                            <input type="number" name="max_runs" min="1" placeholder="Pozostaw puste dla nielimitowanych"
-                                   class="w-full px-3.5 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-sm" />
+                            <input type="number" name="max_runs" min="1" x-model="maxRuns" placeholder="Pozostaw puste dla nielimitowanych"
+                                   class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-sm" />
                         </div>
                     </div>
 
                     <div class="pt-3 border-t border-slate-100 dark:border-slate-800 flex justify-end gap-2">
-                        <button type="button" @click="showModal = false"
-                                class="px-4 py-2 border border-slate-300 dark:border-slate-700 rounded-xl text-sm font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800">
+                        <button type="button"
+                                @click="closeModal()"
+                                data-close-modal
+                                class="px-4 py-2 border border-slate-300 dark:border-slate-700 rounded-xl text-sm font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer">
                             Anuluj
                         </button>
                         <button type="submit"
-                                class="px-5 py-2 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-sm rounded-xl shadow-md transition-colors">
-                            Zapisz harmonogram
+                                class="px-5 py-2 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-sm rounded-xl shadow-md transition-colors cursor-pointer">
+                            <span x-text="isEdit ? 'Zapisz zmiany' : 'Zapisz harmonogram'">Zapisz harmonogram</span>
                         </button>
                     </div>
                 </form>
             </div>
         </div>
     </div>
+
+    {{-- Fallback skrypt do zamykania modala nawet przy opóźnieniu inicjalizacji bibliotek --}}
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const modal = document.getElementById('triggerModal');
+            document.querySelectorAll('[data-close-modal]').forEach(function (btn) {
+                btn.addEventListener('click', function () {
+                    if (modal) {
+                        modal.style.display = 'none';
+                    }
+                });
+            });
+            window.addEventListener('keydown', function (e) {
+                if (e.key === 'Escape' && modal) {
+                    modal.style.display = 'none';
+                }
+            });
+        });
+    </script>
 </x-layouts.app>

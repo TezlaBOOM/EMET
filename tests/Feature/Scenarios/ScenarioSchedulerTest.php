@@ -188,14 +188,27 @@ class ScenarioSchedulerTest extends TestCase
 
         $trigger = ScenarioTrigger::where('name', 'Testowy Raport Dzienny')->firstOrFail();
 
-        // 3. Toggle (Pause)
+        // 3. Update
+        $updateResponse = $this->actingAs($this->admin)->put(route('scenarios.triggers.update', [$this->scenario, $trigger]), [
+            'name' => 'Zmieniona Nazwa Harmonogramu',
+            'schedule_type' => 'interval',
+            'interval_minutes' => 45,
+            'timezone' => 'Europe/Warsaw',
+        ]);
+        $updateResponse->assertRedirect(route('scenarios.triggers.index', $this->scenario));
+        $trigger->refresh();
+        $this->assertSame('Zmieniona Nazwa Harmonogramu', $trigger->name);
+        $this->assertSame('interval', $trigger->schedule_type);
+        $this->assertSame(45, $trigger->schedule['interval_minutes']);
+
+        // 4. Toggle (Pause)
         $toggleResponse = $this->actingAs($this->admin)->post(route('scenarios.triggers.toggle', [$this->scenario, $trigger]));
         $toggleResponse->assertRedirect();
         $trigger->refresh();
         $this->assertFalse($trigger->enabled);
         $this->assertSame(ScenarioTrigger::STATE_PAUSED, $trigger->state);
 
-        // 4. Run Now
+        // 5. Run Now
         $runNowResponse = $this->actingAs($this->admin)->post(route('scenarios.triggers.run-now', [$this->scenario, $trigger]));
         $runNowResponse->assertRedirect();
         $this->assertDatabaseHas('scenario_runs', [

@@ -405,11 +405,35 @@ class ScenariosController extends Controller
             'timezone' => ['nullable', 'string'],
             'max_runs' => ['nullable', 'integer', 'min:1'],
             'schedule' => ['nullable', 'array'],
+            'run_at' => ['nullable', 'string'],
+            'interval_minutes' => ['nullable', 'integer', 'min:1'],
+            'time' => ['nullable', 'string'],
+            'days' => ['nullable', 'array'],
+            'day_of_month' => ['nullable', 'integer', 'min:1', 'max:31'],
+            'cron_expression' => ['nullable', 'string'],
         ]);
 
         $scheduleType = $validated['schedule_type'];
         $timezone = $validated['timezone'] ?? $trigger->timezone ?? 'Europe/Warsaw';
-        $schedule = $validated['schedule'] ?? $trigger->schedule ?? [];
+        $schedule = $validated['schedule'] ?? [];
+
+        if (empty($schedule)) {
+            $schedule = match ($scheduleType) {
+                'once' => ['run_at' => $request->input('run_at')],
+                'interval' => ['interval_minutes' => (int) $request->input('interval_minutes', 60)],
+                'daily' => ['time' => $request->input('time', '09:00')],
+                'weekly' => [
+                    'days' => $request->input('days', ['monday']),
+                    'time' => $request->input('time', '09:00'),
+                ],
+                'monthly' => [
+                    'day_of_month' => (int) $request->input('day_of_month', 1),
+                    'time' => $request->input('time', '09:00'),
+                ],
+                'cron' => ['cron_expression' => $request->input('cron_expression', '0 * * * *')],
+                default => $trigger->schedule ?? [],
+            };
+        }
 
         $nextRunAt = $this->scheduler->calculateNextRun($scheduleType, $schedule, $timezone);
 
