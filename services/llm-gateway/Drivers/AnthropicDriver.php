@@ -75,15 +75,19 @@ class AnthropicDriver implements LlmDriverInterface
 
         if ($response->status() === 429) {
             $retryAfter = (int) ($response->header('Retry-After') ?: 60);
+            $errorJson = $response->json();
+            $errorMsg = $errorJson['error']['message'] ?? $response->body();
             throw new RateLimitExceededException(
-                message: 'Anthropic rate limit exceeded: '.$response->body(),
+                message: 'Anthropic rate limit exceeded: '.$errorMsg,
                 retryAfterSeconds: $retryAfter,
                 accountId: $account->id,
             );
         }
 
         if (! $response->successful()) {
-            throw new LlmDriverException('Anthropic API error ('.$response->status().'): '.$response->body());
+            $errorJson = $response->json();
+            $errorMsg = $errorJson['error']['message'] ?? $response->body();
+            throw new LlmDriverException('Anthropic API error ('.$response->status().'): '.$errorMsg);
         }
 
         $data = $response->json();

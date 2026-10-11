@@ -22,6 +22,16 @@ Format opiera się na [Keep a Changelog](https://keepachangelog.com/pl/1.0.0/).
   - Plik konfiguracyjny `config/integrations.php`.
 
 ### Naprawiono (Fixed)
+- **Obsługa błędów i czat z modelami LLM (w tym Google Gemini)**:
+  - Rozbudowano `modules/Chat/resources/views/index.blade.php` oraz `ChatController`: błędy generowania odpowiedzi (brak konta, błędny klucz API, 404, 429) są teraz poprawnie przechwytywane i wyświetlają dokładny komunikat błędu z serwera w dymku czatu zamiast ogólnego, niemówiącego komunikatu „Wystąpił błąd podczas generowania odpowiedzi.”.
+  - `GeminiDriver`:
+    - Wydzielono prompt systemowy do dedykowanego pola `systemInstruction` (zgodnie ze specyfikacją Gemini REST API v1beta) zamiast przekazywać go jako rolę `user`, co powodowało błąd 400 z powodu dwóch kolejnych wiadomości użytkownika z rzędu.
+    - Wdrożono automatyczne scalanie sąsiadujących wiadomości o tej samej roli (wymóg naprzemienności `user`/`model` w Gemini).
+    - Wprowadzono normalizację nazw modeli (np. alias `gemini`, `gemini-flash` -> `gemini-1.5-flash`, `gemini-pro` -> `gemini-1.5-pro`, usunięcie prefiksu `models/`).
+    - Zapewniono czytelne wyodrębnianie komunikatów błędów z odpowiedzi JSON API Gemini.
+  - `LlmGateway`:
+    - Wprowadzono inteligentny dobór konta fallback (`pool === null`) dopasowany do sterownika żądanego modelu (np. konto Gemini dla modeli Gemini, OpenAI dla modeli GPT, Anthropic dla Claude, Ollama dla modeli lokalnych).
+    - Czytelny komunikat błędu w przypadku braku aktywnych kont LLM w systemie.
 - **Formularz dodawania skilli (ręczny oraz import z paczki ZIP)**:
   - Dołączono bibliotekę Alpine.js do głównego layoutu `app.blade.php`, usuwając problem braku renderowania pól formularza opartych o tagi `<template>`.
   - Przebudowano widok `create.blade.php`: usunięto ukrywające pola `<template x-if>`, dodano pełną obsługę zakładek (Alpine.js + fallback Vanilla JS), synchronizację atrybutów `disabled` i `required` (zapobiegającą blokadzie wysyłania formularza przez ukryte pola w walidacji HTML5), zachowanie stanu `old('source_type')` oraz baner błędów walidacji.

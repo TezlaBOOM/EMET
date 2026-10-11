@@ -94,15 +94,38 @@ class LlmGateway implements LlmGatewayInterface
             return $this->executeWithAccount($specificAccount, $request, $startTime);
         }
 
-        // 2. Jeśli nie podano puli, używamy domyślnego aktywnego konta z bazy
+        // 2. Jeśli nie podano puli, dobieramy konto pasujące do modelu lub aktywne konto fallback
         if ($pool === null) {
-            $fallbackAccount = LlmAccount::with('provider')
-                ->where('current_status', '!=', 'error')
-                ->latest()
-                ->first();
+            $fallbackAccount = null;
+
+            if (! empty($request->model)) {
+                $modelLower = strtolower($request->model);
+                $driverGuess = match (true) {
+                    str_contains($modelLower, 'gemini') => 'gemini',
+                    str_contains($modelLower, 'gpt') || str_contains($modelLower, 'o1') || str_contains($modelLower, 'o3') => 'openai',
+                    str_contains($modelLower, 'claude') => 'anthropic',
+                    str_contains($modelLower, 'llama') || str_contains($modelLower, 'mistral') || str_contains($modelLower, 'qwen') || str_contains($modelLower, 'deepseek') => 'ollama',
+                    default => null,
+                };
+
+                if ($driverGuess !== null) {
+                    $fallbackAccount = LlmAccount::with('provider')
+                        ->whereHas('provider', fn ($q) => $q->where('driver', $driverGuess))
+                        ->where('current_status', '!=', 'error')
+                        ->latest()
+                        ->first();
+                }
+            }
 
             if (! $fallbackAccount) {
-                throw new LlmDriverException('Brak skonfigurowanych kont LLM w systemie');
+                $fallbackAccount = LlmAccount::with('provider')
+                    ->where('current_status', '!=', 'error')
+                    ->latest()
+                    ->first();
+            }
+
+            if (! $fallbackAccount) {
+                throw new LlmDriverException('Brak skonfigurowanych kont LLM w systemie. Przejdź do panelu Ustawienia AI -> Konta i dodaj klucz API dostawcy.');
             }
 
             return $this->executeWithAccount($fallbackAccount, $request, $startTime);
@@ -197,11 +220,31 @@ class LlmGateway implements LlmGatewayInterface
         }
 
         if (! $account) {
-            $account = LlmAccount::with('provider')->where('current_status', 'active')->first();
+            if (! empty($request->model)) {
+                $modelLower = strtolower($request->model);
+                $driverGuess = match (true) {
+                    str_contains($modelLower, 'gemini') => 'gemini',
+                    str_contains($modelLower, 'gpt') || str_contains($modelLower, 'o1') || str_contains($modelLower, 'o3') => 'openai',
+                    str_contains($modelLower, 'claude') => 'anthropic',
+                    str_contains($modelLower, 'llama') || str_contains($modelLower, 'mistral') || str_contains($modelLower, 'qwen') || str_contains($modelLower, 'deepseek') => 'ollama',
+                    default => null,
+                };
+
+                if ($driverGuess !== null) {
+                    $account = LlmAccount::with('provider')
+                        ->whereHas('provider', fn ($q) => $q->where('driver', $driverGuess))
+                        ->where('current_status', 'active')
+                        ->first();
+                }
+            }
+
+            if (! $account) {
+                $account = LlmAccount::with('provider')->where('current_status', 'active')->first();
+            }
         }
 
         if (! $account) {
-            throw new LlmDriverException('Brak dostępnego konta do strumieniowania');
+            throw new LlmDriverException('Brak dostępnego konta do strumieniowania. Przejdź do panelu Ustawienia AI -> Konta i dodaj lub aktywuj konto.');
         }
 
         $driver = $this->getDriver($account->provider?->driver ?? 'openai');

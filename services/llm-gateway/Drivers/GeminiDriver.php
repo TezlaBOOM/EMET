@@ -22,7 +22,16 @@ class GeminiDriver implements LlmDriverInterface
     public function complete(CompletionRequest $request, LlmAccount $account): CompletionResponse
     {
         $startTime = microtime(true);
-        $model = $request->model ?: ($account->provider?->default_model ?: 'gemini-1.5-flash');
+        $rawModel = $request->model ?: ($account->provider?->default_model ?: 'gemini-1.5-flash');
+        $model = str_replace('models/', '', $rawModel);
+
+        $modelAliases = [
+            'gemini' => 'gemini-1.5-flash',
+            'gemini-flash' => 'gemini-1.5-flash',
+            'gemini-pro' => 'gemini-1.5-pro',
+            'gemini-2.5-flash' => 'gemini-2.0-flash',
+        ];
+        $model = $modelAliases[strtolower($model)] ?? $model;
         $apiKey = $account->api_key;
 
         if (str_starts_with($apiKey, 'mock-') || str_starts_with($apiKey, 'test-')) {
@@ -40,39 +49,77 @@ class GeminiDriver implements LlmDriverInterface
             );
         }
 
-        // Konwersja komunikatów na format Gemini (contents / parts)
+        // Konwersja komunikatów na format Gemini (contents / parts / systemInstruction)
+        $systemInstructions = [];
         $contents = [];
+
         foreach ($request->messages as $msg) {
-            $role = ($msg['role'] === 'assistant') ? 'model' : 'user';
+            $role = $msg['role'] ?? 'user';
+            $content = $msg['content'] ?? '';
+
+            if ($role === 'system') {
+                $systemInstructions[] = $content;
+
+                continue;
+            }
+
+            $geminiRole = ($role === 'assistant' || $role === 'model') ? 'model' : 'user';
+
+            // Gemini API wymaga naprzemienności ról ('user', 'model', 'user', 'model').
+            // Jeśli dwie kolejne wiadomości mają tę samą rolę, łączymy ich treść.
+            if (! empty($contents) && end($contents)['role'] === $geminiRole) {
+                $lastIndex = count($contents) - 1;
+                $contents[$lastIndex]['parts'][] = ['text' => "\n\n".$content];
+            } else {
+                $contents[] = [
+                    'role' => $geminiRole,
+                    'parts' => [['text' => $content]],
+                ];
+            }
+        }
+
+        if (empty($contents)) {
             $contents[] = [
-                'role' => $role,
-                'parts' => [['text' => $msg['content']]],
+                'role' => 'user',
+                'parts' => [['text' => 'Hello']],
             ];
         }
 
         $url = "https://generativelanguage.googleapis.com/v1beta/models/{$model}:generateContent?key={$apiKey}";
 
-        $response = Http::timeout(60)->post($url, [
+        $payload = [
             'contents' => $contents,
             'generationConfig' => [
                 'temperature' => $request->temperature,
                 'maxOutputTokens' => $request->maxTokens,
             ],
-        ]);
+        ];
+
+        if (! empty($systemInstructions)) {
+            $payload['systemInstruction'] = [
+                'parts' => array_map(fn ($text) => ['text' => $text], $systemInstructions),
+            ];
+        }
+
+        $response = Http::timeout(60)->post($url, $payload);
 
         $latency = (int) round((microtime(true) - $startTime) * 1000);
 
         if ($response->status() === 429) {
             $retryAfter = (int) ($response->header('Retry-After') ?: 60);
+            $errorJson = $response->json();
+            $errorMsg = $errorJson['error']['message'] ?? $response->body();
             throw new RateLimitExceededException(
-                message: 'Gemini rate limit exceeded: '.$response->body(),
+                message: 'Gemini rate limit exceeded: '.$errorMsg,
                 retryAfterSeconds: $retryAfter,
                 accountId: $account->id,
             );
         }
 
         if (! $response->successful()) {
-            throw new LlmDriverException('Gemini API error ('.$response->status().'): '.$response->body());
+            $errorJson = $response->json();
+            $errorMsg = $errorJson['error']['message'] ?? $response->body();
+            throw new LlmDriverException('Gemini API error ('.$response->status().'): '.$errorMsg);
         }
 
         $data = $response->json();

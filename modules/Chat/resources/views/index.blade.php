@@ -214,19 +214,30 @@
                     },
                     body: JSON.stringify({ content: content })
                 })
-                .then(res => res.json())
-                .then(data => {
+                .then(async res => {
+                    let data = {};
+                    try {
+                        data = await res.json();
+                    } catch (e) {
+                        data = { error: 'Błąd przetwarzania odpowiedzi serwera (HTTP ' + res.status + ')' };
+                    }
+                    return { ok: res.ok, status: res.status, data };
+                })
+                .then(({ ok, data }) => {
                     btn.disabled = false;
-                    if (data.success && data.assistant_message) {
+                    if (ok && data.success && data.assistant_message) {
                         botInner.innerHTML = `<div class="whitespace-pre-wrap leading-relaxed">${escapeHtml(data.assistant_message.content)}</div>`;
                         scrollToBottom();
                     } else {
-                        botInner.innerHTML = '<span class="text-rose-500 text-xs">Wystąpił błąd podczas generowania odpowiedzi.</span>';
+                        const errorDetails = data.error || data.message || 'Wystąpił błąd podczas generowania odpowiedzi.';
+                        botInner.innerHTML = `<span class="text-rose-500 text-xs font-medium">Błąd: ${escapeHtml(errorDetails)}</span>`;
+                        scrollToBottom();
                     }
                 })
                 .catch(err => {
                     btn.disabled = false;
-                    botInner.innerHTML = `<span class="text-rose-500 text-xs">Błąd: ${escapeHtml(err.message)}</span>`;
+                    botInner.innerHTML = `<span class="text-rose-500 text-xs font-medium">Błąd sieci: ${escapeHtml(err.message)}</span>`;
+                    scrollToBottom();
                 });
             }
 

@@ -15,6 +15,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Illuminate\View\View;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -97,7 +98,15 @@ class ChatController extends Controller
             ]);
 
             // Wywołanie LLM dla pierwszej wiadomości
-            $this->processAssistantResponse($conversation, $validated['initial_message']);
+            try {
+                $this->processAssistantResponse($conversation, $validated['initial_message']);
+            } catch (\Throwable $e) {
+                Log::error('Błąd generowania pierwszej wiadomości asystenta: '.$e->getMessage(), [
+                    'conversation_id' => $conversation->id,
+                    'agent_id' => $conversation->agent_id,
+                    'exception' => $e,
+                ]);
+            }
         }
 
         return redirect()->route('chat.index', ['conversation_id' => $conversation->id]);
@@ -122,14 +131,28 @@ class ChatController extends Controller
             'created_at' => now(),
         ]);
 
-        // Wywołanie asystenta
-        $assistantMessage = $this->processAssistantResponse($conversation, $validated['content']);
+        try {
+            // Wywołanie asystenta
+            $assistantMessage = $this->processAssistantResponse($conversation, $validated['content']);
 
-        return response()->json([
-            'success' => true,
-            'user_message' => $userMessage,
-            'assistant_message' => $assistantMessage,
-        ]);
+            return response()->json([
+                'success' => true,
+                'user_message' => $userMessage,
+                'assistant_message' => $assistantMessage,
+            ]);
+        } catch (\Throwable $e) {
+            Log::error('Błąd generowania odpowiedzi w czacie: '.$e->getMessage(), [
+                'conversation_id' => $conversation->id,
+                'agent_id' => $conversation->agent_id,
+                'exception' => $e,
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'error' => $e->getMessage(),
+                'user_message' => $userMessage,
+            ], 500);
+        }
     }
 
     public function streamMessage(Request $request, ChatConversation $conversation): StreamedResponse

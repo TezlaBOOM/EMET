@@ -62,15 +62,19 @@ class OpenAiDriver implements LlmDriverInterface
 
         if ($response->status() === 429) {
             $retryAfter = (int) ($response->header('Retry-After') ?: 60);
+            $errorJson = $response->json();
+            $errorMsg = $errorJson['error']['message'] ?? $response->body();
             throw new RateLimitExceededException(
-                message: 'OpenAI rate limit exceeded: '.$response->body(),
+                message: 'OpenAI rate limit exceeded: '.$errorMsg,
                 retryAfterSeconds: $retryAfter,
                 accountId: $account->id,
             );
         }
 
         if (! $response->successful()) {
-            throw new LlmDriverException('OpenAI API error ('.$response->status().'): '.$response->body());
+            $errorJson = $response->json();
+            $errorMsg = $errorJson['error']['message'] ?? $response->body();
+            throw new LlmDriverException('OpenAI API error ('.$response->status().'): '.$errorMsg);
         }
 
         $data = $response->json();

@@ -154,7 +154,7 @@ class AgentController extends Controller
                 'name' => 'Hermes Autonomiczny Asystent',
                 'description' => 'Instancja agenta Hermes dedykowana do długotrwałych zadań powłoki i automatyzacji systemowej.',
                 'runtime_type' => 'hermes',
-                'primary_model' => 'gemini-2.5-flash',
+                'primary_model' => 'gemini-1.5-flash',
                 'temperature' => 0.7,
                 'system_prompt' => 'Jesteś autonomicznym agentem wykonawczym Hermes.',
             ],
