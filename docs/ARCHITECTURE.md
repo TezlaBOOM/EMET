@@ -82,3 +82,39 @@ Zlokalizowany w `services/telemetry-collector/`.
 - **Zdarzenia agentów:** zapis do tabeli `telemetry_events` (`run.started`, `tool.called`, `memory.read`, `memory.write`, `llm.call`, `run.finished`, `error`).
 - **Rollupy danych (`agenthub:telemetry-rollup`):** preagregacja godzinowa i dzienna do tabeli `telemetry_rollups` eliminująca kosztowne skanowanie surowych rekordów `llm_calls` przez Dashboard.
 - **Transmisja Reverb:** kanały WebSocket `telemetry.agents` oraz `telemetry.dashboard` dla natychmiastowych aktualizacji statusu agentów i zużycia tokenów w UI.
+
+---
+
+## 6. Rejestr Modeli AI & Kaskadowy Wybór w Agencie (v1.5.7)
+
+Zarządzanie modelami LLM (`App\Contracts\Llm\ModelManagementInterface`, `App\Models\LlmModel`):
+
+- **Tabela `models`:** centralna ewidencja modeli wszystkich dostawców (`provider_id`, `model_key`, `display_name`, `enabled`, `capabilities`, `context_window`, `parameters`, `max_output_tokens`, `overrides`, `tags`).
+- **Ochrona nadpisań (`overrides`):** synchronizacja modeli od dostawcy aktualizuje parametry fabryczne, zachowując bez zmian niestandardowe limity tokenów, temperaturę oraz cenniki per konto (`account_id` w `model_pricing`) zdefiniowane przez użytkownika.
+- **Kaskada wyboru modelu (`<x-model-select>`):** trzystopniowy interfejs wyboru w agencie (Runtime → Konto/Pula → Model) walidowany regułą `ValidModelForAgent`.
+- **Wykrywanie niedostępności:** agenci ze wskazanym modelem, który został wyłączony lub usunięty, są automatycznie oznaczani plakietką „Model niedostępny”.
+
+---
+
+## 7. Cykl Życia Skilli, SemVer i Bezpieczne Usuwanie (v1.5.7)
+
+Zarządzanie skillami (`App\Contracts\Skills\SkillLifecycleInterface`):
+
+- **Wersjonowanie definicji (SemVer):** każda modyfikacja kodu skilla rejestruje wpis w `skill_versions` z wymogiem określenia typu zmiany (`patch`, `minor`, `major`) i changeloga.
+- **Flaga nieużywanych skilli (🚩):** automatyczne oznaczanie w UI skilli niepowiązanych z agentami ani grafami scenariuszy. Zgodnie z wytycznymi bezpieczeństwa, system **nie usuwa skilli automatycznie** — o usunięciu decyduje wyłącznie użytkownik.
+- **Ochrona zależności i Kosz:** próba usunięcia skilla używanego w aktywnych konfiguracjach zwraca kod HTTP 409 z listą powiązań. Usunięte skille trafiają do kosza (`deleted_at`), z możliwością bezpiecznego przywrócenia lub trwałego usunięcia (`skills.purge`).
+
+---
+
+## 8. Scenariusze Blokowe: Wersjonowanie Grafów & Harmonogramy Czasowe (v1.5.7)
+
+Zarządzanie schematami i timerami (`App\Contracts\Scenarios\ScenarioSchedulerInterface`, `App\Contracts\Scenarios\ScenarioEngineInterface`):
+
+- **Szkice robocze grafów:** edycja opublikowanego scenariusza tworzy wersję roboczą, nie zakłócając działania wersji produkcyjnej aż do jej opublikowania.
+- **Blokada współbieżnej edycji:** nakładanie `locked_by` i `locked_at` w edytorze Drawflow chroni przed nadpisywaniem pracy innych użytkowników.
+- **Silnik harmonogramów (`scenarios:dispatch-due`):**
+  - Obsługa 6 typów wyzwalaczy (`once`, `interval`, `daily`, `weekly`, `monthly`, `cron`) w strefie `Europe/Warsaw`.
+  - Atomowa blokada `Cache::lock('scenarios:dispatch-due', 55)` zapobiega wyścigom w środowiskach wielowątkowych.
+  - Unikalny `idempotency_key` w `scenario_runs` gwarantuje jednokrotne wykonanie danego cyklu.
+  - Automatyczna pauza (`state = error`) po 5 kolejnych awariach chroni infrastrukturę przed kaskadą błędów.
+

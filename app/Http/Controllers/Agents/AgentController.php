@@ -9,6 +9,7 @@ use App\Models\Agent;
 use App\Models\AgentSkill;
 use App\Models\AuditLog;
 use App\Models\LlmAccountPool;
+use App\Rules\ValidModelForAgent;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
@@ -45,7 +46,12 @@ class AgentController extends Controller
             'description' => ['nullable', 'string'],
             'runtime_type' => ['required', 'string', 'in:native,hermes,openclaw,claude_code,codex'],
             'pool_id' => ['nullable', 'exists:llm_account_pools,id'],
-            'primary_model' => ['required', 'string', 'max:100'],
+            'primary_model' => [
+                'required',
+                'string',
+                'max:100',
+                new ValidModelForAgent($request->filled('pool_id') ? (int) $request->input('pool_id') : null),
+            ],
             'system_prompt' => ['nullable', 'string'],
             'temperature' => ['required', 'numeric', 'between:0,2'],
             'is_active' => ['nullable', 'boolean'],
@@ -91,7 +97,12 @@ class AgentController extends Controller
             'description' => ['nullable', 'string'],
             'runtime_type' => ['required', 'string', 'in:native,hermes,openclaw,claude_code,codex'],
             'pool_id' => ['nullable', 'exists:llm_account_pools,id'],
-            'primary_model' => ['required', 'string', 'max:100'],
+            'primary_model' => [
+                'required',
+                'string',
+                'max:100',
+                new ValidModelForAgent($request->filled('pool_id') ? (int) $request->input('pool_id') : null),
+            ],
             'system_prompt' => ['nullable', 'string'],
             'temperature' => ['required', 'numeric', 'between:0,2'],
             'is_active' => ['nullable', 'boolean'],

@@ -34,4 +34,9 @@ class LlmProvider extends Model
     {
         return $this->accounts()->where('current_status', 'active');
     }
+
+    public function models(): HasMany
+    {
+        return $this->hasMany(LlmModel::class, 'provider_id');
+    }
 }

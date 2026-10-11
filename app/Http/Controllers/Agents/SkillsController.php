@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Agents;
 
+use App\Contracts\Skills\SkillLifecycleInterface;
 use App\Http\Controllers\Controller;
+use App\Models\AuditLog;
 use App\Models\Skill;
 use App\Models\SkillVersion;
 use App\Services\Skills\SkillPackageExtractor;
@@ -20,12 +22,16 @@ class SkillsController extends Controller
 {
     public function __construct(
         protected SkillPackageExtractor $extractor,
-        protected SkillSandboxService $sandbox
+        protected SkillSandboxService $sandbox,
+        protected SkillLifecycleInterface $lifecycle
     ) {}
 
     public function index(Request $request): View
     {
-        $query = Skill::with(['currentVersion', 'versions']);
+        $isTrash = $request->boolean('trash');
+        $query = $isTrash
+            ? Skill::onlyTrashed()->with(['currentVersion', 'versions'])
+            : Skill::with(['currentVersion', 'versions']);
 
         if ($request->filled('type')) {
             $query->where('type', $request->query('type'));
@@ -45,8 +51,9 @@ class SkillsController extends Controller
         }
 
         $skills = $query->latest()->paginate(15);
+        $trashedCount = Skill::onlyTrashed()->count();
 
-        return view('module-agents::skills.index', compact('skills'));
+        return view('module-agents::skills.index', compact('skills', 'isTrash', 'trashedCount'));
     }
 
     public function create(): View
@@ -133,6 +140,8 @@ class SkillsController extends Controller
 
             $skill->update(['current_version_id' => $version->id]);
 
+            AuditLog::record('skill.create', Skill::class, (string) $skill->id, ['source' => 'zip']);
+
             return redirect()->route('agents.skills.show', $skill)
                 ->with('success', 'Skill został pomyślnie zaimportowany z paczki ZIP.');
         }
@@ -178,6 +187,8 @@ class SkillsController extends Controller
 
         $skill->update(['current_version_id' => $version->id]);
 
+        AuditLog::record('skill.create', Skill::class, (string) $skill->id, ['source' => 'manual']);
+
         return redirect()->route('agents.skills.show', $skill)
             ->with('success', 'Skill został pomyślnie utworzony.');
     }
@@ -185,8 +196,104 @@ class SkillsController extends Controller
     public function show(Skill $skill): View
     {
         $skill->load(['versions.creator', 'runs' => fn ($q) => $q->latest()->take(10)]);
+        $isUnused = $this->lifecycle->isUnused($skill);
+        $dependencies = $this->lifecycle->checkDependencies($skill);
 
-        return view('module-agents::skills.show', compact('skill'));
+        return view('module-agents::skills.show', compact('skill', 'isUnused', 'dependencies'));
+    }
+
+    public function edit(Skill $skill): View
+    {
+        $skill->load('currentVersion');
+
+        return view('module-agents::skills.edit', compact('skill'));
+    }
+
+    public function update(Request $request, Skill $skill): RedirectResponse
+    {
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:150'],
+            'description' => ['nullable', 'string'],
+            'readme_md' => ['nullable', 'string'],
+            'type' => ['required', 'in:tool,mcp,prompt,workflow,package'],
+            'status' => ['required', 'in:draft,pending_review,active,deprecated'],
+            'tags' => ['nullable', 'array'],
+            'definition' => ['nullable', 'string'],
+            'changelog' => ['nullable', 'string'],
+            'bump_type' => ['nullable', 'in:patch,minor,major'],
+        ]);
+
+        $skill->update([
+            'name' => $validated['name'],
+            'description' => $validated['description'] ?? null,
+            'readme_md' => $validated['readme_md'] ?? null,
+            'type' => $validated['type'],
+            'status' => $validated['status'],
+            'tags' => $validated['tags'] ?? $skill->tags,
+        ]);
+
+        // Jeśli podano nową definicję, stwórz nową wersję SemVer
+        if (! empty($validated['definition'])) {
+            $parsedDefinition = json_decode($validated['definition'], true) ?? ['content' => $validated['definition']];
+            $changelog = $validated['changelog'] ?? 'Aktualizacja definicji skilla';
+            $bumpType = $validated['bump_type'] ?? 'patch';
+
+            $this->lifecycle->updateDefinitionWithNewVersion($skill, $parsedDefinition, $changelog, $bumpType);
+        }
+
+        AuditLog::record('skill.update', Skill::class, (string) $skill->id, ['name' => $skill->name]);
+
+        return redirect()->route('agents.skills.show', $skill)
+            ->with('success', 'Konfiguracja skilla została pomyślnie zaktualizowana.');
+    }
+
+    public function destroy(Request $request, Skill $skill): RedirectResponse|JsonResponse
+    {
+        $deps = $this->lifecycle->checkDependencies($skill);
+        $hasDeps = ! empty($deps['agents']) || ! empty($deps['scenarios']);
+
+        if ($hasDeps && ! $request->boolean('force_detach')) {
+            $agentNames = collect($deps['agents'])->pluck('name')->all();
+            $scenarioNames = collect($deps['scenarios'])->pluck('name')->all();
+            $msg = 'Nie można usunąć skilla, który jest używany przez: '
+                .implode(', ', array_merge($agentNames, $scenarioNames));
+
+            if ($request->wantsJson()) {
+                return response()->json([
+                    'error' => $msg,
+                    'dependencies' => $deps,
+                ], 409);
+            }
+
+            return back()->with('error', $msg)->setStatusCode(409);
+        }
+
+        $this->lifecycle->safeDelete($skill, $request->boolean('force_detach'));
+
+        AuditLog::record('skill.delete', Skill::class, (string) $skill->id, ['name' => $skill->name]);
+
+        return redirect()->route('agents.skills.index')->with('success', 'Skill został przeniesiony do kosza.');
+    }
+
+    public function restore(int $id): RedirectResponse
+    {
+        $skill = $this->lifecycle->restoreFromTrash($id);
+        AuditLog::record('skill.restore', Skill::class, (string) $skill->id, ['name' => $skill->name]);
+
+        return redirect()->route('agents.skills.index')->with('success', 'Skill został pomyślnie przywrócony z kosza.');
+    }
+
+    public function purge(Request $request, int $id): RedirectResponse
+    {
+        if (! Auth::user()?->can('skills.purge') && ! Auth::user()?->hasRole('admin')) {
+            abort(403, 'Brak uprawnień do trwałego usuwania skilli.');
+        }
+
+        $this->lifecycle->purgePermanently($id);
+        AuditLog::record('skill.purge', Skill::class, (string) $id);
+
+        return redirect()->route('agents.skills.index', ['trash' => 1])
+            ->with('success', 'Skill został trwale usunięty wraz z plikami.');
     }
 
     public function testSandbox(Request $request, Skill $skill): JsonResponse

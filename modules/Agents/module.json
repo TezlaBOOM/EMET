@@ -15,7 +15,7 @@
   },
   "menu2": [
     { "id": "index", "title": "agents.sub_all", "route": "agents.index", "permission": "agents.view" },
-    { "id": "skills", "title": "agents.sub_skills", "route": "agents.skills.index", "permission": "skills.view" },
+    { "id": "skills", "title": "modules.agents.submenu.skills", "route": "agents.skills.index", "permission": "skills.view" },
     { "id": "active", "title": "agents.sub_active", "route": "agents.active", "permission": "agents.view" },
     { "id": "create", "title": "agents.sub_create", "route": "agents.create", "permission": "agents.manage" },
     { "id": "templates", "title": "agents.sub_templates", "route": "agents.templates", "permission": "agents.manage" }

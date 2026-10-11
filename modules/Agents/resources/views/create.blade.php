@@ -63,10 +63,7 @@
                 </div>
 
                 <div>
-                    <label class="block text-xs font-semibold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1">
-                        {{ __('agents.primary_model') }}
-                    </label>
-                    <input type="text" name="primary_model" value="{{ old('primary_model', request('primary_model', 'gpt-4o')) }}" required placeholder="np. gpt-4o, claude-3-5-sonnet" class="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm font-mono">
+                    <x-model-select :pools="$pools" :selected-pool-id="old('pool_id')" :selected-model="old('primary_model', request('primary_model', 'gpt-4o'))" />
                 </div>
             </div>
 

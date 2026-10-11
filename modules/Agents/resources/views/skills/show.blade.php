@@ -18,15 +18,36 @@
                     <span class="px-2.5 py-0.5 text-xs font-semibold rounded-full bg-emerald-50 text-emerald-600 dark:bg-emerald-950/60 dark:text-emerald-400">
                         {{ $skill->status }}
                     </span>
+                    @if($isUnused)
+                        <span class="px-2.5 py-0.5 text-xs font-semibold rounded-full bg-rose-50 text-rose-700 dark:bg-rose-950 dark:text-rose-300 border border-rose-200 dark:border-rose-800 flex items-center gap-1"
+                              title="Skill nie jest powiązany z żadnym agentem ani scenariuszem. Decyzja o usunięciu należy do użytkownika.">
+                            🚩 Nieużywany
+                        </span>
+                    @endif
                 </div>
                 <p class="text-sm text-slate-500 font-mono mt-1">slug: {{ $skill->slug }} | v{{ $skill->currentVersion?->version ?? '1.0.0' }}</p>
             </div>
 
-            <div class="flex gap-2">
+            <div class="flex items-center gap-2">
+                @can('skills.edit')
+                    <a href="{{ route('agents.skills.edit', $skill) }}"
+                       class="px-4 py-2 border border-slate-300 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 font-semibold text-sm rounded-xl transition-all">
+                        Edytuj
+                    </a>
+                @endcan
                 <button type="button" onclick="testSkillInSandbox()"
                         class="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-sm rounded-xl shadow-xs">
                     Testuj w sandboxie
                 </button>
+                @can('skills.delete')
+                    <form action="{{ route('agents.skills.destroy', $skill) }}" method="POST" onsubmit="return confirm('Czy na pewno chcesz przenieść ten skill do kosza?')">
+                        @csrf
+                        @method('DELETE')
+                        <button type="submit" class="px-3 py-2 bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 font-semibold text-sm rounded-xl transition-all">
+                            Usuń
+                        </button>
+                    </form>
+                @endcan
             </div>
         </div>
 

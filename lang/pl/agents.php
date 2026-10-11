@@ -4,6 +4,7 @@ return [
     'title' => 'Agenci AI',
     'menu_title' => 'Agenci AI',
     'sub_all' => 'Wszyscy agenci',
+    'sub_skills' => 'Skille',
     'sub_active' => 'Aktywni agenci',
     'sub_create' => 'Utwórz agenta',
     'sub_templates' => 'Szablony agentów',

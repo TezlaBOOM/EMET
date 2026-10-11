@@ -4,6 +4,7 @@ return [
     'title' => 'AI Agents',
     'menu_title' => 'AI Agents',
     'sub_all' => 'All Agents',
+    'sub_skills' => 'Skills',
     'sub_active' => 'Active Agents',
     'sub_create' => 'Create Agent',
     'sub_templates' => 'Agent Templates',

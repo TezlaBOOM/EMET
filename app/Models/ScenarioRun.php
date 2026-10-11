@@ -40,6 +40,9 @@ class ScenarioRun extends Model
         'finished_at',
         'error',
         'created_by',
+        'trigger_id',
+        'scheduled_for',
+        'idempotency_key',
     ];
 
     protected $casts = [
@@ -51,7 +54,13 @@ class ScenarioRun extends Model
         'cost' => 'float',
         'started_at' => 'datetime',
         'finished_at' => 'datetime',
+        'scheduled_for' => 'datetime',
     ];
+
+    public function trigger(): BelongsTo
+    {
+        return $this->belongsTo(ScenarioTrigger::class, 'trigger_id');
+    }
 
     public function scenario(): BelongsTo
     {

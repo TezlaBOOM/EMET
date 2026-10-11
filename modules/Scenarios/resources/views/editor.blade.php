@@ -1,4 +1,20 @@
 <x-layouts.editor :scenario="$scenario">
+    @if(!empty($isLocked))
+        <div class="bg-amber-500/10 border-b border-amber-500/30 px-4 py-2.5 flex items-center justify-between text-xs text-amber-300 z-20">
+            <div class="flex items-center gap-2">
+                <svg class="w-4 h-4 text-amber-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                <span>
+                    <strong>Uwaga:</strong> Ten scenariusz jest obecnie edytowany przez użytkownika <strong>{{ $lockedUser?->name ?? 'innego użytkownika' }}</strong>.
+                </span>
+            </div>
+            <form action="{{ route('scenarios.lock', $scenario) }}" method="POST">
+                @csrf
+                <button type="submit" class="px-2.5 py-1 bg-amber-500/20 hover:bg-amber-500/30 text-amber-200 border border-amber-500/40 rounded-lg text-xs font-semibold transition-all">
+                    Przejmij blokadę
+                </button>
+            </form>
+        </div>
+    @endif
     <div class="flex-1 flex overflow-hidden w-full h-full" x-data="scenarioEditor()">
         <!-- Lewy panel: Paleta węzłów (12 typów) -->
         <aside class="w-64 bg-slate-900 border-r border-slate-800 p-4 flex flex-col shrink-0 z-10 overflow-y-auto">
@@ -102,12 +118,18 @@
 
                     // Załadowanie istniejącego grafu
                     const existingGraph = @json($scenario->currentVersion?->graph ?? null);
-                    if (existingGraph && existingGraph.drawflow) {
-                        this.editor.import(existingGraph);
-                    } else if (existingGraph && existingGraph.nodes) {
-                        // Inicjalizacja domyślna
-                        this.editor.addNode('start', 0, 1, 150, 200, 'start', { label: 'Start' }, '<div><b>Start</b></div>');
-                        this.editor.addNode('end', 1, 0, 550, 200, 'end', { label: 'Koniec' }, '<div><b>Koniec</b></div>');
+                    try {
+                        if (existingGraph && existingGraph.drawflow) {
+                            this.editor.import(existingGraph);
+                        } else if (existingGraph && existingGraph.nodes) {
+                            this.editor.addNode('start', 0, 1, 150, 200, 'start', { label: 'Start' }, '<div><b>Start</b></div>');
+                            this.editor.addNode('end', 1, 0, 550, 200, 'end', { label: 'Koniec' }, '<div><b>Koniec</b></div>');
+                        } else {
+                            this.editor.addNode('start', 0, 1, 150, 200, 'start', { label: 'Start' }, '<div><b>Start</b></div>');
+                            this.editor.addNode('end', 1, 0, 550, 200, 'end', { label: 'Koniec' }, '<div><b>Koniec</b></div>');
+                        }
+                    } catch (e) {
+                        console.warn('Błąd podczas inicjalizacji grafu Drawflow:', e);
                     }
 
                     this.editor.on('nodeSelected', (id) => {
@@ -118,9 +140,12 @@
                         this.selectedNode = null;
                     });
 
-                    document.getElementById('btn-save-draft').addEventListener('click', () => this.saveDraft());
-                    document.getElementById('btn-publish').addEventListener('click', () => this.publishVersion());
-                    document.getElementById('btn-run-test').addEventListener('click', () => this.runTest());
+                    const btnSave = document.getElementById('btn-save-draft');
+                    if (btnSave) btnSave.addEventListener('click', () => this.saveDraft());
+                    const btnPub = document.getElementById('btn-publish');
+                    if (btnPub) btnPub.addEventListener('click', () => this.publishVersion());
+                    const btnRun = document.getElementById('btn-run-test');
+                    if (btnRun) btnRun.addEventListener('click', () => this.runTest());
                 },
                 drag(ev, type) {
                     ev.dataTransfer.setData("node", type);

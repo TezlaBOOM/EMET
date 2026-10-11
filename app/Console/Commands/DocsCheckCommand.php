@@ -108,6 +108,14 @@ class DocsCheckCommand extends Command
             }
         }
 
+        // 4. Sprawdzenie integralności językowej I18n
+        $this->line('  Weryfikacja tłumaczeń I18n (lang:audit)...');
+        $langAuditResult = $this->call('lang:audit', ['--strict' => true]);
+        if ($langAuditResult !== self::SUCCESS) {
+            $this->error('BŁĄD: Wykryto niespójności lub brakujące klucze tłumaczeń I18n.');
+            $hasErrors = true;
+        }
+
         if ($hasErrors) {
             $this->error('Weryfikacja dokumentacji zakończona niepowodzeniem.');
 

@@ -44,13 +44,25 @@
                     </div>
 
                     <div class="mt-6 pt-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
-                        <span class="text-xs text-slate-500 font-medium">
-                            v{{ $scenario->currentVersion?->version ?? '1.0' }}
-                        </span>
+                        <div class="flex items-center gap-2">
+                            <span class="text-xs text-slate-500 font-medium">
+                                v{{ $scenario->currentVersion?->version ?? '1.0' }}
+                            </span>
+                            <span class="text-slate-300 dark:text-slate-700">|</span>
+                            <a href="{{ route('scenarios.triggers.index', $scenario) }}"
+                               class="text-xs font-semibold text-slate-600 dark:text-slate-400 hover:text-indigo-600 transition-colors">
+                                Timery
+                            </a>
+                            <span class="text-slate-300 dark:text-slate-700">|</span>
+                            <a href="{{ route('scenarios.edit', $scenario) }}"
+                               class="text-xs font-semibold text-slate-600 dark:text-slate-400 hover:text-indigo-600 transition-colors">
+                                Edycja
+                            </a>
+                        </div>
                         <a href="{{ route('scenarios.editor', $scenario) }}"
                            target="_blank"
                            class="text-xs font-semibold text-indigo-600 hover:text-indigo-500 flex items-center gap-1">
-                            Otwórz w osobnym oknie &rarr;
+                            Edytor &rarr;
                         </a>
                     </div>
                 </div>

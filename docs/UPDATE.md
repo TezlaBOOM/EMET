@@ -82,3 +82,27 @@ Platforma AgentHub stosuje wersjonowanie semantyczne (**SemVer**):
 - **Główny numer wersji projektu** jest zdefiniowany w pliku `VERSION` oraz w pliku konfiguracyjnym `config/agenthub.php` (`'version'`).
 - **Dashboard UI**: Wersja prezentowana jest użytkownikom w lewym panelu bocznym pod logo platformy (`v{{ config('agenthub.version') }}`) oraz w zakładce `/users/system`.
 - **Reguła dla deweloperów**: W przypadku wprowadzania większych zmian w projekcie (nowe wydania, wersje major/minor, nowe kluczowe moduły lub przełomowe funkcjonalności), **należy bezwzględnie zaktualizować numer wersji w pliku `VERSION` oraz `config/agenthub.php`**, a także dodać podsumowanie zmian w `CHANGELOG.md`.
+
+---
+
+## 6. Aktualizacja do Wersji 1.5.7
+
+Wersja 1.5.7 wprowadza stabilizację kreatora scenariuszy, audyt i spolszczenia I18n, rejestr modeli AI z ochroną nadpisań `overrides`, kaskadowy wybór modelu w agencie, SemVer definicji skilli z czerwoną flagą dla nieużywanych, szkice robocze scenariuszy oraz silnik 6 typów harmonogramów ze strefą Europe/Warsaw i blokadą atomową `Cache::lock`.
+
+### Kroki aktualizacji do 1.5.7:
+```bash
+# 1. Pobranie kodu
+git pull origin main
+
+# 2. Migracje bazy danych
+php artisan migrate --force
+
+# 3. Nowe uprawnienia skilli (skills.edit, skills.delete, skills.purge)
+php artisan db:seed --class=RolesAndPermissionsSeeder --force
+
+# 4. Czyszczenie pamięci podręcznej i weryfikacja
+php artisan optimize:clear
+php artisan agenthub:selftest
+php artisan docs:check
+```
+

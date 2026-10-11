@@ -143,4 +143,11 @@ class Agent extends Model
     {
         return $this->hasMany(ChatConversation::class, 'agent_id');
     }
+
+    public function isModelAvailable(): bool
+    {
+        $model = LlmModel::where('model_key', $this->primary_model)->first();
+
+        return ! ($model && ! $model->enabled);
+    }
 }

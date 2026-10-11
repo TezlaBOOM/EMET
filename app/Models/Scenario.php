@@ -29,7 +29,16 @@ class Scenario extends Model
         'status',
         'current_version_id',
         'created_by',
+        'locked_by',
+        'locked_at',
     ];
+
+    protected function casts(): array
+    {
+        return [
+            'locked_at' => 'datetime',
+        ];
+    }
 
     protected static function booted(): void
     {
@@ -68,5 +77,24 @@ class Scenario extends Model
     public function runs(): HasMany
     {
         return $this->hasMany(ScenarioRun::class, 'scenario_id')->latest();
+    }
+
+    public function lockedByUser(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'locked_by');
+    }
+
+    public function isLockedByOtherUser(?int $userId = null): bool
+    {
+        $userId ??= auth()->id();
+        if (! $this->locked_by || $this->locked_by === $userId) {
+            return false;
+        }
+
+        if ($this->locked_at && $this->locked_at->diffInMinutes(now()) >= 15) {
+            return false;
+        }
+
+        return true;
     }
 }

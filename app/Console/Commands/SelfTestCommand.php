@@ -5,8 +5,11 @@ declare(strict_types=1);
 namespace App\Console\Commands;
 
 use App\Contracts\Chat\GroupChatOrchestratorInterface;
+use App\Contracts\Llm\ModelManagementInterface;
 use App\Contracts\Memory\VectorStoreInterface;
 use App\Contracts\Scenarios\ScenarioEngineInterface;
+use App\Contracts\Scenarios\ScenarioSchedulerInterface;
+use App\Contracts\Skills\SkillLifecycleInterface;
 use App\Models\LlmAccount;
 use App\Models\LlmProvider;
 use App\Models\User;
@@ -271,6 +274,44 @@ class SelfTestCommand extends Command
             ];
         } catch (\Throwable $e) {
             $checks['config_transfer'] = ['status' => 'warn', 'message' => $e->getMessage()];
+        }
+
+        // --- 1.5.7 Rozszerzenia diagnostyczne ---
+
+        // 13. Rejestr Modeli LLM (v1.5.7)
+        try {
+            $hasModelsTable = Schema::hasTable('models');
+            $modelManager = app(ModelManagementInterface::class);
+            $checks['models_registry'] = [
+                'status' => $hasModelsTable && $modelManager ? 'ok' : 'fail',
+                'message' => 'Rejestr modeli LLM (tabela models, serwis parametrów i overrides gotowe)',
+            ];
+        } catch (\Throwable $e) {
+            $checks['models_registry'] = ['status' => 'warn', 'message' => $e->getMessage()];
+        }
+
+        // 14. Cykl życia skilli (v1.5.7)
+        try {
+            $hasLifecycleColumns = Schema::hasColumn('skills', 'deleted_at');
+            $lifecycleService = app(SkillLifecycleInterface::class);
+            $checks['skills_lifecycle'] = [
+                'status' => $hasLifecycleColumns && $lifecycleService ? 'ok' : 'fail',
+                'message' => 'Cykl życia skilli (SemVer, ochrona zależności, kosz soft-delete gotowe)',
+            ];
+        } catch (\Throwable $e) {
+            $checks['skills_lifecycle'] = ['status' => 'warn', 'message' => $e->getMessage()];
+        }
+
+        // 15. Harmonogramy i timery scenariuszy (v1.5.7)
+        try {
+            $hasTriggersTable = Schema::hasTable('scenario_triggers');
+            $scheduler = app(ScenarioSchedulerInterface::class);
+            $checks['scenario_scheduler'] = [
+                'status' => $hasTriggersTable && $scheduler ? 'ok' : 'fail',
+                'message' => 'Silnik harmonogramów scenariuszy (Europe/Warsaw, blokada atomowa i auto-pauza gotowe)',
+            ];
+        } catch (\Throwable $e) {
+            $checks['scenario_scheduler'] = ['status' => 'warn', 'message' => $e->getMessage()];
         }
 
         if ($isJson) {

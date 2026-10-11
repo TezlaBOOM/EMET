@@ -4,6 +4,7 @@ return [
     'title' => 'Integrations & Instances',
     'menu_title' => 'Integrations',
     'sub_all' => 'All Instances',
+    'sub_containers' => 'Containers (LXC / Proxmox)',
     'sub_hermes' => 'Hermes Agent',
     'sub_openclaw' => 'OpenClaw',
     'sub_claude' => 'Claude Code',

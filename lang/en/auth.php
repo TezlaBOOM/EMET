@@ -16,5 +16,10 @@ return [
     'failed' => 'These credentials do not match our records.',
     'password' => 'The provided password is incorrect.',
     'throttle' => 'Too many login attempts. Please try again in :seconds seconds.',
-
+    'login' => 'Log in',
+    'logout' => 'Log out',
+    'email' => 'Email address',
+    'password_label' => 'Password',
+    'remember_me' => 'Remember me',
+    'welcome_back' => 'Welcome back to Project-Emet',
 ];

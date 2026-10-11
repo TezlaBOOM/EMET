@@ -59,6 +59,49 @@ Format opiera się na [Keep a Changelog](https://keepachangelog.com/pl/1.0.0/).
   - Integracja statusu mock w poleceniu `agenthub:selftest`.
 
 
+## [1.5.7] - 2026-10-11
+
+### Dodano (Added)
+- **Kreator i edycja scenariuszy blokowych (Etap 18 & Etap 23)**:
+  - Bezpieczne tworzenie scenariusza w `ScenariosController::store` otoczone transakcją `DB::transaction()` z automatyczną deduplikacją unikalnego slugu oraz atomową inicjalizacją wersji roboczej z kanonicznym grafem `start` → `end`.
+  - Defensywne ładowanie grafu w `editor.blade.php`: obsługa braku lub uszkodzenia schematu węzłów bez wywoływania błędów JS/Blade.
+  - Nowy widok edycji metadanych `/scenarios/{id}/edit` z podglądem historii wersji, stanu blokady oraz bezpośrednim linkiem do harmonogramów.
+  - Wersjonowanie szkiców roboczych: edycja opublikowanego scenariusza tworzy wersję roboczą bez modyfikacji aktywnej wersji produkcyjnej aż do momentu publikacji.
+  - Mechanizm blokady współbieżnej edycji grafu: kolumny `locked_by` i `locked_at` w tabeli `scenarios`, ostrzegawczy baner w edytorze Drawflow oraz opcja przejęcia blokady dla administratora.
+  - Możliwość przywrócenia dowolnej archiwalnej wersji grafu (`restoreVersion`).
+- **Spolszczenia i audyt I18n (Etap 19)**:
+  - Zmiana etykiety podmenu w `modules/Agents/module.json` z `agent.sub_skill` na `modules.agents.submenu.skills` („Skille”).
+  - Narzędzie konsolowe `App\Console\Commands\LangAuditCommand` (`php artisan lang:audit --strict`) weryfikujące kompletność tłumaczeń w `lang/pl/` i `lang/en/` oraz wykrywające surowe klucze w szablonach Blade i manifestach.
+  - Pełne spolszczenie formularzy, tabel i komunikatów modułów Scenariuszy i Modeli AI.
+  - Integracja audytu językowego z weryfikatorem `php artisan docs:check`.
+- **Rejestr modeli AI i cenniki per konto (Etap 20)**:
+  - Nowa tabela `models` przechowująca ewidencję modeli dostawców (`capabilities`, `context_window`, `parameters`, `max_output_tokens`, `overrides`, `tags`).
+  - Serwis `ModelManagementService` realizujący kontrakt `ModelManagementInterface` z zachowywaniem nadpisań użytkownika (`overrides`) podczas synchronizacji parametrów od dostawców.
+  - Rozszerzenie tabeli `model_pricing` o kolumnę `account_id` (cenniki per konto).
+  - Nowy widok administracyjny *Ustawienia AI → Modele* (`modules/AiSettings/resources/views/models.blade.php`) z tabelą modeli, panelem edycji parametrów i cenników oraz ręcznym dodawaniem modelu.
+- **Kaskadowy wybór modelu w agencie (Etap 21)**:
+  - Komponent Blade / Alpine.js `<x-model-select>` realizujący trzystopniowy kaskadowy wybór: Runtime (Ollama, Hermes, OpenClaw, Brama LLM) → Konto/Pula → Model wraz z prezentacją zdolności (Vision, Function calling, Streaming).
+  - Reguła walidacyjna `App\Rules\ValidModelForAgent` weryfikująca stan włączenia i powiązanie modelu z wybranym kontem/pulą dostawcy.
+  - Wykrywanie nieaktywnych modeli i oznaczanie agentów plakietką „Model niedostępny”.
+- **Cykl życia skilli, SemVer i Bezpieczne usuwanie (Etap 22)**:
+  - Rozszerzenie tabeli `skills` o kolumny `deleted_at`, `deleted_by`, `overrides`, `locked_by_module` oraz migawki parametrów w `skill_runs`.
+  - Nowe uprawnienia RBAC: `skills.edit`, `skills.delete`, `skills.purge`.
+  - Serwis `SkillLifecycleService` realizujący `SkillLifecycleInterface`.
+  - Wersjonowanie SemVer przy edycji definicji skilla (wymóg wyboru `patch`, `minor`, `major` oraz wpisania changeloga z trwałym zapisem w `skill_versions`).
+  - Oznaczanie nieużywanych skilli **czerwoną flagą** (🚩 badge „Nieużywany”) w widoku listy; pełna kontrola użytkownika bez automatycznego usuwania w tle.
+  - Bezpieczne usuwanie skilli (soft-delete): blokada HTTP 409 przy próbie usunięcia skilla przypisanego do aktywnych agentów lub scenariuszy, widok kosza, przywracanie oraz trwałe usuwanie (`skills.purge`).
+- **Timery i harmonogramy scenariuszy (Etap 24)**:
+  - Rozszerzenie tabeli `scenario_triggers` o 6 typów harmonogramu (`once`, `interval`, `daily`, `weekly`, `monthly`, `cron`) oraz kolumny statystyk (`runs_count`, `consecutive_failures`, `last_error`, `state`).
+  - Silnik `ScenarioSchedulerService` implementujący `ScenarioSchedulerInterface` z obsługą strefy `Europe/Warsaw` i podglądem kolejnych 5 terminów uruchomień.
+  - Komenda konsolowa `App\Console\Commands\DispatchDueScenariosCommand` (`php artisan scenarios:dispatch-due`) rejestrowana w harmonogramie co minutę.
+  - Ochrona przed wyścigami: atomowa blokada `Cache::lock('scenarios:dispatch-due', 55)` oraz unikalny `idempotency_key` w `scenario_runs`.
+  - Zabezpieczenie auto-pauzy po 5 kolejnych awariach (`state = error`).
+  - Dedykowany widok zarządzania timerami `/scenarios/{id}/triggers` z testowym uruchamianiem („Uruchom teraz”), przełącznikiem stanu oraz kalkulatorem terminów.
+- **Stabilizacja i diagnostyka (Etap 25)**:
+  - Rozszerzenie polecenia `php artisan agenthub:selftest` o testy rejestru modeli LLM, cyklu życia skilli oraz schedulera scenariuszy.
+  - Aktualizacja dokumentacji `docs/ARCHITECTURE.md`, `docs/UPDATE.md` oraz instrukcji `modules/*/docs/first-setup.md`.
+  - Podbicie wersji platformy do `1.5.7` w pliku `VERSION` oraz `config/agenthub.php`.
+
 ## [1.5.0] - 2026-10-10
 
 ### Dodano (Added)

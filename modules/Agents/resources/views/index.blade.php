@@ -59,11 +59,18 @@
                                     {{ $agent->runtime_type }}
                                 </span>
                             </div>
-                            <div class="flex justify-between py-0.5">
+                            <div class="flex justify-between py-0.5 items-center">
                                 <span class="text-slate-500">Model:</span>
-                                <span class="font-medium text-slate-800 dark:text-slate-200">
-                                    {{ $agent->primary_model }}
-                                </span>
+                                <div class="flex items-center gap-1.5">
+                                    <span class="font-medium text-slate-800 dark:text-slate-200">
+                                        {{ $agent->primary_model }}
+                                    </span>
+                                    @if(! $agent->isModelAvailable())
+                                        <span class="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-rose-100 text-rose-700 dark:bg-rose-950 dark:text-rose-300">
+                                            Model niedostępny
+                                        </span>
+                                    @endif
+                                </div>
                             </div>
                             <div class="flex justify-between py-0.5">
                                 <span class="text-slate-500">Pula kont:</span>

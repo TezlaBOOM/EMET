@@ -34,9 +34,12 @@ class RolesAndPermissionsSeeder extends Seeder
             'telemetry.view',
             'audit.view',
             'system.update',
-            // Nowe uprawnienia v1.5.0
+            // Nowe uprawnienia v1.5.0 i v1.5.7
             'skills.view',
             'skills.manage',
+            'skills.edit',
+            'skills.delete',
+            'skills.purge',
             'chat.group.create',
             'chat.group.manage',
             'scenarios.view',

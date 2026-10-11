@@ -15,6 +15,7 @@
   },
   "menu2": [
     { "id": "providers", "title": "ai.sub_providers", "route": "ai-settings.index", "permission": "ai_settings.manage" },
+    { "id": "models", "title": "ai.sub_models", "route": "ai-settings.models.index", "permission": "ai_settings.manage" },
     { "id": "accounts", "title": "ai.sub_accounts", "route": "ai-settings.accounts", "permission": "ai_settings.manage" },
     { "id": "pools", "title": "ai.sub_pools", "route": "ai-settings.pools", "permission": "ai_settings.manage" },
     { "id": "limits", "title": "ai.sub_limits", "route": "ai-settings.limits", "permission": "ai_settings.manage" }
