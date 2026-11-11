@@ -11,7 +11,9 @@ use App\Contracts\Integrations\McpHubInterface;
 use App\Contracts\Llm\AiGuardrailsInterface;
 use App\Contracts\Llm\LlmGatewayInterface;
 use App\Contracts\Llm\ModelManagementInterface;
+use App\Contracts\Llm\SelfReflectionCriticInterface;
 use App\Contracts\Llm\SemanticCacheInterface;
+use App\Contracts\Memory\DocumentParserInterface;
 use App\Contracts\Memory\HybridRagInterface;
 use App\Contracts\Memory\VectorStoreInterface;
 use App\Contracts\Scenarios\ScenarioEngineInterface;
@@ -29,7 +31,9 @@ use App\Services\Integrations\McpHubService;
 use App\Services\LlmGateway\AiGuardrailsService;
 use App\Services\LlmGateway\LlmGateway;
 use App\Services\LlmGateway\ModelManagementService;
+use App\Services\LlmGateway\SelfReflectionCriticService;
 use App\Services\LlmGateway\SemanticCacheService;
+use App\Services\MemoryService\DocumentParserService;
 use App\Services\MemoryService\HybridRagService;
 use App\Services\MemoryService\MockVectorStore;
 use App\Services\MemoryService\PgVectorStore;
@@ -142,6 +146,16 @@ class AppServiceProvider extends ServiceProvider
         $this->app->singleton(
             FederatedSkillHubInterface::class,
             FederatedSkillHubService::class
+        );
+
+        $this->app->singleton(
+            SelfReflectionCriticInterface::class,
+            SelfReflectionCriticService::class
+        );
+
+        $this->app->singleton(
+            DocumentParserInterface::class,
+            DocumentParserService::class
         );
     }
 

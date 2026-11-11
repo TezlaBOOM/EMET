@@ -13,7 +13,9 @@ use App\Contracts\Integrations\McpHubInterface;
 use App\Contracts\Llm\AiGuardrailsInterface;
 use App\Contracts\Llm\LlmGatewayInterface;
 use App\Contracts\Llm\ModelManagementInterface;
+use App\Contracts\Llm\SelfReflectionCriticInterface;
 use App\Contracts\Llm\SemanticCacheInterface;
+use App\Contracts\Memory\DocumentParserInterface;
 use App\Contracts\Memory\HybridRagInterface;
 use App\Contracts\Memory\VectorStoreInterface;
 use App\Contracts\Scenarios\ScenarioEngineInterface;
@@ -391,6 +393,19 @@ class SelfTestCommand extends Command
             ];
         } catch (\Throwable $e) {
             $checks['finops_chatops_multimodal_hub'] = ['status' => 'warn', 'message' => $e->getMessage()];
+        }
+
+        // 20. Self-Reflection Critic Loop, Strukturalny Parser Dokumentów RAG & Orkiestracja v2.0 (v2.0.0)
+        try {
+            $critic = app(SelfReflectionCriticInterface::class);
+            $docParser = app(DocumentParserInterface::class);
+
+            $checks['v2_self_reflection_and_parser'] = [
+                'status' => ($critic && $docParser) ? 'ok' : 'fail',
+                'message' => 'Autonomiczna Pętla Samokorekty (Self-Reflection Critic), Strukturalny Parser Dokumentów RAG (CSV/HTML/JSON) oraz Orkiestracja FinOps/OTel gotowe (v2.0.0)',
+            ];
+        } catch (\Throwable $e) {
+            $checks['v2_self_reflection_and_parser'] = ['status' => 'warn', 'message' => $e->getMessage()];
         }
 
         if ($isJson) {

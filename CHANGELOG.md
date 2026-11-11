@@ -6,6 +6,17 @@ Format opiera się na [Keep a Changelog](https://keepachangelog.com/pl/1.0.0/).
 ## [Unreleased]
 
 ### Dodano (Added)
+- **Pakiet Autonomiczna Samokorekta, Strukturalny Parser RAG & Orkiestracja v2.0 (Modernizacja v2.0.0)**:
+  - **Autonomiczna Pętla Refleksji i Samokorekty Agentów (`SelfReflectionCriticService`)**:
+    - Nowy kontrakt `App\Contracts\Llm\SelfReflectionCriticInterface` oraz serwis `App\Services\LlmGateway\SelfReflectionCriticService` wpięty w `LlmGateway::executeWithAccount()`.
+    - Automatyczna inspekcja wygenerowanych odpowiedzi pod kątem poprawności strukturalnej JSON (`expect_json`), obecności wymaganych kluczy (`required_keys`) oraz sekcji tematycznych (`required_terms`), wraz z automatyczną naprawą niedomkniętych struktur JSON i ekstrakcją z bloków Markdown.
+  - **Strukturalny Parser Dokumentów i Tabel dla Pipeline'u Ingestii RAG (`DocumentParserService`)**:
+    - Nowy kontrakt `App\Contracts\Memory\DocumentParserInterface` oraz serwis `App\Services\MemoryService\DocumentParserService` zintegrowany bezpośrednio z `EmbeddingService::ingestDocument()`.
+    - Automatyczna detekcja i konwersja tabel CSV, TSV, HTML (`<table><tr><th><td>`) oraz list obiektów JSON do kanonicznych tabel Markdown z zachowaniem nagłówków kolumn i metadanych (`detected_format`, `tables_extracted`, `rows_count`) przed podziałem na chunki i ekstrakcją encji GraphRAG.
+  - **Zunifikowana Orkiestracja FinOps, OpenTelemetry oraz Centrum Kontroli AI v2.0**:
+    - Bezpośrednie wpięcie `WorkspaceFinOpsInterface` oraz `DistributedTracerInterface` do `LlmGateway::complete()`: automatyczne sprawdzanie budżetu przestrzeni roboczej (`workspace_id`), degradacja do darmowego modelu lokalnego przy przekroczeniu limitu, automatyczne księgowanie zużytych tokenów i kosztu USD oraz zapis spanów `llm.complete:{model}` w `telemetry_spans`.
+    - Rozbudowa głównego widoku `Dashboard` (`DashboardController::index`, `modules/Dashboard/resources/views/overview.blade.php`) o pasek KPI **Centrum Kontroli AI v2.0** (Semantic Cache, AI Guardrails & DLP, GraphRAG & MCP Hub, Workspaces FinOps & Evals A/B).
+    - Podbicie wersji platformy do **`2.0.0`** w pliku `VERSION` oraz `config/agenthub.php`.
 - **Pakiet Enterprise FinOps, Kanały ChatOps, Multimodalność & Sfederowany Hub (Modernizacja v1.9.0)**:
   - **Wielodostępność Przestrzeni Roboczych i Budżety Zespołowe (`WorkspaceFinOpsService`)**:
     - Nowy kontrakt `App\Contracts\FinOps\WorkspaceFinOpsInterface`, serwis `App\Services\FinOps\WorkspaceFinOpsService` oraz model `App\Models\Workspace` (`workspaces`).

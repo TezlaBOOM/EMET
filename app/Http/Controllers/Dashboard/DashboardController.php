@@ -6,9 +6,16 @@ namespace App\Http\Controllers\Dashboard;
 
 use App\Contracts\Telemetry\TelemetryCollectorInterface;
 use App\Http\Controllers\Controller;
+use App\Models\AgentEvalRun;
+use App\Models\LlmGuardrailEvent;
+use App\Models\LlmSemanticCacheEntry;
+use App\Models\McpServer;
+use App\Models\MemoryEntity;
 use App\Models\ModelPricing;
+use App\Models\Workspace;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\View\View;
 
 class DashboardController extends Controller
@@ -27,6 +34,16 @@ class DashboardController extends Controller
         $costs = $this->telemetry->getCostSummary($period);
         $integrations = $this->telemetry->getIntegrationsHealthSummary();
 
+        $v2Summary = [
+            'cache_saved_usd' => Schema::hasTable('llm_semantic_cache_entries') ? (float) LlmSemanticCacheEntry::sum('saved_cost_usd') : 0.0,
+            'cache_hits' => Schema::hasTable('llm_semantic_cache_entries') ? (int) LlmSemanticCacheEntry::sum('hit_count') : 0,
+            'guardrail_events' => Schema::hasTable('llm_guardrail_events') ? LlmGuardrailEvent::count() : 0,
+            'graph_entities' => Schema::hasTable('memory_entities') ? MemoryEntity::count() : 0,
+            'mcp_servers' => Schema::hasTable('mcp_servers') ? McpServer::count() : 0,
+            'eval_runs' => Schema::hasTable('agent_eval_runs') ? AgentEvalRun::count() : 0,
+            'workspaces' => Schema::hasTable('workspaces') ? Workspace::count() : 0,
+        ];
+
         return view('module-dashboard::overview', [
             'period' => $period,
             'activeAgents' => $activeAgents,
@@ -34,6 +51,7 @@ class DashboardController extends Controller
             'performance' => $performance,
             'costs' => $costs,
             'integrations' => $integrations,
+            'v2Summary' => $v2Summary,
         ]);
     }
 

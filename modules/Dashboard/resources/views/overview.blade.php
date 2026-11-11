@@ -99,6 +99,34 @@
             </div>
         </div>
 
+        <!-- Pasek Centrum Kontroli AI v2.0 -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div class="p-4 rounded-2xl bg-indigo-50/60 dark:bg-indigo-950/30 border border-indigo-200/70 dark:border-indigo-900/60">
+                <div class="text-[11px] font-semibold uppercase tracking-wider text-indigo-600 dark:text-indigo-400">Semantic Cache</div>
+                <div class="text-lg font-bold text-slate-900 dark:text-white mt-1">
+                    ${{ number_format($v2Summary['cache_saved_usd'] ?? 0, 4) }} ({{ $v2Summary['cache_hits'] ?? 0 }} hits)
+                </div>
+            </div>
+            <div class="p-4 rounded-2xl bg-emerald-50/60 dark:bg-emerald-950/30 border border-emerald-200/70 dark:border-emerald-900/60">
+                <div class="text-[11px] font-semibold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">AI Guardrails & DLP</div>
+                <div class="text-lg font-bold text-slate-900 dark:text-white mt-1">
+                    {{ $v2Summary['guardrail_events'] ?? 0 }} zdarzeń ochrony
+                </div>
+            </div>
+            <div class="p-4 rounded-2xl bg-amber-50/60 dark:bg-amber-950/30 border border-amber-200/70 dark:border-amber-900/60">
+                <div class="text-[11px] font-semibold uppercase tracking-wider text-amber-600 dark:text-amber-400">GraphRAG & MCP Hub</div>
+                <div class="text-lg font-bold text-slate-900 dark:text-white mt-1">
+                    {{ $v2Summary['graph_entities'] ?? 0 }} encji | {{ $v2Summary['mcp_servers'] ?? 0 }} MCP
+                </div>
+            </div>
+            <div class="p-4 rounded-2xl bg-purple-50/60 dark:bg-purple-950/30 border border-purple-200/70 dark:border-purple-900/60">
+                <div class="text-[11px] font-semibold uppercase tracking-wider text-purple-600 dark:text-purple-400">FinOps & Evals A/B</div>
+                <div class="text-lg font-bold text-slate-900 dark:text-white mt-1">
+                    {{ $v2Summary['workspaces'] ?? 0 }} Workspaces | {{ $v2Summary['eval_runs'] ?? 0 }} Evals
+                </div>
+            </div>
+        </div>
+
         <!-- Sekcja 2 kolumn: Aktywni agenci i Zdrowie integracji -->
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <!-- Aktywni agenci (2 kolumny) -->

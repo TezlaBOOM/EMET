@@ -6,6 +6,7 @@ namespace App\Services\MemoryService;
 
 use App\Contracts\Llm\EmbeddingRequest;
 use App\Contracts\Llm\LlmGatewayInterface;
+use App\Contracts\Memory\DocumentParserInterface;
 use App\Contracts\Memory\HybridRagInterface;
 use App\Contracts\Memory\VectorStoreInterface;
 use App\Models\MemoryChunk;
@@ -19,14 +20,18 @@ class EmbeddingService
 {
     protected HybridRagInterface $hybridRag;
 
+    protected DocumentParserInterface $documentParser;
+
     public function __construct(
         protected LlmGatewayInterface $llmGateway,
         protected TextChunker $chunker,
         protected QdrantVectorStore $qdrantStore,
         protected PgVectorStore $pgVectorStore,
         ?HybridRagInterface $hybridRag = null,
+        ?DocumentParserInterface $documentParser = null,
     ) {
         $this->hybridRag = $hybridRag ?? new HybridRagService($llmGateway, $qdrantStore, $pgVectorStore);
+        $this->documentParser = $documentParser ?? new DocumentParserService;
     }
 
     public function getStore(MemoryCollection $collection): VectorStoreInterface
@@ -50,7 +55,15 @@ class EmbeddingService
     public function ingestDocument(MemoryCollection $collection, string $title, string $content, array $metadata = []): array
     {
         $store = $this->getStore($collection);
-        $chunksData = $this->chunker->chunk($content);
+        $parsedDoc = $this->documentParser->parseToStructuredMarkdown(
+            rawContent: $content,
+            mimeOrExtension: isset($metadata['format']) ? (string) $metadata['format'] : null,
+            title: $title
+        );
+        $normalizedContent = $parsedDoc['normalized_markdown'];
+        $metadata = array_merge($metadata, $parsedDoc['metadata']);
+
+        $chunksData = $this->chunker->chunk($normalizedContent);
         $savedChunks = [];
 
         foreach ($chunksData as $chunkData) {

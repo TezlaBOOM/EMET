@@ -1,0 +1,174 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Tests\Feature\V2AutonomousAndRagParser;
+
+use App\Contracts\Llm\CompletionRequest;
+use App\Contracts\Llm\LlmGatewayInterface;
+use App\Contracts\Llm\SelfReflectionCriticInterface;
+use App\Contracts\Memory\DocumentParserInterface;
+use App\Contracts\Telemetry\DistributedTracerInterface;
+use App\Models\LlmAccount;
+use App\Models\LlmProvider;
+use App\Models\MemoryCollection;
+use App\Models\Workspace;
+use App\Services\MemoryService\EmbeddingService;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Http;
+use Tests\TestCase;
+
+class V2AutonomousCriticParserAndOrchestrationTest extends TestCase
+{
+    use RefreshDatabase;
+
+    public function test_self_reflection_critic_repairs_broken_json_and_populates_missing_required_keys(): void
+    {
+        /** @var SelfReflectionCriticInterface $critic */
+        $critic = app(SelfReflectionCriticInterface::class);
+
+        $brokenJsonOutput = "```json\n{\"status\": \"ok\", \"summary\": \"Raport gotowy\"\n```";
+
+        $inspection = $critic->inspectResponse($brokenJsonOutput, [
+            'expect_json' => true,
+            'required_keys' => ['status', 'summary', 'confidence'],
+        ]);
+
+        $this->assertNotNull($inspection['repaired_content']);
+        $decoded = json_decode((string) $inspection['repaired_content'], true);
+        $this->assertIsArray($decoded);
+        $this->assertSame('ok', $decoded['status']);
+        $this->assertArrayHasKey('confidence', $decoded);
+    }
+
+    public function test_document_parser_converts_csv_and_html_tables_into_structured_markdown_for_rag_ingestion(): void
+    {
+        /** @var DocumentParserInterface $parser */
+        $parser = app(DocumentParserInterface::class);
+
+        $csv = "Service,Port,Status\nqdrant,6333,healthy\nollama,11434,healthy";
+        $parsedCsv = $parser->parseToStructuredMarkdown($csv, 'csv', 'Usługi Lokalne');
+
+        $this->assertSame('csv', $parsedCsv['format']);
+        $this->assertSame(1, $parsedCsv['tables_extracted']);
+        $this->assertSame(2, $parsedCsv['rows_count']);
+        $this->assertStringContainsString('| Service | Port | Status |', $parsedCsv['normalized_markdown']);
+        $this->assertStringContainsString('| qdrant | 6333 | healthy |', $parsedCsv['normalized_markdown']);
+
+        $html = '<html><body><h1>Macierz Modeli</h1><table><tr><th>Model</th><th>Kontekst</th></tr><tr><td>Gemini 2.5 Pro</td><td>1000000</td></tr></table></body></html>';
+        $parsedHtml = $parser->parseToStructuredMarkdown($html, 'html');
+
+        $this->assertSame('html', $parsedHtml['format']);
+        $this->assertSame(1, $parsedHtml['tables_extracted']);
+        $this->assertStringContainsString('| Model | Kontekst |', $parsedHtml['normalized_markdown']);
+        $this->assertStringContainsString('| Gemini 2.5 Pro | 1000000 |', $parsedHtml['normalized_markdown']);
+
+        $provider = LlmProvider::create([
+            'name' => 'Ollama',
+            'slug' => 'ollama',
+            'driver' => 'ollama',
+            'base_url' => 'http://localhost:11434',
+            'default_model' => 'nomic-embed-text',
+            'is_enabled' => true,
+        ]);
+
+        LlmAccount::create([
+            'provider_id' => $provider->id,
+            'name' => 'Local Ollama',
+            'api_key' => 'local',
+            'current_status' => 'active',
+        ]);
+
+        Http::fake([
+            '*' => Http::response(['embedding' => array_fill(0, 16, 0.1)], 200),
+        ]);
+
+        $collection = MemoryCollection::create([
+            'name' => 'Tabela Infrastruktury',
+            'slug' => 'tabela-infrastruktury',
+            'vector_store' => 'qdrant',
+            'embedding_provider_id' => $provider->id,
+            'embedding_model' => 'nomic-embed-text',
+            'dimensions' => 16,
+        ]);
+
+        /** @var EmbeddingService $embeddingService */
+        $embeddingService = app(EmbeddingService::class);
+        $chunks = $embeddingService->ingestDocument($collection, 'Usługi CSV', $csv, ['format' => 'csv']);
+
+        $this->assertNotEmpty($chunks);
+        $this->assertSame('csv', $chunks[0]->metadata['detected_format'] ?? null);
+        $this->assertSame(1, $chunks[0]->metadata['tables_extracted'] ?? 0);
+    }
+
+    public function test_llm_gateway_orchestrates_workspace_finops_downgrade_and_opentelemetry_spans(): void
+    {
+        $ollamaProvider = LlmProvider::create([
+            'name' => 'Ollama Local',
+            'slug' => 'ollama',
+            'driver' => 'ollama',
+            'base_url' => 'http://localhost:11434',
+            'default_model' => 'llama3.2',
+            'is_enabled' => true,
+        ]);
+
+        LlmAccount::create([
+            'provider_id' => $ollamaProvider->id,
+            'name' => 'Local Ollama Account',
+            'api_key' => 'ollama-local',
+            'current_status' => 'active',
+        ]);
+
+        Http::fake([
+            '*/api/chat*' => Http::response([
+                'model' => 'llama3.2',
+                'message' => ['role' => 'assistant', 'content' => '{"status":"ok","mode":"local_fallback"'],
+                'prompt_eval_count' => 25,
+                'eval_count' => 15,
+            ], 200),
+        ]);
+
+        $workspace = Workspace::create([
+            'name' => 'Zespół Analityczny',
+            'slug' => 'zespol-analityczny',
+            'daily_budget_usd' => 5.00,
+            'monthly_budget_usd' => 100.00,
+            'daily_token_limit' => 100000,
+            'spent_today_usd' => 6.50,
+            'fallback_to_local_on_exceed' => true,
+            'fallback_model' => 'llama3.2',
+            'is_active' => true,
+        ]);
+
+        /** @var DistributedTracerInterface $tracer */
+        $tracer = app(DistributedTracerInterface::class);
+        $trace = $tracer->startTrace('api.request', 'agenthub-core');
+
+        /** @var LlmGatewayInterface $gateway */
+        $gateway = app(LlmGatewayInterface::class);
+
+        $response = $gateway->complete(new CompletionRequest(
+            messages: [['role' => 'user', 'content' => 'Zwróć status JSON']],
+            model: 'gpt-4o',
+            metadata: [
+                'workspace_id' => $workspace->id,
+                'trace_id' => $trace['trace_id'],
+                'parent_span_id' => $trace['root_span_id'],
+                'skip_cache' => true,
+                'self_reflection' => [
+                    'expect_json' => true,
+                    'required_keys' => ['status', 'mode'],
+                ],
+            ]
+        ));
+
+        $decoded = json_decode($response->content, true);
+        $this->assertIsArray($decoded);
+        $this->assertSame('local_fallback', $decoded['mode'] ?? null);
+        $this->assertGreaterThan(0, $workspace->fresh()->tokens_used_today);
+
+        $waterfall = $tracer->getWaterfallTrace($trace['trace_id']);
+        $this->assertGreaterThanOrEqual(2, $waterfall['span_count']);
+    }
+}
+

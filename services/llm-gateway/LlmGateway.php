@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services\LlmGateway;
 
+use App\Contracts\FinOps\WorkspaceFinOpsInterface;
 use App\Contracts\Llm\AiGuardrailsInterface;
 use App\Contracts\Llm\CompletionRequest;
 use App\Contracts\Llm\CompletionResponse;
@@ -12,11 +13,15 @@ use App\Contracts\Llm\EmbeddingRequest;
 use App\Contracts\Llm\EmbeddingResponse;
 use App\Contracts\Llm\LlmDriverInterface;
 use App\Contracts\Llm\LlmGatewayInterface;
+use App\Contracts\Llm\SelfReflectionCriticInterface;
 use App\Contracts\Llm\SemanticCacheInterface;
+use App\Contracts\Telemetry\DistributedTracerInterface;
 use App\Models\LlmAccount;
 use App\Models\LlmAccountPool;
 use App\Models\LlmCall;
 use App\Models\ModelPricing;
+use App\Models\Workspace;
+use App\Services\FinOps\WorkspaceFinOpsService;
 use App\Services\LlmGateway\Drivers\AnthropicDriver;
 use App\Services\LlmGateway\Drivers\GeminiDriver;
 use App\Services\LlmGateway\Drivers\LmStudioDriver;
@@ -32,8 +37,10 @@ use App\Services\LlmGateway\Strategies\PriorityFallbackStrategy;
 use App\Services\LlmGateway\Strategies\RoundRobinStrategy;
 use App\Services\LlmGateway\Strategies\RoutingStrategyInterface;
 use App\Services\LlmGateway\Strategies\WeightedStrategy;
+use App\Services\TelemetryCollector\DistributedTracerService;
 use Exception;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 
 class LlmGateway implements LlmGatewayInterface
@@ -52,12 +59,24 @@ class LlmGateway implements LlmGatewayInterface
 
     protected AiGuardrailsInterface $guardrails;
 
+    protected SelfReflectionCriticInterface $critic;
+
+    protected WorkspaceFinOpsInterface $finOps;
+
+    protected DistributedTracerInterface $tracer;
+
     public function __construct(
         ?SemanticCacheInterface $semanticCache = null,
         ?AiGuardrailsInterface $guardrails = null,
+        ?SelfReflectionCriticInterface $critic = null,
+        ?WorkspaceFinOpsInterface $finOps = null,
+        ?DistributedTracerInterface $tracer = null,
     ) {
         $this->semanticCache = $semanticCache ?? new SemanticCacheService;
         $this->guardrails = $guardrails ?? new AiGuardrailsService;
+        $this->critic = $critic ?? new SelfReflectionCriticService;
+        $this->finOps = $finOps ?? new WorkspaceFinOpsService;
+        $this->tracer = $tracer ?? new DistributedTracerService;
 
         $this->drivers = [
             'gemini' => new GeminiDriver,
@@ -114,6 +133,27 @@ class LlmGateway implements LlmGatewayInterface
         $attempts = 0;
         $maxAttempts = 3;
         $excludedAccountIds = [];
+
+        // 0. Orkiestracja FinOps Quotas (v2.0.0): sprawdzenie budżetu przestrzeni roboczej przed doborem konta
+        if (! empty($request->metadata['workspace_id']) && Schema::hasTable('workspaces')) {
+            $workspace = Workspace::find((int) $request->metadata['workspace_id']);
+            if ($workspace !== null) {
+                $resolved = $this->finOps->resolveEffectiveModel($workspace, (string) ($request->model ?: 'gpt-4o-mini'));
+                if ($resolved['downgraded_to_local']) {
+                    $request = new CompletionRequest(
+                        messages: $request->messages,
+                        model: $resolved['effective_model'],
+                        temperature: $request->temperature,
+                        maxTokens: $request->maxTokens,
+                        tools: $request->tools,
+                        metadata: array_merge($request->metadata, [
+                            'finops_downgraded' => true,
+                            'finops_reason' => $resolved['reason'],
+                        ]),
+                    );
+                }
+            }
+        }
 
         // 1. Jeśli przekazano konkretne konto, używamy go bezpośrednio
         if ($specificAccount !== null) {
@@ -396,9 +436,27 @@ class LlmGateway implements LlmGatewayInterface
         $driver = $this->getDriver($driverName);
         $response = $driver->complete($effectiveRequest, $account);
 
+        // 3b. Pętla samokorekty Self-Reflection Critic (v2.0.0)
+        if (! empty($effectiveRequest->metadata['self_reflection']) && is_array($effectiveRequest->metadata['self_reflection'])) {
+            $critique = $this->critic->inspectResponse($response->content, $effectiveRequest->metadata['self_reflection']);
+            if ($critique['repaired_content'] !== null) {
+                $response->content = $critique['repaired_content'];
+            }
+            $response->raw = array_merge($response->raw, [
+                'self_reflection' => $critique,
+            ]);
+        }
+
         $durationMs = (int) round((microtime(true) - $startTime) * 1000);
         $cost = ModelPricing::calculateCost($response->model, $response->promptTokens, $response->completionTokens);
         $response->estimatedCost = $cost;
+
+        if (! empty($effectiveRequest->metadata['workspace_id']) && Schema::hasTable('workspaces')) {
+            $workspace = Workspace::find((int) $effectiveRequest->metadata['workspace_id']);
+            if ($workspace !== null) {
+                $this->finOps->recordUsage($workspace, $response->totalTokens, $cost);
+            }
+        }
 
         // 4. Zapis odpowiedzi w Semantic Cache (w formie zmaskowanej przez DLP)
         $this->semanticCache->store($effectiveRequest, $response);
@@ -459,5 +517,25 @@ class LlmGateway implements LlmGatewayInterface
             'error_message' => $errorMessage,
             'created_at' => now(),
         ]);
+
+        // Automatyczna rejestracja spanu OpenTelemetry dla wywołań LLM ze skorelowanym trace_id (v2.0.0)
+        if (! empty($request->metadata['trace_id'])) {
+            $this->tracer->recordSpan(
+                traceId: (string) $request->metadata['trace_id'],
+                name: "llm.complete:{$model}",
+                serviceName: 'llm-gateway',
+                durationMs: max(1, $durationMs),
+                parentSpanId: isset($request->metadata['parent_span_id']) ? (string) $request->metadata['parent_span_id'] : null,
+                status: $status === 'failed' ? 'ERROR' : 'OK',
+                attributes: [
+                    'model' => $model,
+                    'status' => $status,
+                    'prompt_tokens' => $promptTokens,
+                    'completion_tokens' => $completionTokens,
+                    'estimated_cost_usd' => $estimatedCost,
+                ],
+                errorMessage: $errorMessage,
+            );
+        }
     }
 }

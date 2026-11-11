@@ -148,5 +148,17 @@ Zarządzanie schematami i timerami (`App\Contracts\Scenarios\ScenarioSchedulerIn
 - **Sfederowany Katalog Skilli i Szablonów Ed25519 (`App\Contracts\Skills\FederatedSkillHubInterface`):**
   - Weryfikacja podpisów kryptograficznych `libsodium` Ed25519 (`sodium_crypto_sign_verify_detached`) oraz sum kontrolnych SHA-256 paczek z zaufanych rejestrów (`federated_registries`).
 
+---
+
+## 11. Autonomiczna Pętla Samokorekty, Strukturalny Parser RAG & Orkiestracja v2.0 (v2.0.0)
+
+- **Autonomiczna Pętla Refleksji i Samokorekty (`App\Contracts\Llm\SelfReflectionCriticInterface`):**
+  - Walidacja i automatyczna naprawa wyjść ustrukturyzowanych (JSON, wymagane klucze i sekcje) bezpośrednio w potoku `LlmGateway`.
+- **Strukturalny Parser Dokumentów i Tabel (`App\Contracts\Memory\DocumentParserInterface`):**
+  - Konwersja plików CSV, TSV, tabel HTML i tablic JSON do ustrukturyzowanych tabel Markdown z zachowaniem nagłówków przed etapem chunkingu i ekstrakcji GraphRAG w `EmbeddingService`.
+- **Zunifikowana Orkiestracja FinOps & OpenTelemetry w `LlmGateway`:**
+  - Automatyczna weryfikacja budżetu `Workspace` i przełączanie na model lokalny, księgowanie kosztów po wykonaniu oraz rejestracja spanów OpenTelemetry dla każdego wywołania ze skorelowanym `trace_id`.
+
+
 
 
