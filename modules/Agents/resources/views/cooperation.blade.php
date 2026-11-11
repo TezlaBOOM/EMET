@@ -296,8 +296,9 @@
                                 <form method="POST" action="{{ route('agents.cooperation.cooldown', $activeCooperation) }}">
                                     @csrf
                                     <button type="submit"
+                                            title="Czyści przeciągniętą historię czatu, aby agenci nie zaczęli zmyślać, jednocześnie zapisując wszystkie dotychczasowe ustalenia w Pamięci Kontekstowej"
                                             class="px-3 py-1.5 rounded-xl bg-sky-500/20 hover:bg-sky-500/30 text-sky-300 border border-sky-500/30 text-xs font-semibold transition flex items-center gap-1.5">
-                                        <span>❄️</span>
+                                        <span>🔄🧠</span>
                                         <span>{{ __('agents.cooperation.cooldown_btn') }}</span>
                                     </button>
                                 </form>
@@ -478,6 +479,23 @@
                             <p class="text-xs text-rose-200">
                                 {{ $lastEvent['message'] ?? 'Przekroczono bezpieczne parametry pracy zespołu. Dalsza pętla została zatrzymana.' }}
                             </p>
+                        </div>
+                    @endif
+
+                    @if($activeCooperation->preserved_context)
+                        <div class="bg-emerald-950/90 border border-emerald-500/40 rounded-2xl p-5 text-emerald-100 shadow-sm space-y-2">
+                            <div class="flex flex-wrap items-center justify-between gap-2">
+                                <span class="text-xs font-bold uppercase tracking-wider text-emerald-300 flex items-center gap-2">
+                                    <span>🧠 Zachowany Kontekst Rozmowy po Przeładowaniu Czatu (Pamięć Anty-Halucynacyjna)</span>
+                                </span>
+                                <span class="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-200 text-[11px] font-mono">
+                                    Przeładowania czatu: #{{ $activeCooperation->context_reloads_count }}
+                                </span>
+                            </div>
+                            <p class="text-[11px] text-emerald-300/80">
+                                Ten skondensowany kontekst jest automatycznie wstrzykiwany do każdego agenta po przeładowaniu czatu — dzięki temu agenci pamiętają wszystkie ustalenia, ale nie zmyślają od nadmiaru historii.
+                            </p>
+                            <pre class="whitespace-pre-wrap text-xs leading-relaxed text-emerald-100 font-sans bg-slate-950/60 p-3.5 rounded-xl border border-emerald-500/20">{{ $activeCooperation->preserved_context }}</pre>
                         </div>
                     @endif
 

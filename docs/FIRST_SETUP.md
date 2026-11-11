@@ -1,7 +1,7 @@
 # Podręcznik Pierwszej Konfiguracji AgentHub (Wydanie 1.5.0)
 
 > Niniejszy dokument jest generowany automatycznie poleceniem `php artisan docs:first-setup --build`.
-> Ostatnia aktualizacja: 2026-11-11 23:14:31
+> Ostatnia aktualizacja: 2026-11-11 23:54:09
 
 ## Spis treści
 

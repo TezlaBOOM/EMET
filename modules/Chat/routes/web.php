@@ -10,5 +10,6 @@ Route::middleware(['web', 'auth', 'permission:agents.chat'])->prefix('chat')->gr
     Route::post('/', [ChatController::class, 'store'])->name('chat.store');
     Route::post('/{conversation}/messages', [ChatController::class, 'sendMessage'])->name('chat.messages.send');
     Route::post('/{conversation}/stream', [ChatController::class, 'streamMessage'])->name('chat.messages.stream');
+    Route::post('/{conversation}/reload-context', [ChatController::class, 'reloadWithContext'])->name('chat.reload-context');
     Route::delete('/{conversation}', [ChatController::class, 'destroy'])->name('chat.destroy');
 });

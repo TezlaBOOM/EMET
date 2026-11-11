@@ -46,7 +46,9 @@ class AgentCooperation extends Model
         'status',
         'total_tokens_used',
         'total_turns_executed',
+        'context_reloads_count',
         'last_task_prompt',
+        'preserved_context',
         'final_synthesis',
         'discussion_log',
         'overheat_events',
@@ -68,6 +70,7 @@ class AgentCooperation extends Model
             'current_temperature' => 'float',
             'total_tokens_used' => 'integer',
             'total_turns_executed' => 'integer',
+            'context_reloads_count' => 'integer',
             'discussion_log' => 'array',
             'overheat_events' => 'array',
             'cooled_down_at' => 'datetime',
@@ -103,4 +106,3 @@ class AgentCooperation extends Model
         return $ordered;
     }
 }
-

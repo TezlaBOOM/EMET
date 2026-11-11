@@ -36,7 +36,9 @@ return new class extends Migration
                 $table->string('status')->default('idle'); // idle, running, completed, cooled_down, overheated
                 $table->unsignedInteger('total_tokens_used')->default(0);
                 $table->unsignedInteger('total_turns_executed')->default(0);
+                $table->unsignedInteger('context_reloads_count')->default(0);
                 $table->text('last_task_prompt')->nullable();
+                $table->longText('preserved_context')->nullable();
                 $table->longText('final_synthesis')->nullable();
                 $table->json('discussion_log')->nullable();
                 $table->json('overheat_events')->nullable();
@@ -51,4 +53,3 @@ return new class extends Migration
         Schema::dropIfExists('agent_cooperations');
     }
 };
-

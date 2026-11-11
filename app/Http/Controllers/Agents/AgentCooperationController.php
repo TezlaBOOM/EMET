@@ -141,9 +141,13 @@ class AgentCooperationController extends Controller
             ->with('status', __('agents.cooperation.guard_updated_success'));
     }
 
-    public function cooldown(AgentCooperation $cooperation): RedirectResponse
+    public function cooldown(Request $request, AgentCooperation $cooperation): RedirectResponse
     {
-        $this->cooperationService->cooldown($cooperation);
+        $customNote = $request->input('custom_context_note');
+        $this->cooperationService->cooldown(
+            $cooperation,
+            is_string($customNote) && trim($customNote) !== '' ? trim($customNote) : null
+        );
 
         return redirect()
             ->route('agents.cooperation.index', ['cooperation_id' => $cooperation->id])
@@ -159,4 +163,3 @@ class AgentCooperationController extends Controller
             ->with('status', __('agents.cooperation.deleted_success'));
     }
 }
-

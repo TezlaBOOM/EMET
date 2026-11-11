@@ -37,8 +37,9 @@ interface AgentCooperationInterface
     ): array;
 
     /**
-     * Schładza układ kooperacji (Cooldown Reset), resetując temperaturę do wartości nominalnej 22.0°C.
+     * Przeładowuje czat kooperacji (gdy rozmowa zaczyna się przeciągać i grozi halucynacjami),
+     * kondensując dotychczasowe ustalenia do skondensowanej pamięci kontekstowej (preserved_context)
+     * i czyszcząc nadmiarową historię wiadomości.
      */
-    public function cooldown(AgentCooperation $cooperation): AgentCooperation;
+    public function cooldown(AgentCooperation $cooperation, ?string $customContextNote = null): AgentCooperation;
 }
-

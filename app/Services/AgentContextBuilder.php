@@ -22,8 +22,13 @@ class AgentContextBuilder
     ): array {
         $messages = [];
 
-        // 1. Prompt systemowy oraz wiedza z pamięci wektorowej
+        // 1. Prompt systemowy oraz wiedza z pamięci wektorowej i przeładowanego kontekstu czatu
         $systemPrompt = $agent->system_prompt ?? '';
+
+        if ($conversation !== null && ! empty($conversation->settings['preserved_context_summary'])) {
+            $preservedSummary = trim((string) $conversation->settings['preserved_context_summary']);
+            $systemPrompt = trim($systemPrompt."\n\n=== ZACHOWANY KONTEKST PO PRZEŁADOWANIU CZATU (PAMIĘĆ ANTY-HALUCYNACYJNA — NIE ZMYŚLAJ FAKTÓW SPOZA USTALEŃ) ===\n".$preservedSummary);
+        }
 
         if (! empty($retrievedMemory)) {
             $memorySection = "\n\nKontekst z bazy wiedzy:\n".trim($retrievedMemory);

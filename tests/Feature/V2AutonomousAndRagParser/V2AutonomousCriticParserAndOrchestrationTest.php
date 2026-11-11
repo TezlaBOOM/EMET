@@ -12,12 +12,15 @@ use App\Contracts\Telemetry\DistributedTracerInterface;
 use App\Models\Agent;
 use App\Models\AgentCooperation;
 use App\Models\AgentSkill;
+use App\Models\ChatConversation;
+use App\Models\ChatMessage;
 use App\Models\LlmAccount;
 use App\Models\LlmProvider;
 use App\Models\MemoryCollection;
 use App\Models\Skill;
 use App\Models\User;
 use App\Models\Workspace;
+use App\Services\AgentContextBuilder;
 use App\Services\MemoryService\EmbeddingService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
@@ -308,14 +311,60 @@ class V2AutonomousCriticParserAndOrchestrationTest extends TestCase
         $this->assertSame('overheated', $cooperation->thermal_status);
         $this->assertNotEmpty($cooperation->overheat_events);
         $this->assertStringContainsString('SYNTEZA AWARYJNA', (string) $cooperation->final_synthesis);
+        $this->assertNotEmpty($cooperation->preserved_context);
+        $this->assertGreaterThanOrEqual(1, $cooperation->context_reloads_count);
 
-        // 3. Schłodzenie układu (Cooldown Reset)
-        $cooldownResponse = $this->actingAs($user)->post(route('agents.cooperation.cooldown', $cooperation));
+        // 3. Przeładowanie czatu z zachowaniem kontekstu (aby agenci nie zmyślali po przeciągnięciu rozmowy)
+        $cooldownResponse = $this->actingAs($user)->post(route('agents.cooperation.cooldown', $cooperation), [
+            'custom_context_note' => 'Zachowaj architekturę OAuth2 + mTLS.',
+        ]);
         $cooldownResponse->assertRedirect();
         $cooperation->refresh();
 
         $this->assertSame(22.0, $cooperation->current_temperature);
         $this->assertSame('nominal', $cooperation->thermal_status);
         $this->assertSame('cooled_down', $cooperation->status);
+        $this->assertStringContainsString('OAuth2 + mTLS', (string) $cooperation->preserved_context);
+        $this->assertCount(1, $cooperation->discussion_log ?? []);
+
+        // 4. Przeładowanie standardowego czatu 1-na-1 z zachowaniem kontekstu (ChatController::reloadWithContext)
+        Permission::findOrCreate('agents.chat');
+        $user->givePermissionTo('agents.chat');
+
+        $conversation = ChatConversation::create([
+            'id' => '00000000-0000-0000-0000-000000000123',
+            'user_id' => $user->id,
+            'agent_id' => $agentA->id,
+            'title' => 'Długa rozmowa architektoniczna',
+        ]);
+
+        ChatMessage::create([
+            'id' => '00000000-0000-0000-0000-000000000124',
+            'conversation_id' => $conversation->id,
+            'role' => 'user',
+            'content' => 'Używamy bazy PostgreSQL 17 oraz Qdrant na porcie 6333.',
+            'created_at' => now()->subMinutes(5),
+        ]);
+
+        ChatMessage::create([
+            'id' => '00000000-0000-0000-0000-000000000125',
+            'conversation_id' => $conversation->id,
+            'role' => 'assistant',
+            'content' => 'Przyjąłem: PostgreSQL 17 + Qdrant 6333 skonfigurowane jako główny klaster pamięci.',
+            'created_at' => now()->subMinutes(4),
+        ]);
+
+        $reloadChatResp = $this->actingAs($user)->post(route('chat.reload-context', $conversation));
+        $reloadChatResp->assertRedirect();
+
+        $conversation->refresh();
+        $this->assertSame(1, $conversation->settings['context_reloads_count'] ?? 0);
+        $this->assertStringContainsString('PostgreSQL 17', $conversation->settings['preserved_context_summary'] ?? '');
+        $this->assertCount(1, $conversation->messages);
+
+        /** @var AgentContextBuilder $builder */
+        $builder = app(AgentContextBuilder::class);
+        $builtMessages = $builder->build($agentA, 'Jakiej bazy używamy?', $conversation);
+        $this->assertStringContainsString('PostgreSQL 17', $builtMessages[0]['content'] ?? '');
     }
 }

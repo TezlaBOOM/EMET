@@ -235,6 +235,78 @@ class ChatController extends Controller
         return $response;
     }
 
+    public function reloadWithContext(Request $request, ChatConversation $conversation): RedirectResponse
+    {
+        if ($conversation->user_id !== Auth::id()) {
+            abort(403);
+        }
+
+        $existingMessages = $conversation->messages()->orderBy('created_at')->get();
+        $settings = $conversation->settings ?? [];
+        $reloadsCount = ((int) ($settings['context_reloads_count'] ?? 0)) + 1;
+
+        $summaryLines = [];
+        $summaryLines[] = "📌 [PAMIĘĆ KONTEKSTOWA ROZMOWY – PRZEŁADOWANIE #{$reloadsCount} (".now()->format('Y-m-d H:i:s').')]';
+
+        if (! empty($settings['preserved_context_summary'])) {
+            $summaryLines[] = '• Poprzedni skondensowany kontekst: '.mb_substr(trim((string) $settings['preserved_context_summary']), 0, 500);
+        }
+
+        $userMessages = $existingMessages->where('role', 'user')->take(-4);
+        if ($userMessages->isNotEmpty()) {
+            $summaryLines[] = '• Kluczowe polecenia i intencje użytkownika:';
+            foreach ($userMessages as $uMsg) {
+                $summaryLines[] = '  - '.mb_substr(trim((string) $uMsg->content), 0, 220);
+            }
+        }
+
+        $assistantMessages = $existingMessages->where('role', 'assistant')->take(-3);
+        if ($assistantMessages->isNotEmpty()) {
+            $summaryLines[] = '• Najważniejsze ustalenia i odpowiedzi asystenta:';
+            foreach ($assistantMessages as $aMsg) {
+                $summaryLines[] = '  - '.mb_substr(trim((string) $aMsg->content), 0, 260);
+            }
+        }
+
+        $customNote = $request->input('custom_context_note');
+        if (is_string($customNote) && trim($customNote) !== '') {
+            $summaryLines[] = '• Dodatkowa notatka kontekstowa użytkownika: '.trim($customNote);
+        }
+
+        $preservedSummary = implode("\n", $summaryLines);
+
+        $settings['preserved_context_summary'] = $preservedSummary;
+        $settings['context_reloads_count'] = $reloadsCount;
+        $settings['last_reloaded_at'] = now()->toIso8601String();
+
+        $conversation->update([
+            'settings' => $settings,
+        ]);
+
+        // Czyszczenie przeciążonej historii czatu i wstawienie czystego punktu kontrolnego z zachowanym kontekstem
+        $conversation->messages()->delete();
+
+        ChatMessage::create([
+            'id' => (string) Str::uuid(),
+            'conversation_id' => $conversation->id,
+            'role' => 'assistant',
+            'content' => "🔄 **Przeładowano czat z zachowaniem kontekstu (Przeładowanie #{$reloadsCount})**\n"
+                .'Okno rozmowy zostało oczyszczone z nadmiarowej historii, aby zapobiec przegrzaniu kontekstu i halucynacjom modelu. '
+                ."Poniższe ustalenia zostały trwale przypięte do pamięci systemowej agenta:\n\n"
+                .$preservedSummary,
+            'metadata' => [
+                'model' => 'context-guard',
+                'latency_ms' => 1,
+                'context_reload' => true,
+            ],
+            'created_at' => now(),
+        ]);
+
+        return redirect()
+            ->route('chat.index', ['conversation_id' => $conversation->id])
+            ->with('status', 'Czat został przeładowany ze świeżym oknem uwagi – kluczowy kontekst rozmowy został zachowany.');
+    }
+
     public function destroy(ChatConversation $conversation): RedirectResponse
     {
         if ($conversation->user_id !== Auth::id()) {
@@ -297,10 +369,15 @@ class ChatController extends Controller
         $messages = [];
         $agent = $conversation->agent;
 
-        if ($agent && ! empty($agent->system_prompt)) {
+        $systemContent = $agent ? (string) ($agent->system_prompt ?? '') : '';
+        if (! empty($conversation->settings['preserved_context_summary'])) {
+            $systemContent = trim($systemContent."\n\n=== ZACHOWANY KONTEKST PO PRZEŁADOWANIU CZATU (PAMIĘĆ ANTY-HALUCYNACYJNA — NIE ZMYŚLAJ FAKTÓW SPOZA USTALEŃ) ===\n".$conversation->settings['preserved_context_summary']);
+        }
+
+        if ($systemContent !== '') {
             $messages[] = [
                 'role' => 'system',
-                'content' => $agent->system_prompt,
+                'content' => $systemContent,
             ];
         }
 

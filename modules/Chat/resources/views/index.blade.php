@@ -41,8 +41,15 @@
         <!-- Prawa kolumna: Obszar aktywnego czatu -->
         <div class="flex-1 flex flex-col bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden shadow-xs">
             @if($activeConversation)
+                @php
+                    $msgCount = $activeConversation->messages->count();
+                    $maxWindow = max(6, (int) ($activeConversation->agent->context_window_messages ?? 20));
+                    $heatPct = min(100, (int) round(($msgCount / $maxWindow) * 100));
+                    $reloadsCount = (int) ($activeConversation->settings['context_reloads_count'] ?? 0);
+                    $isChatOverheating = $heatPct >= 75;
+                @endphp
                 <!-- Nagłówek czatu -->
-                <div class="px-6 py-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+                <div class="px-6 py-4 border-b border-slate-100 dark:border-slate-800 flex flex-wrap items-center justify-between gap-3">
                     <div class="flex items-center gap-3">
                         <div class="w-10 h-10 rounded-xl bg-indigo-600/10 border border-indigo-200 dark:border-indigo-800 flex items-center justify-center font-bold text-indigo-600 dark:text-indigo-400 text-sm">
                             {{ strtoupper(substr($activeConversation->agent->name, 0, 2)) }}
@@ -51,21 +58,43 @@
                             <h3 class="font-bold text-slate-900 dark:text-white text-sm">
                                 {{ $activeConversation->agent->name }}
                             </h3>
-                            <div class="flex items-center gap-2 text-xs text-slate-400">
+                            <div class="flex flex-wrap items-center gap-2 text-xs text-slate-400">
                                 <span class="font-mono">{{ $activeConversation->agent->primary_model }}</span>
                                 <span>&bull;</span>
                                 <span class="uppercase text-[10px] font-semibold text-indigo-500">{{ $activeConversation->agent->runtime_type }}</span>
+                                <span>&bull;</span>
+                                <span class="px-2 py-0.5 rounded-full text-[10px] font-mono font-semibold {{ $isChatOverheating ? 'bg-rose-500/15 text-rose-500 border border-rose-500/30' : 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400' }}"
+                                      title="Nasycenie okna kontekstu rozmowy. Gdy czat się przeciąga, przeładuj go z zachowaniem kontekstu, aby model nie zmyślał.">
+                                    🌡️ Kontekst: {{ $heatPct }}% ({{ $msgCount }}/{{ $maxWindow }} wiad.)
+                                </span>
+                                @if($reloadsCount > 0)
+                                    <span class="px-2 py-0.5 rounded-full text-[10px] font-mono bg-indigo-500/10 text-indigo-500">
+                                        🧠 Przeładowania: #{{ $reloadsCount }}
+                                    </span>
+                                @endif
                             </div>
                         </div>
                     </div>
 
-                    <form method="POST" action="{{ route('chat.destroy', $activeConversation) }}" onsubmit="return confirm('Usunąć tę rozmowę?');">
-                        @csrf
-                        @method('DELETE')
-                        <button type="submit" class="text-xs text-slate-400 hover:text-rose-500 transition-colors">
-                            Usuń rozmowę
-                        </button>
-                    </form>
+                    <div class="flex items-center gap-2">
+                        <form method="POST" action="{{ route('chat.reload-context', $activeConversation) }}">
+                            @csrf
+                            <button type="submit"
+                                    title="Kompresuje dotychczasowe ustalenia do pamięci systemowej i czyści przeciążone okno wiadomości, aby model nie halucynował"
+                                    class="px-3 py-1.5 rounded-xl text-xs font-semibold transition flex items-center gap-1.5 {{ $isChatOverheating ? 'bg-amber-500 hover:bg-amber-400 text-slate-950 shadow-xs' : 'bg-indigo-50 dark:bg-indigo-950/60 hover:bg-indigo-100 dark:hover:bg-indigo-900/60 text-indigo-600 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800' }}">
+                                <span>🔄</span>
+                                <span>Przeładuj czat (zachowaj kontekst)</span>
+                            </button>
+                        </form>
+
+                        <form method="POST" action="{{ route('chat.destroy', $activeConversation) }}" onsubmit="return confirm('Usunąć tę rozmowę?');">
+                            @csrf
+                            @method('DELETE')
+                            <button type="submit" class="text-xs text-slate-400 hover:text-rose-500 transition-colors">
+                                Usuń rozmowę
+                            </button>
+                        </form>
+                    </div>
                 </div>
 
                 <!-- Wiadomości -->

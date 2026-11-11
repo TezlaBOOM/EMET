@@ -155,6 +155,9 @@ class AgentCooperationService implements AgentCooperationInterface
         }
 
         $finalSynthesis = null;
+        $preservedContext = $cooperation->preserved_context;
+        $reloadsCount = (int) $cooperation->context_reloads_count;
+
         if (! $trippedOverheat || $cooperation->auto_synthesize_on_overheat) {
             $finalSynthesis = $this->generateFinalSynthesis(
                 $cooperation,
@@ -165,12 +168,24 @@ class AgentCooperationService implements AgentCooperationInterface
             );
         }
 
+        if ($trippedOverheat && $cooperation->auto_synthesize_on_overheat) {
+            $preservedContext = $this->buildPreservedContextSnapshot(
+                $cooperation,
+                $discussionLog,
+                $finalSynthesis,
+                'Auto-kompresja po wykryciu przegrzania czatu (ochrona przed zmyślaniem / halucynacjami)'
+            );
+            $reloadsCount++;
+        }
+
         $cooperation->update([
             'current_temperature' => $currentTemperature,
             'thermal_status' => $thermalStatus,
             'status' => $trippedOverheat ? 'overheated' : 'completed',
             'total_tokens_used' => $cooperation->total_tokens_used + $tokensUsed,
             'total_turns_executed' => $cooperation->total_turns_executed + $turnsExecuted,
+            'context_reloads_count' => $reloadsCount,
+            'preserved_context' => $preservedContext,
             'discussion_log' => $discussionLog,
             'overheat_events' => $overheatEvents,
             'final_synthesis' => $finalSynthesis,
@@ -243,16 +258,96 @@ class AgentCooperationService implements AgentCooperationInterface
         ];
     }
 
-    public function cooldown(AgentCooperation $cooperation): AgentCooperation
+    public function cooldown(AgentCooperation $cooperation, ?string $customContextNote = null): AgentCooperation
     {
+        $discussionLog = $cooperation->discussion_log ?? [];
+        $preservedSnapshot = $this->buildPreservedContextSnapshot(
+            $cooperation,
+            $discussionLog,
+            $cooperation->final_synthesis,
+            $customContextNote
+        );
+
+        $reloadsCount = ((int) $cooperation->context_reloads_count) + 1;
+
+        $checkpointEntry = [
+            'round' => 0,
+            'turn' => 1,
+            'agent_id' => $cooperation->coordinator_agent_id ?? 0,
+            'agent_name' => 'Pamięć Kontekstowa (Reload #'.$reloadsCount.')',
+            'agent_model' => 'context-compactor',
+            'role' => 'Strażnik Kontekstu Anty-Halucynacyjnego',
+            'target_agent_name' => 'Cały Zespół',
+            'skills_used' => ['Kompresja Kontekstu', 'Ochrona przed Halucynacją'],
+            'content' => '🔄 Przeładowano czat w celu oczyszczenia okna kontekstowego i zapobieżenia zmyślaniu modeli. '
+                .'Wszystkie kluczowe fakty i ustalenia z poprzednich tur zostały zachowane w Pamięci Kontekstowej zespołu.',
+            'tokens' => 0,
+            'temperature_delta' => 0.0,
+            'temperature_after' => 22.0,
+            'loop_similarity' => 0.0,
+            'timestamp' => now()->format('H:i:s'),
+        ];
+
         $cooperation->update([
             'current_temperature' => 22.0,
             'thermal_status' => AgentCooperation::THERMAL_NOMINAL,
             'status' => 'cooled_down',
+            'context_reloads_count' => $reloadsCount,
+            'preserved_context' => $preservedSnapshot,
+            'discussion_log' => [$checkpointEntry],
             'cooled_down_at' => now(),
         ]);
 
         return $cooperation->fresh();
+    }
+
+    /**
+     * Buduje skondensowaną pigułkę pamięci kontekstowej z dotychczasowej rozmowy,
+     * aby po przeładowaniu czatu modele pamiętały wszystkie fakty i ustalenia, ale nie halucynowały od nadmiaru historii.
+     *
+     * @param  array<int, array<string, mixed>>  $discussionLog
+     */
+    protected function buildPreservedContextSnapshot(
+        AgentCooperation $cooperation,
+        array $discussionLog,
+        ?string $finalSynthesis = null,
+        ?string $customNote = null
+    ): string {
+        $lines = [];
+        $reloadNum = ((int) $cooperation->context_reloads_count) + 1;
+        $lines[] = "📌 [PAMIĘĆ KONTEKSTOWA ZESPOŁU – PRZEŁADOWANIE #{$reloadNum} (".now()->format('Y-m-d H:i:s').')]';
+
+        if (! empty($cooperation->last_task_prompt)) {
+            $lines[] = '• Główny cel / zadanie: '.trim((string) $cooperation->last_task_prompt);
+        }
+
+        if (! empty($customNote)) {
+            $lines[] = '• Notatka priorytetowa: '.trim($customNote);
+        }
+
+        if (! empty($cooperation->preserved_context)) {
+            $prevCompact = mb_substr(trim((string) $cooperation->preserved_context), 0, 500);
+            $lines[] = '• Wcześniejsza pamięć bazowa: '.$prevCompact;
+        }
+
+        $meaningfulTurns = array_values(array_filter(
+            $discussionLog,
+            fn (array $item) => ($item['round'] ?? 0) > 0
+        ));
+
+        if (! empty($meaningfulTurns)) {
+            $lines[] = '• Kluczowe ustalenia agentów przed przeładowaniem czatu:';
+            foreach (array_slice($meaningfulTurns, -4) as $turn) {
+                $snippet = mb_substr(trim((string) ($turn['content'] ?? '')), 0, 220);
+                $lines[] = "  - {$turn['agent_name']} ({$turn['role']}): {$snippet}";
+            }
+        }
+
+        if (! empty($finalSynthesis)) {
+            $lines[] = '• Wypracowany dotąd konsensus: '.mb_substr(trim($finalSynthesis), 0, 450);
+        }
+
+        return implode("\n", $lines);
     }
 
     /**
@@ -343,10 +438,14 @@ class AgentCooperationService implements AgentCooperationInterface
 
         $skillsList = $agent->skills->where('is_enabled', true)->pluck('name')->implode(', ') ?: 'analiza ogólna';
         $handoffTarget = $nextAgent ? $nextAgent->name : 'Koordynator Końcowy';
+        $preservedBlock = ! empty($cooperation->preserved_context)
+            ? "\n=== ZACHOWANY KONTEKST Z PRZEŁADOWANIA CZATU (TRZYMAJ SIĘ TYCH FAKTÓW, NIE ZMYŚLAJ) ===\n{$cooperation->preserved_context}\n"
+            : '';
 
         $systemPrompt = trim(($agent->system_prompt ?? 'Jesteś wyspecjalizowanym agentem AI.')."\n"
             ."Bierzesz udział w kooperacji wieloagentowej '{$cooperation->name}' (topologia: {$cooperation->topology}).\n"
-            ."Twoja rola w zespole: {$roleLabel}. Dostępne skille: {$skillsList}.\n"
+            ."Twoja rola w zespole: {$roleLabel}. Dostępne skille: {$skillsList}."
+            .$preservedBlock."\n"
             ."Odpowiadaj zwięźle, konkretnie i merytorycznie (3-5 zdań), wnosząc nową wartość i przekazując wnioski do kolejnego ogniwa: {$handoffTarget}.");
 
         $userContent = "Zadanie zespołu: {$taskPrompt}\n"
