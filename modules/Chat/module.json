@@ -15,7 +15,8 @@
   },
   "menu2": [
     { "id": "new", "title": "chat.new_conversation", "route": "chat.index", "permission": "agents.chat" },
-    { "id": "history", "title": "chat.history", "route": "chat.history", "permission": "agents.chat" }
+    { "id": "history", "title": "chat.history", "route": "chat.history", "permission": "agents.chat" },
+    { "id": "artifacts", "title": "chat.sub_artifacts", "route": "chat.artifacts", "permission": "agents.chat" }
   ],
   "config_sections": [
     "Modules\\Chat\\Config\\ChatConfigSection"

@@ -6,6 +6,7 @@ use Illuminate\Support\Facades\Route;
 Route::middleware(['web', 'auth', 'permission:agents.chat'])->prefix('chat')->group(function () {
     Route::get('/', [ChatController::class, 'index'])->name('chat.index');
     Route::get('/history', [ChatController::class, 'history'])->name('chat.history');
+    Route::get('/artifacts', [ChatController::class, 'artifacts'])->name('chat.artifacts');
     Route::post('/', [ChatController::class, 'store'])->name('chat.store');
     Route::post('/{conversation}/messages', [ChatController::class, 'sendMessage'])->name('chat.messages.send');
     Route::post('/{conversation}/stream', [ChatController::class, 'streamMessage'])->name('chat.messages.stream');

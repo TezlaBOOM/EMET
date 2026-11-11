@@ -135,4 +135,18 @@ Zarządzanie schematami i timerami (`App\Contracts\Scenarios\ScenarioSchedulerIn
 - **Rozproszony Tracing OpenTelemetry (`App\Contracts\Telemetry\DistributedTracerInterface`):**
   - Hierarchiczne spany (`telemetry_spans`) z korelacją `trace_id` i `parent_span_id`, wizualizacją kaskadową (*Waterfall View*) oraz automatyczną identyfikacją najwolniejszego ogniwa (`bottleneck_span`) i pierwotnej przyczyny błędu (`root_cause_error`).
 
+---
+
+## 10. Przestrzenie Robocze FinOps, Kanały ChatOps, Multimodalne Artefakty & Sfederowany Hub Ed25519 (v1.9.0)
+
+- **Wielodostępność Przestrzeni Roboczych i Budżety Zespołowe (`App\Contracts\FinOps\WorkspaceFinOpsInterface`):**
+  - Izolacja budżetowa (`workspaces`) z dziennymi/miesięcznymi limitami USD, limitami tokenów, progami ostrzegawczymi (80%/100%) i automatyczną degradacją do darmowych modeli lokalnych (`ollama`, `lmstudio`) po wyczerpaniu budżetu.
+- **Dwukierunkowe Kanały Zewnętrzne ChatOps (`App\Contracts\Integrations\ChatOpsChannelInterface`):**
+  - Konektory (`external_channels`) dla Telegram, Slack, Discord, Microsoft Teams i Email z obsługą interaktywnych przycisków *Zatwierdź / Odrzuć* wznawiających wstrzymane węzły `human` w `ScenarioEngine`.
+- **Multimodalność i Panel Artefaktów na Żywo (`App\Contracts\Chat\MultimodalArtifactInterface`):**
+  - Ekstrakcja i wersjonowanie artefaktów (`chat_artifacts`: HTML, Mermaid, SVG, JSON, Chart, Code) oraz obsługa załączników obrazów Vision i transkrypcji audio Whisper STT.
+- **Sfederowany Katalog Skilli i Szablonów Ed25519 (`App\Contracts\Skills\FederatedSkillHubInterface`):**
+  - Weryfikacja podpisów kryptograficznych `libsodium` Ed25519 (`sodium_crypto_sign_verify_detached`) oraz sum kontrolnych SHA-256 paczek z zaufanych rejestrów (`federated_registries`).
+
+
 

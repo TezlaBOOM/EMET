@@ -4,10 +4,12 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Chat;
 
+use App\Contracts\Chat\MultimodalArtifactInterface;
 use App\Contracts\Llm\CompletionRequest;
 use App\Contracts\Llm\LlmGatewayInterface;
 use App\Http\Controllers\Controller;
 use App\Models\Agent;
+use App\Models\ChatArtifact;
 use App\Models\ChatConversation;
 use App\Models\ChatMessage;
 use App\Services\AgentContextBuilder;
@@ -70,6 +72,15 @@ class ChatController extends Controller
             ->paginate(15);
 
         return view('module-chat::history', compact('conversations'));
+    }
+
+    public function artifacts(): View
+    {
+        $artifacts = ChatArtifact::latest()->limit(30)->get();
+
+        return view('module-chat::artifacts', [
+            'artifacts' => $artifacts,
+        ]);
     }
 
     public function store(Request $request): RedirectResponse
@@ -251,7 +262,7 @@ class ChatController extends Controller
 
         $response = $this->llmGateway->complete($completionRequest, $agent->pool);
 
-        return ChatMessage::create([
+        $assistantMsg = ChatMessage::create([
             'id' => (string) Str::uuid(),
             'conversation_id' => $conversation->id,
             'role' => 'assistant',
@@ -264,6 +275,16 @@ class ChatController extends Controller
             ],
             'created_at' => now(),
         ]);
+
+        try {
+            /** @var MultimodalArtifactInterface $artifactService */
+            $artifactService = app(MultimodalArtifactInterface::class);
+            $artifactService->extractAndStoreArtifacts($conversation->id, $assistantMsg->id, $response->content);
+        } catch (\Throwable) {
+            // Nie przerywamy czatu w razie błędu ekstrakcji artefaktów
+        }
+
+        return $assistantMsg;
     }
 
     /**

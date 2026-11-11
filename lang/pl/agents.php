@@ -9,6 +9,7 @@ return [
     'sub_create' => 'Utwórz agenta',
     'sub_templates' => 'Szablony agentów',
     'sub_evals' => 'Ewaluacje i Benchmarki A/B',
+    'sub_hub' => 'Sfederowany Katalog (Ed25519 Hub)',
     'name' => 'Nazwa agenta',
     'slug' => 'Identyfikator (slug)',
     'description' => 'Opis roli agenta',
@@ -38,5 +39,11 @@ return [
         'invalid_cases_json' => 'Nieprawidłowy format JSON przypadków testowych.',
         'suite_created' => 'Zestaw ewaluacyjny został utworzony.',
         'run_completed' => 'Benchmark zakończony (:status) — wynik modelu A: :score',
+    ],
+    'hub' => [
+        'title' => 'Sfederowany Katalog Skilli i Szablonów z Podpisami Kryptograficznymi Ed25519',
+        'subtitle' => 'Podłączaj zaufane rejestry paczek Skilli i Scenariuszy weryfikowane podpisem cyfrowym libsodium (Ed25519) oraz sumą kontrolną SHA-256.',
+        'add_registry' => 'Dodaj zaufany rejestr sfederowany',
+        'registry_added' => 'Zaufany rejestr sfederowany Ed25519 został dodany.',
     ],
 ];

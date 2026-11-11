@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Integrations\ContainerIntegrationController;
+use App\Http\Controllers\Integrations\ExternalChannelController;
 use App\Http\Controllers\Integrations\IntegrationController;
 use App\Http\Controllers\Integrations\McpHubController;
 use Illuminate\Support\Facades\Route;
@@ -33,5 +34,12 @@ Route::middleware(['web', 'auth', 'permission:integrations.manage'])->prefix('in
         Route::post('/', [McpHubController::class, 'store'])->name('store');
         Route::post('/{server}/sync', [McpHubController::class, 'sync'])->name('sync');
         Route::delete('/{server}', [McpHubController::class, 'destroy'])->name('destroy');
+    });
+
+    // Dwukierunkowe Kanały Zewnętrzne i Boty ChatOps (v1.9.0)
+    Route::prefix('channels')->name('integrations.channels.')->group(function () {
+        Route::get('/', [ExternalChannelController::class, 'index'])->name('index');
+        Route::post('/', [ExternalChannelController::class, 'store'])->name('store');
+        Route::delete('/{channel}', [ExternalChannelController::class, 'destroy'])->name('destroy');
     });
 });

@@ -6,6 +6,25 @@ Format opiera się na [Keep a Changelog](https://keepachangelog.com/pl/1.0.0/).
 ## [Unreleased]
 
 ### Dodano (Added)
+- **Pakiet Enterprise FinOps, Kanały ChatOps, Multimodalność & Sfederowany Hub (Modernizacja v1.9.0)**:
+  - **Wielodostępność Przestrzeni Roboczych i Budżety Zespołowe (`WorkspaceFinOpsService`)**:
+    - Nowy kontrakt `App\Contracts\FinOps\WorkspaceFinOpsInterface`, serwis `App\Services\FinOps\WorkspaceFinOpsService` oraz model `App\Models\Workspace` (`workspaces`).
+    - Zarządzanie dziennymi i miesięcznymi limitami budżetowymi USD, dziennym limitem tokenów, progami alertów (`alert_threshold_pct`, np. 80%) oraz automatycznym przełączaniem na darmowy model lokalny (`fallback_model`, np. `ollama/llama3.2`) po przekroczeniu budżetu zespołu.
+    - Widok administracyjny *System → Przestrzenie Robocze i Budżety FinOps* (`/system/workspaces`, `WorkspaceFinOpsController`).
+  - **Dwukierunkowe Kanały Komunikacyjne i Interaktywne Zatwierdzanie Human-in-the-Loop (`ChatOpsChannelService`)**:
+    - Nowy kontrakt `App\Contracts\Integrations\ChatOpsChannelInterface`, serwis `App\Services\Integrations\ChatOpsChannelService` oraz model `App\Models\ExternalChannel` (`external_channels`).
+    - Konektory dla **Telegram, Slack, Discord, Microsoft Teams i Email** oraz publiczny endpoint webhooka `POST /api/v1/hooks/channels/{slug}` (`ExternalChannelController::handleWebhook`).
+    - Interaktywne przyciski **Zatwierdź / Odrzuć** (`buildHumanApprovalPayload`), które po kliknięciu na komunikatorze natychmiast wznawiają wstrzymany scenariusz na węźle `human` w `ScenarioEngine::resumeRun()`.
+    - Widok administracyjny *Integracje → Kanały ChatOps* (`/integrations/channels`).
+  - **Multimodalność (Vision / Audio STT) i Panel Artefaktów na Żywo (`MultimodalArtifactService`)**:
+    - Nowy kontrakt `App\Contracts\Chat\MultimodalArtifactInterface`, serwis `App\Services\Chat\MultimodalArtifactService` oraz model `App\Models\ChatArtifact` (`chat_artifacts`).
+    - Automatyczna ekstrakcja interaktywnych artefaktów (`html`, `mermaid`, `svg`, `chart`, `json`, `code`) z odpowiedzi agentów oraz przetwarzanie załączników obrazów (*Vision* `data:image/...;base64`) i nagrań audio (*Whisper STT*).
+    - Widok *Czat AI → Artefakty i Multimodalność (Canvas)* (`/chat/artifacts`).
+  - **Sfederowany Katalog Skilli i Szablonów z Podpisami Kryptograficznymi Ed25519 (`FederatedSkillHubService`)**:
+    - Nowy kontrakt `App\Contracts\Skills\FederatedSkillHubInterface`, serwis `App\Services\Skills\FederatedSkillHubService` oraz model `App\Models\FederatedRegistry` (`federated_registries`).
+    - Generowanie par kluczy, podpisywanie manifestów (`sodium_crypto_sign_detached`) i weryfikacja autentyczności paczek (`sodium_crypto_sign_verify_detached` + SHA-256) przed instalacją do rejestru `skills` i `skill_versions`.
+    - Widok *Agenci AI → Sfederowany Katalog (Ed25519 Hub)* (`/agents/hub`).
+    - Podbicie wersji platformy do `1.9.0` w pliku `VERSION` oraz `config/agenthub.php`.
 - **Pakiet Narzędzia Deweloperskie i Obserwowalność (Modernizacja v1.8.0)**:
   - **Podsystem Ewaluacji Jakości i Testów A/B Agentów (`AgentEvaluationService`)**:
     - Nowy kontrakt `App\Contracts\Agents\AgentEvaluationInterface`, serwis `App\Services\Agents\AgentEvaluationService` oraz modele `App\Models\AgentEvalSuite` (`agent_eval_suites`) i `App\Models\AgentEvalRun` (`agent_eval_runs`).

@@ -9,6 +9,7 @@ return [
     'sub_create' => 'Create Agent',
     'sub_templates' => 'Agent Templates',
     'sub_evals' => 'Evaluations & A/B Benchmarks',
+    'sub_hub' => 'Federated Catalog (Ed25519 Hub)',
     'name' => 'Agent Name',
     'slug' => 'Identifier (slug)',
     'description' => 'Role description',
@@ -38,5 +39,11 @@ return [
         'invalid_cases_json' => 'Invalid JSON format for test cases.',
         'suite_created' => 'Evaluation suite created successfully.',
         'run_completed' => 'Benchmark completed (:status) — Model A score: :score',
+    ],
+    'hub' => [
+        'title' => 'Federated Skill & Scenario Catalog with Ed25519 Cryptographic Signatures',
+        'subtitle' => 'Connect trusted Skill and Scenario package registries verified with libsodium Ed25519 digital signatures and SHA-256 checksums.',
+        'add_registry' => 'Add Trusted Federated Registry',
+        'registry_added' => 'Trusted Ed25519 federated registry added successfully.',
     ],
 ];

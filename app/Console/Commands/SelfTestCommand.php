@@ -6,6 +6,9 @@ namespace App\Console\Commands;
 
 use App\Contracts\Agents\AgentEvaluationInterface;
 use App\Contracts\Chat\GroupChatOrchestratorInterface;
+use App\Contracts\Chat\MultimodalArtifactInterface;
+use App\Contracts\FinOps\WorkspaceFinOpsInterface;
+use App\Contracts\Integrations\ChatOpsChannelInterface;
 use App\Contracts\Integrations\McpHubInterface;
 use App\Contracts\Llm\AiGuardrailsInterface;
 use App\Contracts\Llm\LlmGatewayInterface;
@@ -15,6 +18,7 @@ use App\Contracts\Memory\HybridRagInterface;
 use App\Contracts\Memory\VectorStoreInterface;
 use App\Contracts\Scenarios\ScenarioEngineInterface;
 use App\Contracts\Scenarios\ScenarioSchedulerInterface;
+use App\Contracts\Skills\FederatedSkillHubInterface;
 use App\Contracts\Skills\SkillLifecycleInterface;
 use App\Contracts\Telemetry\DistributedTracerInterface;
 use App\Models\LlmAccount;
@@ -368,6 +372,25 @@ class SelfTestCommand extends Command
             ];
         } catch (\Throwable $e) {
             $checks['evals_timetravel_otel'] = ['status' => 'warn', 'message' => $e->getMessage()];
+        }
+
+        // 19. Workspaces FinOps, Kanały ChatOps, Multimodalne Artefakty & Sfederowany Hub Ed25519 (v1.9.0)
+        try {
+            $hasV19Tables = Schema::hasTable('workspaces')
+                && Schema::hasTable('external_channels')
+                && Schema::hasTable('chat_artifacts')
+                && Schema::hasTable('federated_registries');
+            $finOps = app(WorkspaceFinOpsInterface::class);
+            $chatOps = app(ChatOpsChannelInterface::class);
+            $multimodal = app(MultimodalArtifactInterface::class);
+            $fedHub = app(FederatedSkillHubInterface::class);
+
+            $checks['finops_chatops_multimodal_hub'] = [
+                'status' => ($hasV19Tables && $finOps && $chatOps && $multimodal && $fedHub) ? 'ok' : 'fail',
+                'message' => 'Przestrzenie Robocze FinOps, Kanały ChatOps (Human-in-the-Loop), Multimodalne Artefakty Canvas oraz Sfederowany Katalog Ed25519 gotowe (v1.9.0)',
+            ];
+        } catch (\Throwable $e) {
+            $checks['finops_chatops_multimodal_hub'] = ['status' => 'warn', 'message' => $e->getMessage()];
         }
 
         if ($isJson) {

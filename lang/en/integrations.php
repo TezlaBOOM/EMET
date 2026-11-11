@@ -5,6 +5,7 @@ return [
     'menu_title' => 'Integrations',
     'sub_all' => 'All Instances',
     'sub_mcp' => 'MCP Hub (Client & Server)',
+    'sub_channels' => 'ChatOps Channels (Telegram / Slack)',
     'sub_containers' => 'Containers (LXC / Proxmox)',
     'sub_hermes' => 'Hermes Agent',
     'sub_openclaw' => 'OpenClaw',
@@ -42,4 +43,11 @@ return [
     'mcp_server_added' => 'MCP server :name connected (synced tools to Skills: :count).',
     'mcp_server_synced' => 'Synced tools from MCP server :name (total Skills: :count).',
     'mcp_server_deleted' => 'External MCP server disconnected.',
+    'channels' => [
+        'title' => 'Bi-Directional Communication Channels (External Channels & ChatOps Bots)',
+        'subtitle' => 'Telegram, Slack, Discord, Microsoft Teams, and Email connectors with interactive Approve / Reject buttons for Human-in-the-Loop scenario nodes.',
+        'create' => 'Add ChatOps Channel',
+        'created' => 'ChatOps channel configured successfully.',
+        'deleted' => 'ChatOps channel deleted.',
+    ],
 ];

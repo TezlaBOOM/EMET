@@ -5,6 +5,7 @@ return [
     'menu_title' => 'Integracje',
     'sub_all' => 'Wszystkie instancje',
     'sub_mcp' => 'MCP Hub (Client & Server)',
+    'sub_channels' => 'Kanały ChatOps (Telegram / Slack)',
     'sub_containers' => 'Kontenery (LXC / Proxmox)',
     'sub_hermes' => 'Hermes Agent',
     'sub_openclaw' => 'OpenClaw',
@@ -42,4 +43,11 @@ return [
     'mcp_server_added' => 'Serwer MCP :name został podłączony (zsynchronizowano narzędzi do Skilli: :count).',
     'mcp_server_synced' => 'Zsynchronizowano narzędzia z serwera MCP :name (łącznie Skilli: :count).',
     'mcp_server_deleted' => 'Zewnętrzny serwer MCP został odłączony.',
+    'channels' => [
+        'title' => 'Dwukierunkowe Kanały Komunikacyjne (External Channels & ChatOps Bots)',
+        'subtitle' => 'Konektory Telegram, Slack, Discord, Microsoft Teams i Email z interaktywnymi przyciskami Zatwierdź / Odrzuć dla węzłów Human-in-the-Loop w scenariuszach.',
+        'create' => 'Dodaj kanał komunikacyjny ChatOps',
+        'created' => 'Kanał komunikacyjny ChatOps został skonfigurowany.',
+        'deleted' => 'Kanał komunikacyjny został usunięty.',
+    ],
 ];

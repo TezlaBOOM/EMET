@@ -16,6 +16,7 @@
   },
   "menu2": [
     { "id": "transfers", "title": "system.sub_transfers", "route": "system.transfers.index", "permission": "system.manage" },
+    { "id": "workspaces", "title": "system.sub_workspaces", "route": "system.workspaces.index", "permission": "system.manage" },
     { "id": "first_setup", "title": "system.sub_first_setup", "route": "system.first-setup.index", "permission": "system.manage" }
   ]
 }

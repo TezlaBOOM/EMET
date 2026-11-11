@@ -20,6 +20,7 @@
   "menu2": [
     { "id": "all", "title": "integrations.sub_all", "route": "integrations.index", "permission": "integrations.manage" },
     { "id": "mcp", "title": "integrations.sub_mcp", "route": "integrations.mcp.index", "permission": "integrations.manage" },
+    { "id": "channels", "title": "integrations.sub_channels", "route": "integrations.channels.index", "permission": "integrations.manage" },
     { "id": "containers", "title": "integrations.sub_containers", "route": "integrations.containers.index", "permission": "integrations.manage" },
     { "id": "hermes", "title": "integrations.sub_hermes", "route": "integrations.hermes", "permission": "integrations.manage" },
     { "id": "openclaw", "title": "integrations.sub_openclaw", "route": "integrations.openclaw", "permission": "integrations.manage" },

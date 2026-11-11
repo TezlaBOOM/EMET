@@ -19,7 +19,8 @@
     { "id": "active", "title": "agents.sub_active", "route": "agents.active", "permission": "agents.view" },
     { "id": "create", "title": "agents.sub_create", "route": "agents.create", "permission": "agents.manage" },
     { "id": "templates", "title": "agents.sub_templates", "route": "agents.templates", "permission": "agents.manage" },
-    { "id": "evals", "title": "agents.sub_evals", "route": "agents.evals.index", "permission": "agents.view" }
+    { "id": "evals", "title": "agents.sub_evals", "route": "agents.evals.index", "permission": "agents.view" },
+    { "id": "hub", "title": "agents.sub_hub", "route": "agents.hub.index", "permission": "skills.view" }
   ],
   "config_sections": [
     "Modules\\Agents\\Config\\AgentsConfigSection",
