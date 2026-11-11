@@ -18,7 +18,8 @@
     { "id": "skills", "title": "modules.agents.submenu.skills", "route": "agents.skills.index", "permission": "skills.view" },
     { "id": "active", "title": "agents.sub_active", "route": "agents.active", "permission": "agents.view" },
     { "id": "create", "title": "agents.sub_create", "route": "agents.create", "permission": "agents.manage" },
-    { "id": "templates", "title": "agents.sub_templates", "route": "agents.templates", "permission": "agents.manage" }
+    { "id": "templates", "title": "agents.sub_templates", "route": "agents.templates", "permission": "agents.manage" },
+    { "id": "evals", "title": "agents.sub_evals", "route": "agents.evals.index", "permission": "agents.view" }
   ],
   "config_sections": [
     "Modules\\Agents\\Config\\AgentsConfigSection",

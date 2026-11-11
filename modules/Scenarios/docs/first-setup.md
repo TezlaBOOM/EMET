@@ -28,3 +28,8 @@
    - Ochrona przed współbieżnością: atomowa blokada `Cache::lock('scenarios:dispatch-due', 55)` zapobiega równoległym wywołaniom z wielu workerów.
    - Klucz idempotentności: każde utworzone wykonanie `scenario_runs` posiada unikalny `idempotency_key`.
    - Auto-pauza: po 5 kolejnych nieudanych uruchomieniach wyzwalacz zostaje automatycznie zatrzymany (`state = error`) w celu ochrony zasobów, a w UI prezentowany jest szczegółowy komunikat błędu.
+
+5. **Debugger Scenariuszy „Time-Travel” i Forking Stanu (v1.8.0)**:
+   - Podczas każdego uruchomienia silnik `ScenarioEngine` zapisuje pełną migawkę zmiennych kontekstowych przed (`state_snapshot_before`) i po (`state_snapshot_after`) każdym węźle oraz czas wykonania w milisekundach (`duration_ms`).
+   - Endpoint `GET /scenarios/runs/{run}/timeline` udostępnia pełną oś czasu wykonania wraz ze skorelowanym identyfikatorem `trace_id` OpenTelemetry.
+   - Endpoint `POST /scenarios/runs/{run}/fork` (`from_node_id`, `override_vars`) pozwala rozwidlić dowolny historyczny lub przerwany przebieg od wskazanego węzła bez ponownego wykonywania wcześniejszych kroków.

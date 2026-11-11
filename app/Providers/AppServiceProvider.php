@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Contracts\Agents\AgentEvaluationInterface;
 use App\Contracts\Chat\GroupChatOrchestratorInterface;
 use App\Contracts\Integrations\McpHubInterface;
 use App\Contracts\Llm\AiGuardrailsInterface;
@@ -13,7 +14,9 @@ use App\Contracts\Memory\VectorStoreInterface;
 use App\Contracts\Scenarios\ScenarioEngineInterface;
 use App\Contracts\Scenarios\ScenarioSchedulerInterface;
 use App\Contracts\Skills\SkillLifecycleInterface;
+use App\Contracts\Telemetry\DistributedTracerInterface;
 use App\Contracts\Telemetry\TelemetryCollectorInterface;
+use App\Services\Agents\AgentEvaluationService;
 use App\Services\Chat\GroupChatOrchestrator;
 use App\Services\Integrations\McpHubService;
 use App\Services\LlmGateway\AiGuardrailsService;
@@ -27,6 +30,7 @@ use App\Services\MemoryService\QdrantVectorStore;
 use App\Services\Scenarios\ScenarioEngine;
 use App\Services\Scenarios\ScenarioSchedulerService;
 use App\Services\Skills\SkillLifecycleService;
+use App\Services\TelemetryCollector\DistributedTracerService;
 use App\Services\TelemetryCollector\TelemetryCollectorService;
 use Illuminate\Support\ServiceProvider;
 
@@ -100,6 +104,16 @@ class AppServiceProvider extends ServiceProvider
         $this->app->singleton(
             ScenarioSchedulerInterface::class,
             ScenarioSchedulerService::class
+        );
+
+        $this->app->singleton(
+            AgentEvaluationInterface::class,
+            AgentEvaluationService::class
+        );
+
+        $this->app->singleton(
+            DistributedTracerInterface::class,
+            DistributedTracerService::class
         );
     }
 

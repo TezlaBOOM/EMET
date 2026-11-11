@@ -44,11 +44,17 @@ class ScenarioRunStep extends Model
         'started_at',
         'finished_at',
         'error',
+        'state_snapshot_before',
+        'state_snapshot_after',
+        'duration_ms',
     ];
 
     protected $casts = [
         'input' => 'array',
         'output' => 'array',
+        'state_snapshot_before' => 'array',
+        'state_snapshot_after' => 'array',
+        'duration_ms' => 'integer',
         'attempt' => 'integer',
         'tokens_in' => 'integer',
         'tokens_out' => 'integer',

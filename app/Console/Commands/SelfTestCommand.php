@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Console\Commands;
 
+use App\Contracts\Agents\AgentEvaluationInterface;
 use App\Contracts\Chat\GroupChatOrchestratorInterface;
 use App\Contracts\Integrations\McpHubInterface;
 use App\Contracts\Llm\AiGuardrailsInterface;
@@ -15,6 +16,7 @@ use App\Contracts\Memory\VectorStoreInterface;
 use App\Contracts\Scenarios\ScenarioEngineInterface;
 use App\Contracts\Scenarios\ScenarioSchedulerInterface;
 use App\Contracts\Skills\SkillLifecycleInterface;
+use App\Contracts\Telemetry\DistributedTracerInterface;
 use App\Models\LlmAccount;
 use App\Models\LlmProvider;
 use App\Models\User;
@@ -351,6 +353,21 @@ class SelfTestCommand extends Command
             ];
         } catch (\Throwable $e) {
             $checks['mcp_and_graph_rag'] = ['status' => 'warn', 'message' => $e->getMessage()];
+        }
+
+        // 18. Agent Evals A/B, Time-Travel Debugger & OpenTelemetry Waterfall (v1.8.0)
+        try {
+            $hasEvalTables = Schema::hasTable('agent_eval_suites') && Schema::hasTable('agent_eval_runs');
+            $hasSpanTable = Schema::hasTable('telemetry_spans');
+            $evalService = app(AgentEvaluationInterface::class);
+            $tracer = app(DistributedTracerInterface::class);
+
+            $checks['evals_timetravel_otel'] = [
+                'status' => ($hasEvalTables && $hasSpanTable && $evalService && $tracer) ? 'ok' : 'fail',
+                'message' => 'Podsystem Ewaluacji A/B Agentów, Debugger Scenariuszy Time-Travel oraz OpenTelemetry Waterfall gotowe (v1.8.0)',
+            ];
+        } catch (\Throwable $e) {
+            $checks['evals_timetravel_otel'] = ['status' => 'warn', 'message' => $e->getMessage()];
         }
 
         if ($isJson) {

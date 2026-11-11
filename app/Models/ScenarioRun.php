@@ -21,6 +21,8 @@ class ScenarioRun extends Model
 
     public const STATUS_SUCCESS = 'success';
 
+    public const STATUS_COMPLETED = 'success';
+
     public const STATUS_FAILED = 'failed';
 
     public const STATUS_CANCELLED = 'cancelled';
@@ -43,12 +45,18 @@ class ScenarioRun extends Model
         'trigger_id',
         'scheduled_for',
         'idempotency_key',
+        'parent_run_id',
+        'forked_from_node_id',
+        'trace_id',
+        'state_snapshots',
     ];
 
     protected $casts = [
         'input' => 'array',
         'output' => 'array',
         'vars' => 'array',
+        'state_snapshots' => 'array',
+        'parent_run_id' => 'integer',
         'tokens_in' => 'integer',
         'tokens_out' => 'integer',
         'cost' => 'float',

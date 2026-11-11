@@ -1,7 +1,7 @@
 # Podręcznik Pierwszej Konfiguracji AgentHub (Wydanie 1.5.0)
 
 > Niniejszy dokument jest generowany automatycznie poleceniem `php artisan docs:first-setup --build`.
-> Ostatnia aktualizacja: 2026-11-11 15:35:58
+> Ostatnia aktualizacja: 2026-11-11 16:06:49
 
 ## Spis treści
 
@@ -53,6 +53,11 @@
      Wybór środowiska wykonawczego (Runtime: Ollama, Hermes, OpenClaw, Brama LLM) → Wybór konta/puli dostawcy → Filtrowana lista modeli.
    - Reguła walidacyjna `ValidModelForAgent` weryfikuje dostępność i stan włączenia wybranego modelu.
    - W przypadku wyłączenia lub usunięcia modelu z rejestru, powiązani agenci są w panelu oznaczani widoczną etykietą ostrzegawczą „Model niedostępny”.
+
+7. **Podsystem Ewaluacji Jakości i Testów A/B Agentów (v1.8.0)**:
+   - Przejdź do zakładki **Agenci AI → Ewaluacje i Benchmarki A/B** (`/agents/evals`).
+   - Zdefiniuj zestaw testowy (*Golden Dataset*) zawierający przypadki JSON (`prompt`, `expected_keywords`, `reference_answer`) oraz próg zaliczenia (`pass_threshold`).
+   - Uruchom porównanie A/B dwóch modeli (`model_a` vs `model_b`), aby ocenić ich jakość, średnią latencję oraz koszt tokenów przed wdrożeniem zmian na produkcję.
 
 ---
 
@@ -138,6 +143,11 @@ link: memory.collections
    - Ochrona przed współbieżnością: atomowa blokada `Cache::lock('scenarios:dispatch-due', 55)` zapobiega równoległym wywołaniom z wielu workerów.
    - Klucz idempotentności: każde utworzone wykonanie `scenario_runs` posiada unikalny `idempotency_key`.
    - Auto-pauza: po 5 kolejnych nieudanych uruchomieniach wyzwalacz zostaje automatycznie zatrzymany (`state = error`) w celu ochrony zasobów, a w UI prezentowany jest szczegółowy komunikat błędu.
+
+5. **Debugger Scenariuszy „Time-Travel” i Forking Stanu (v1.8.0)**:
+   - Podczas każdego uruchomienia silnik `ScenarioEngine` zapisuje pełną migawkę zmiennych kontekstowych przed (`state_snapshot_before`) i po (`state_snapshot_after`) każdym węźle oraz czas wykonania w milisekundach (`duration_ms`).
+   - Endpoint `GET /scenarios/runs/{run}/timeline` udostępnia pełną oś czasu wykonania wraz ze skorelowanym identyfikatorem `trace_id` OpenTelemetry.
+   - Endpoint `POST /scenarios/runs/{run}/fork` (`from_node_id`, `override_vars`) pozwala rozwidlić dowolny historyczny lub przerwany przebieg od wskazanego węzła bez ponownego wykonywania wcześniejszych kroków.
 
 ---
 

@@ -6,6 +6,19 @@ Format opiera się na [Keep a Changelog](https://keepachangelog.com/pl/1.0.0/).
 ## [Unreleased]
 
 ### Dodano (Added)
+- **Pakiet Narzędzia Deweloperskie i Obserwowalność (Modernizacja v1.8.0)**:
+  - **Podsystem Ewaluacji Jakości i Testów A/B Agentów (`AgentEvaluationService`)**:
+    - Nowy kontrakt `App\Contracts\Agents\AgentEvaluationInterface`, serwis `App\Services\Agents\AgentEvaluationService` oraz modele `App\Models\AgentEvalSuite` (`agent_eval_suites`) i `App\Models\AgentEvalRun` (`agent_eval_runs`).
+    - Automatyczne wykonywanie zestawów testowych (*Golden Datasets*), ocena hybrydowa łącząca pokrycie słów kluczowych, podobieństwo do odpowiedzi wzorcowej oraz sędziego **LLM-as-a-Judge**, a także porównywanie dwóch modeli w trybie **A/B Benchmark** (jakość, latencja ms, koszt USD i automatyczny wybór `winner_model`).
+    - Nowy widok administracyjny *Agenci AI → Ewaluacje i Benchmarki A/B* (`/agents/evals`, `AgentEvaluationController`).
+  - **Zaawansowany Debugger Scenariuszy „Time-Travel” i Forking Stanu (`ScenarioEngine`)**:
+    - Automatyczny zapis migawek stanu zmiennych przed (`state_snapshot_before`) i po (`state_snapshot_after`) wykonaniu każdego węzła DAG oraz pomiar czasu wykonania węzła (`duration_ms`).
+    - Nowe metody `ScenarioEngineInterface::inspectRunTimeline()` (`GET /scenarios/runs/{run}/timeline`) oraz `ScenarioEngineInterface::forkAndReplayFromStep()` (`POST /scenarios/runs/{run}/fork`) pozwalające cofnąć się do dowolnego kroku historycznego przebiegu, nadpisać zmienne kontekstowe i wznowić wykonanie od wybranego węzła bez powtarzania wcześniejszych operacji.
+  - **Rozproszony Tracing OpenTelemetry i Analityka Przyczyn Błędów (`DistributedTracerService`)**:
+    - Nowy kontrakt `App\Contracts\Telemetry\DistributedTracerInterface`, serwis `App\Services\TelemetryCollector\DistributedTracerService` oraz model `App\Models\TelemetrySpan` (`telemetry_spans`).
+    - Propagacja identyfikatora `trace_id` i hierarchii `parent_span_id -> span_id`, generowanie wykresu kaskadowego (`getWaterfallTrace`) z wyliczeniem offsetów i szerokości procentowych oraz automatyczną detekcją wąskiego gardła (`bottleneck_span`) i pierwotnej przyczyny błędu (`root_cause_error`).
+    - Nowy widok *Logi → Tracing OpenTelemetry (Waterfall)* (`/logs/traces`).
+    - Podbicie wersji platformy do `1.8.0` w pliku `VERSION` oraz `config/agenthub.php`.
 - **Pakiet Standardy i Wiedza (Modernizacja v1.7.0)**:
   - **Natywny Klient i Serwer Model Context Protocol (`McpHubService` / MCP Hub)**:
     - Nowy kontrakt `App\Contracts\Integrations\McpHubInterface`, serwis `App\Services\Integrations\McpHubService` oraz model `App\Models\McpServer` (tabela `mcp_servers` z szyfrowanym `auth_token`).

@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Agents\AgentController;
+use App\Http\Controllers\Agents\AgentEvaluationController;
 use App\Http\Controllers\Agents\SkillsController;
 use Illuminate\Support\Facades\Route;
 
@@ -8,6 +9,11 @@ Route::middleware(['web', 'auth'])->prefix('agents')->group(function () {
     Route::get('/', [AgentController::class, 'index'])->name('agents.index')->middleware('permission:agents.view');
     Route::get('/active', [AgentController::class, 'active'])->name('agents.active')->middleware('permission:agents.view');
     Route::get('/templates', [AgentController::class, 'templates'])->name('agents.templates')->middleware('permission:agents.view');
+
+    // Ewaluacje i Benchmarki A/B (v1.8.0)
+    Route::get('/evals', [AgentEvaluationController::class, 'index'])->name('agents.evals.index')->middleware('permission:agents.view');
+    Route::post('/evals', [AgentEvaluationController::class, 'storeSuite'])->name('agents.evals.store')->middleware('permission:agents.manage');
+    Route::post('/evals/{suite}/run', [AgentEvaluationController::class, 'runSuite'])->name('agents.evals.run')->middleware('permission:agents.manage');
 
     // Skille (v1.5.0 i v1.5.7)
     Route::get('/skills', [SkillsController::class, 'index'])->name('agents.skills.index')->middleware('permission:skills.view');

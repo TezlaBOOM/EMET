@@ -6,6 +6,7 @@ namespace Modules\Agents\Config;
 
 use App\Contracts\Config\ConfigSectionInterface;
 use App\Models\Agent;
+use App\Models\AgentEvalSuite;
 use Illuminate\Support\Facades\DB;
 
 class AgentsConfigSection implements ConfigSectionInterface
@@ -17,7 +18,7 @@ class AgentsConfigSection implements ConfigSectionInterface
 
     public function schemaVersion(): int
     {
-        return 1;
+        return 2;
     }
 
     public function dependsOn(): array
@@ -48,6 +49,7 @@ class AgentsConfigSection implements ConfigSectionInterface
                     'context_window_messages' => $agent->context_window_messages,
                 ];
             })->all(),
+            'eval_suites_count' => AgentEvalSuite::count(),
         ];
     }
 

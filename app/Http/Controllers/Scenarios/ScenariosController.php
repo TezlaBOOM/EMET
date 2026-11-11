@@ -304,6 +304,34 @@ class ScenariosController extends Controller
         ]);
     }
 
+    public function runTimeline(ScenarioRun $run): JsonResponse
+    {
+        $timeline = $this->engine->inspectRunTimeline($run->id);
+
+        return response()->json($timeline);
+    }
+
+    public function forkRun(Request $request, ScenarioRun $run): JsonResponse
+    {
+        $validated = $request->validate([
+            'from_node_id' => ['required', 'string'],
+            'override_vars' => ['nullable', 'array'],
+        ]);
+
+        $forkedRunId = $this->engine->forkAndReplayFromStep(
+            sourceRunId: $run->id,
+            fromNodeId: $validated['from_node_id'],
+            overrideVars: $validated['override_vars'] ?? []
+        );
+
+        return response()->json([
+            'success' => true,
+            'forked_run_id' => $forkedRunId,
+            'parent_run_id' => $run->id,
+            'from_node_id' => $validated['from_node_id'],
+        ]);
+    }
+
     public function webhookTrigger(Request $request, string $token): JsonResponse
     {
         $tokenHash = hash('sha256', $token);

@@ -33,3 +33,8 @@
      Wybór środowiska wykonawczego (Runtime: Ollama, Hermes, OpenClaw, Brama LLM) → Wybór konta/puli dostawcy → Filtrowana lista modeli.
    - Reguła walidacyjna `ValidModelForAgent` weryfikuje dostępność i stan włączenia wybranego modelu.
    - W przypadku wyłączenia lub usunięcia modelu z rejestru, powiązani agenci są w panelu oznaczani widoczną etykietą ostrzegawczą „Model niedostępny”.
+
+7. **Podsystem Ewaluacji Jakości i Testów A/B Agentów (v1.8.0)**:
+   - Przejdź do zakładki **Agenci AI → Ewaluacje i Benchmarki A/B** (`/agents/evals`).
+   - Zdefiniuj zestaw testowy (*Golden Dataset*) zawierający przypadki JSON (`prompt`, `expected_keywords`, `reference_answer`) oraz próg zaliczenia (`pass_threshold`).
+   - Uruchom porównanie A/B dwóch modeli (`model_a` vs `model_b`), aby ocenić ich jakość, średnią latencję oraz koszt tokenów przed wdrożeniem zmian na produkcję.

@@ -122,4 +122,17 @@ Zarządzanie schematami i timerami (`App\Contracts\Scenarios\ScenarioSchedulerIn
   - Atomowa blokada `Cache::lock('scenarios:dispatch-due', 55)` zapobiega wyścigom w środowiskach wielowątkowych.
   - Unikalny `idempotency_key` w `scenario_runs` gwarantuje jednokrotne wykonanie danego cyklu.
   - Automatyczna pauza (`state = error`) po 5 kolejnych awariach chroni infrastrukturę przed kaskadą błędów.
+- **Debugger Scenariuszy „Time-Travel” i Forking Stanu (v1.8.0):**
+  - Zapis migawek stanu (`state_snapshot_before`, `state_snapshot_after`, `duration_ms`) na każdym kroku `scenario_run_steps` oraz `state_snapshots` w `scenario_runs`.
+  - Możliwość inspekcji osi czasu (`inspectRunTimeline`) oraz rozwidlenia wykonania od dowolnego węzła (`forkAndReplayFromStep`) ze zmodyfikowanym stanem zmiennych.
+
+---
+
+## 9. Ewaluacja Jakości Agentów A/B & Rozproszony Tracing OpenTelemetry (v1.8.0)
+
+- **Podsystem Ewaluacji Jakości i Testów A/B (`App\Contracts\Agents\AgentEvaluationInterface`):**
+  - Zestawy testowe *Golden Datasets* (`agent_eval_suites`) i przebiegi porównawcze (`agent_eval_runs`) oceniające modele A vs B przy użyciu metryk leksykalnych, referencyjnych i sędziego *LLM-as-a-Judge*.
+- **Rozproszony Tracing OpenTelemetry (`App\Contracts\Telemetry\DistributedTracerInterface`):**
+  - Hierarchiczne spany (`telemetry_spans`) z korelacją `trace_id` i `parent_span_id`, wizualizacją kaskadową (*Waterfall View*) oraz automatyczną identyfikacją najwolniejszego ogniwa (`bottleneck_span`) i pierwotnej przyczyny błędu (`root_cause_error`).
+
 

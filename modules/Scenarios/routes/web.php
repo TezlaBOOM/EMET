@@ -21,6 +21,8 @@ Route::middleware(['web', 'auth'])->prefix('scenarios')->group(function () {
     Route::post('/{scenario}/run', [ScenariosController::class, 'run'])->name('scenarios.run')->middleware('permission:scenarios.run');
 
     Route::get('/runs/{run}', [ScenariosController::class, 'runStatus'])->name('scenarios.runs.status')->middleware('permission:scenarios.view');
+    Route::get('/runs/{run}/timeline', [ScenariosController::class, 'runTimeline'])->name('scenarios.runs.timeline')->middleware('permission:scenarios.view');
+    Route::post('/runs/{run}/fork', [ScenariosController::class, 'forkRun'])->name('scenarios.runs.fork')->middleware('permission:scenarios.manage');
     Route::post('/runs/{run}/resume', [ScenariosController::class, 'resumeRun'])->name('scenarios.runs.resume')->middleware('permission:scenarios.manage');
 
     // Harmonogramy i timery (v1.5.7)
