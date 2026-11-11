@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Integrations\ContainerIntegrationController;
 use App\Http\Controllers\Integrations\IntegrationController;
+use App\Http\Controllers\Integrations\McpHubController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware(['web', 'auth', 'permission:integrations.manage'])->prefix('integrations')->group(function () {
@@ -24,5 +25,13 @@ Route::middleware(['web', 'auth', 'permission:integrations.manage'])->prefix('in
         Route::post('/{container}/configure', [ContainerIntegrationController::class, 'configure'])->name('configure');
         Route::post('/{container}/autoconfig', [ContainerIntegrationController::class, 'autoConfig'])->name('autoconfig');
         Route::post('/{container}/exec', [ContainerIntegrationController::class, 'exec'])->name('exec');
+    });
+
+    // Model Context Protocol Hub (MCP Client & Server v1.7.0)
+    Route::prefix('mcp')->name('integrations.mcp.')->group(function () {
+        Route::get('/', [McpHubController::class, 'index'])->name('index');
+        Route::post('/', [McpHubController::class, 'store'])->name('store');
+        Route::post('/{server}/sync', [McpHubController::class, 'sync'])->name('sync');
+        Route::delete('/{server}', [McpHubController::class, 'destroy'])->name('destroy');
     });
 });

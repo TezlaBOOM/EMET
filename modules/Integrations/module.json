@@ -1,13 +1,16 @@
 {
   "name": "Integracje",
   "slug": "integrations",
-  "description": "Zarządzanie środowiskami uruchomieniowymi i provisioning instancji agentów zewnętrznych oraz kontenerów Docker",
-  "version": "1.5.0",
+  "description": "Zarządzanie środowiskami uruchomieniowymi, kontenerami Docker oraz hubem Model Context Protocol (MCP Client & Server)",
+  "version": "1.7.0",
   "icon": "command-line",
   "order": 6,
   "enabled": true,
   "permission": "integrations.manage",
-  "config_section": "Modules\\Integrations\\Config\\IntegrationsConfigSection",
+  "first_setup": "docs/first-setup.md",
+  "config_sections": [
+    "Modules\\Integrations\\Config\\IntegrationsConfigSection"
+  ],
   "menu1": {
     "title": "integrations.menu_title",
     "route": "integrations.index",
@@ -16,6 +19,7 @@
   },
   "menu2": [
     { "id": "all", "title": "integrations.sub_all", "route": "integrations.index", "permission": "integrations.manage" },
+    { "id": "mcp", "title": "integrations.sub_mcp", "route": "integrations.mcp.index", "permission": "integrations.manage" },
     { "id": "containers", "title": "integrations.sub_containers", "route": "integrations.containers.index", "permission": "integrations.manage" },
     { "id": "hermes", "title": "integrations.sub_hermes", "route": "integrations.hermes", "permission": "integrations.manage" },
     { "id": "openclaw", "title": "integrations.sub_openclaw", "route": "integrations.openclaw", "permission": "integrations.manage" },

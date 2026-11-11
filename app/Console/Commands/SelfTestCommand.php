@@ -5,10 +5,12 @@ declare(strict_types=1);
 namespace App\Console\Commands;
 
 use App\Contracts\Chat\GroupChatOrchestratorInterface;
+use App\Contracts\Integrations\McpHubInterface;
 use App\Contracts\Llm\AiGuardrailsInterface;
 use App\Contracts\Llm\LlmGatewayInterface;
 use App\Contracts\Llm\ModelManagementInterface;
 use App\Contracts\Llm\SemanticCacheInterface;
+use App\Contracts\Memory\HybridRagInterface;
 use App\Contracts\Memory\VectorStoreInterface;
 use App\Contracts\Scenarios\ScenarioEngineInterface;
 use App\Contracts\Scenarios\ScenarioSchedulerInterface;
@@ -334,6 +336,21 @@ class SelfTestCommand extends Command
             ];
         } catch (\Throwable $e) {
             $checks['ai_core_security'] = ['status' => 'warn', 'message' => $e->getMessage()];
+        }
+
+        // 17. MCP Hub & Hybrydowy GraphRAG (v1.7.0)
+        try {
+            $hasMcpTable = Schema::hasTable('mcp_servers');
+            $hasGraphTables = Schema::hasTable('memory_entities') && Schema::hasTable('memory_relations');
+            $mcpHub = app(McpHubInterface::class);
+            $hybridRag = app(HybridRagInterface::class);
+
+            $checks['mcp_and_graph_rag'] = [
+                'status' => ($hasMcpTable && $hasGraphTables && $mcpHub && $hybridRag) ? 'ok' : 'fail',
+                'message' => 'Natywny MCP Hub (Client & Server JSON-RPC 2.0) oraz Hybrydowy RAG z GraphRAG i Rerankerem gotowe (v1.7.0)',
+            ];
+        } catch (\Throwable $e) {
+            $checks['mcp_and_graph_rag'] = ['status' => 'warn', 'message' => $e->getMessage()];
         }
 
         if ($isJson) {

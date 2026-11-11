@@ -62,15 +62,17 @@ Zlokalizowany w `services/memory-service/` i dostępny przez `App\Contracts\Memo
   - `QdrantVectorStore` – obsługa silnika Qdrant przez REST API z indeksami HNSW i wektorami o konfigurowalnej wymiarowości (domyślnie 1536).
   - `PgVectorStore` – obsługa lokalna / PostgreSQL z kalkulacją podobieństwa kosinusowego.
 - **Dzielenie tekstu (`TextChunker`):** inteligentny podział dokumentów Markdown z uwzględnieniem nagłówków H1–H3 oraz konfigurowalnym overlapem fragmentów.
-- **Wizualizacja grafowa:** interaktywny widok asocjacji pamięci w stylu Obsidian oparty na elemencie HTML5 Canvas z fizyką odpychania węzłów i przyciągania krawędzi semantycznych.
+- **Hybrydowy RAG & GraphRAG (`HybridRagService`, v1.7.0):** połączenie wyszukiwania gęstego (Qdrant/PgVector), pełnotekstowego scoringu leksykalnego **BM25**, automatycznej ekstrakcji encji i relacji do Grafu Wiedzy (`memory_entities`, `memory_relations`, ekspansja 1-hop) oraz fuzji **Cross-Encoder Reranker**.
+- **Wizualizacja grafowa:** interaktywny widok asocjacji pamięci i encji GraphRAG w stylu Obsidian oparty na elemencie HTML5 Canvas z fizyką odpychania węzłów i przyciągania krawędzi semantycznych.
 
 ---
 
-## 4. Zarządzanie Instancjami (Integration Manager)
+## 4. Zarządzanie Instancjami i MCP Hub (Integration Manager)
 
-Zlokalizowany w `services/integration-manager/` i powiązany z kontraktem `App\Contracts\Integrations\AgentRuntimeAdapter`.
+Zlokalizowany w `services/integration-manager/` i powiązany z kontraktami `App\Contracts\Integrations\AgentRuntimeAdapter` oraz `App\Contracts\Integrations\McpHubInterface`.
 
 - **Adaptery:** `HermesAdapter`, `OpenClawAdapter`, `ClaudeCodeAdapter`, `CodexAdapter`.
+- **Natywny MCP Hub (`McpHubService`, v1.7.0):** dwukierunkowa obsługa standardu Model Context Protocol (JSON-RPC 2.0): podłączanie zewnętrznych serwerów MCP z automatyczną synchronizacją narzędzi do rejestru `skills` oraz wbudowany serwer MCP (`POST /api/v1/mcp/rpc`) wystawiający agentów, pamięć GraphRAG i scenariusze dla zewnętrznych środowisk IDE.
 - **Alokacja portów:** dynamiczne przydzielanie wolnych portów TCP z puli `8100–8900`.
 - **Szablony konfiguracyjne:** renderowanie szablonów jednostek systemd (`agenthub-hermes@.service`) i konfiguracji Docker Compose.
 - **Automatyczny Rollback:** w przypadku niepowodzenia health-probe, system natychmiast czyści wygenerowane pliki, oznacza stan jako `error` i zwalnia zasoby.

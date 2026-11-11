@@ -1,12 +1,16 @@
 {
   "name": "Pamięć Wektorowa",
   "slug": "memory",
-  "description": "Współdzielona baza wiedzy semantycznej, graf Obsidian i kolekcje wektorowe",
-  "version": "1.0.0",
+  "description": "Współdzielona baza wiedzy semantycznej, Hybrydowy RAG z Rerankingiem, GraphRAG na kanwie Obsidian i kolekcje wektorowe",
+  "version": "1.7.0",
   "icon": "server-stack",
   "order": 4,
   "enabled": true,
   "permission": "memory.view",
+  "first_setup": "docs/first-setup.md",
+  "config_sections": [
+    "Modules\\Memory\\Config\\MemoryConfigSection"
+  ],
   "menu1": {
     "title": "memory.menu_title",
     "route": "memory.index",

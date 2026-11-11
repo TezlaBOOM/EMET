@@ -6,6 +6,20 @@ Format opiera się na [Keep a Changelog](https://keepachangelog.com/pl/1.0.0/).
 ## [Unreleased]
 
 ### Dodano (Added)
+- **Pakiet Standardy i Wiedza (Modernizacja v1.7.0)**:
+  - **Natywny Klient i Serwer Model Context Protocol (`McpHubService` / MCP Hub)**:
+    - Nowy kontrakt `App\Contracts\Integrations\McpHubInterface`, serwis `App\Services\Integrations\McpHubService` oraz model `App\Models\McpServer` (tabela `mcp_servers` z szyfrowanym `auth_token`).
+    - **MCP Client:** odpytywanie zewnętrznych serwerów MCP metodą JSON-RPC 2.0 `tools/list`, automatyczna synchronizacja odkrytych narzędzi do rejestru skilli (`skills` typu `mcp` + `skill_versions`) oraz wywoływanie zdalnych narzędzi przez `tools/call`.
+    - **Wbudowany Serwer MCP Projekt-Emet:** endpointy `POST /api/v1/mcp/rpc` oraz `GET /api/v1/mcp/manifest` (`McpServerApiController`) obsługujące metody JSON-RPC 2.0 (`initialize`, `ping`, `tools/list`, `tools/call`, `resources/list`) i wystawiające agentów (`agenthub_list_agents`), hybrydową pamięć wiedzy (`agenthub_memory_hybrid_search`) oraz scenariusze (`agenthub_list_scenarios`).
+    - Nowy widok administracyjny *Integracje → MCP Hub* (`/integrations/mcp`, `McpHubController`).
+  - **Hybrydowy RAG z Rerankingiem i Grafem Wiedzy (`HybridRagService` / GraphRAG)**:
+    - Nowy kontrakt `App\Contracts\Memory\HybridRagInterface`, serwis `App\Services\MemoryService\HybridRagService` oraz modele `App\Models\MemoryEntity` (`memory_entities`) i `App\Models\MemoryRelation` (`memory_relations`).
+    - Automatyczna ekstrakcja encji technicznych, pojęć i identyfikatorów oraz budowa ważonych relacji współwystępowania i zależności podczas indeksowania dokumentów w `EmbeddingService::ingestDocument()`.
+    - Wyszukiwanie hybrydowe łączące wektory gęste (*Dense Cosine Similarity*), pełnotekstowy scoring leksykalny **BM25**, ekspansję sąsiednich węzłów Grafu Wiedzy (**GraphRAG 1-hop**) oraz dwuetapowy **Cross-Encoder Reranker**.
+    - Wzbogacenie wizualizacji grafu Obsidian (`EmbeddingService::getGraphData`) o węzły wyekstrahowanych encji i krawędzie relacji semantycznych.
+    - Rozbudowa widoku wyszukiwania *Pamięć → Wyszukiwarka semantyczna* o wybór trybu (`hybrid`, `dense`, `bm25`) oraz prezentację składowych punktacji i dopasowanych encji grafu.
+    - Dodano `Modules\Memory\Config\MemoryConfigSection` oraz instrukcję `modules/Memory/docs/first-setup.md`.
+    - Podbicie wersji platformy do `1.7.0` w pliku `VERSION` oraz `config/agenthub.php`.
 - **Pakiet Rdzeniowy AI & Bezpieczeństwo (Modernizacja v1.6.0)**:
   - **Semantyczna Pamięć Podręczna w Bramie LLM (`SemanticCacheService`)**:
     - Nowy kontrakt `App\Contracts\Llm\SemanticCacheInterface`, serwis `App\Services\LlmGateway\SemanticCacheService` oraz model `App\Models\LlmSemanticCacheEntry` (tabela `llm_semantic_cache_entries`).

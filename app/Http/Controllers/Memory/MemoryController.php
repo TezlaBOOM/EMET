@@ -59,13 +59,18 @@ class MemoryController extends Controller
         $activeCollection = $selectedCollectionId ? MemoryCollection::find($selectedCollectionId) : null;
 
         $query = $request->query('q');
+        $mode = (string) $request->query('mode', 'hybrid');
+        if (! in_array($mode, ['hybrid', 'dense', 'bm25'], true)) {
+            $mode = 'hybrid';
+        }
+
         $results = [];
 
         if ($activeCollection && ! empty($query)) {
-            $results = $this->embeddingService->search($activeCollection, $query, 10);
+            $results = $this->embeddingService->search($activeCollection, (string) $query, 10, $mode);
         }
 
-        return view('module-memory::search', compact('collections', 'activeCollection', 'query', 'results'));
+        return view('module-memory::search', compact('collections', 'activeCollection', 'query', 'mode', 'results'));
     }
 
     public function collections(): View
