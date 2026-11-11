@@ -37,5 +37,7 @@ Route::middleware(['web', 'auth'])->prefix('agents')->group(function () {
     Route::get('/{agent}/edit', [AgentController::class, 'edit'])->name('agents.edit')->middleware('permission:agents.manage');
     Route::put('/{agent}', [AgentController::class, 'update'])->name('agents.update')->middleware('permission:agents.manage');
     Route::delete('/{agent}', [AgentController::class, 'destroy'])->name('agents.destroy')->middleware('permission:agents.manage');
+    Route::post('/{agent}/skills', [AgentController::class, 'attachSkill'])->name('agents.skills.attach')->middleware('permission:agents.manage');
     Route::post('/{agent}/skills/{skill}/toggle', [AgentController::class, 'toggleSkill'])->name('agents.skills.toggle')->middleware('permission:agents.manage');
+    Route::delete('/{agent}/skills/{skill}', [AgentController::class, 'detachSkill'])->name('agents.skills.detach')->middleware('permission:agents.manage');
 });

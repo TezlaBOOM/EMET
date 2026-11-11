@@ -9,13 +9,18 @@ use App\Contracts\Llm\LlmGatewayInterface;
 use App\Contracts\Llm\SelfReflectionCriticInterface;
 use App\Contracts\Memory\DocumentParserInterface;
 use App\Contracts\Telemetry\DistributedTracerInterface;
+use App\Models\Agent;
+use App\Models\AgentSkill;
 use App\Models\LlmAccount;
 use App\Models\LlmProvider;
 use App\Models\MemoryCollection;
+use App\Models\Skill;
+use App\Models\User;
 use App\Models\Workspace;
 use App\Services\MemoryService\EmbeddingService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
+use Spatie\Permission\Models\Permission;
 use Tests\TestCase;
 
 class V2AutonomousCriticParserAndOrchestrationTest extends TestCase
@@ -170,5 +175,67 @@ class V2AutonomousCriticParserAndOrchestrationTest extends TestCase
         $waterfall = $tracer->getWaterfallTrace($trace['trace_id']);
         $this->assertGreaterThanOrEqual(2, $waterfall['span_count']);
     }
-}
 
+    public function test_user_can_attach_catalog_and_custom_skills_to_agent_and_detach_them_from_agents_tab(): void
+    {
+        Permission::findOrCreate('agents.view');
+        Permission::findOrCreate('agents.manage');
+
+        $user = User::factory()->create();
+        $user->givePermissionTo(['agents.view', 'agents.manage']);
+
+        $agent = Agent::create([
+            'name' => 'Agent Operacyjny',
+            'slug' => 'agent-operacyjny',
+            'runtime' => 'hermes',
+            'model' => 'llama3.2',
+            'status' => 'active',
+        ]);
+
+        $catalogSkill = Skill::create([
+            'name' => 'Wyszukiwarka Semantyczna RAG',
+            'slug' => 'rag-semantic-search',
+            'description' => 'Skill wyszukiwania w bazie Qdrant',
+            'type' => 'tool',
+            'status' => Skill::STATUS_ACTIVE,
+            'current_version' => '1.0.0',
+        ]);
+
+        $attachCatalogResponse = $this->actingAs($user)->post(route('agents.skills.attach', $agent), [
+            'skill_id' => $catalogSkill->id,
+        ]);
+
+        $attachCatalogResponse->assertRedirect();
+        $this->assertDatabaseHas('agent_skills', [
+            'agent_id' => $agent->id,
+            'skill_id' => $catalogSkill->id,
+            'name' => 'Wyszukiwarka Semantyczna RAG',
+            'driver' => 'rag-semantic-search',
+            'is_enabled' => true,
+        ]);
+
+        $attachCustomResponse = $this->actingAs($user)->post(route('agents.skills.attach', $agent), [
+            'custom_name' => 'Konektor ERP',
+            'custom_driver' => 'erp_http_tool',
+        ]);
+
+        $attachCustomResponse->assertRedirect();
+        $this->assertDatabaseHas('agent_skills', [
+            'agent_id' => $agent->id,
+            'name' => 'Konektor ERP',
+            'driver' => 'erp_http_tool',
+            'is_enabled' => true,
+        ]);
+
+        $attachedSkill = AgentSkill::where('agent_id', $agent->id)
+            ->where('driver', 'erp_http_tool')
+            ->firstOrFail();
+
+        $detachResponse = $this->actingAs($user)->delete(route('agents.skills.detach', [$agent, $attachedSkill]));
+        $detachResponse->assertRedirect();
+
+        $this->assertDatabaseMissing('agent_skills', [
+            'id' => $attachedSkill->id,
+        ]);
+    }
+}

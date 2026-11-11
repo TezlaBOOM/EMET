@@ -84,6 +84,35 @@
                                     {{ $agent->skills->where('is_enabled', true)->count() }} włączone
                                 </span>
                             </div>
+
+                            @if($agent->skills->isNotEmpty())
+                                <div class="pt-1.5 flex flex-wrap gap-1">
+                                    @foreach($agent->skills as $agSkill)
+                                        <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-medium {{ $agSkill->is_enabled ? 'bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 border border-indigo-200/60 dark:border-indigo-800/60' : 'bg-slate-100 dark:bg-slate-800 text-slate-400 line-through' }}">
+                                            {{ $agSkill->name }}
+                                        </span>
+                                    @endforeach
+                                </div>
+                            @endif
+
+                            @can('agents.manage')
+                                <form method="POST" action="{{ route('agents.skills.attach', $agent) }}" class="pt-2 flex items-center gap-1.5">
+                                    @csrf
+                                    @if(isset($availableSkills) && $availableSkills->isNotEmpty())
+                                        <select name="skill_id" class="flex-1 min-w-0 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-2 py-1 text-[11px] text-slate-700 dark:text-slate-200">
+                                            <option value="">{{ __('agents.select_skill_from_catalog') }}</option>
+                                            @foreach($availableSkills as $avSkill)
+                                                <option value="{{ $avSkill->id }}">{{ $avSkill->name }} ({{ $avSkill->type }})</option>
+                                            @endforeach
+                                        </select>
+                                    @else
+                                        <input type="text" name="custom_name" placeholder="{{ __('agents.add_skill') }}..." class="flex-1 min-w-0 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-2 py-1 text-[11px] text-slate-700 dark:text-slate-200">
+                                    @endif
+                                    <button type="submit" class="px-2.5 py-1 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-[11px] whitespace-nowrap transition-colors">
+                                        {{ __('agents.attach_skill_btn') }}
+                                    </button>
+                                </form>
+                            @endcan
                         </div>
                     </div>
 

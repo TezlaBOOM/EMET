@@ -38,3 +38,8 @@
    - Przejdź do zakładki **Agenci AI → Ewaluacje i Benchmarki A/B** (`/agents/evals`).
    - Zdefiniuj zestaw testowy (*Golden Dataset*) zawierający przypadki JSON (`prompt`, `expected_keywords`, `reference_answer`) oraz próg zaliczenia (`pass_threshold`).
    - Uruchom porównanie A/B dwóch modeli (`model_a` vs `model_b`), aby ocenić ich jakość, średnią latencję oraz koszt tokenów przed wdrożeniem zmian na produkcję.
+
+8. **Bezpośrednie przypisywanie i odpinanie skilli w zakładce Agenci AI (v2.0.0)**:
+   - **Na liście agentów (`/agents` oraz `/agents/active`)**: na karcie każdego agenta możesz jednym kliknięciem wybrać skill z katalogu z rozwijanej listy i przypisać go przyciskiem `+ Dodaj skill`.
+   - **Podczas tworzenia agenta (`/agents/create`)**: zaznacz dowolne aktywne skille z katalogu, aby zostały od razu podpięte do nowo tworzonego agenta.
+   - **W edycji agenta (`/agents/{agent}/edit`)**: przypisuj skille z katalogu lub dodawaj niestandardowe sterowniki (`custom_name` + `custom_driver`), przełączaj ich aktywność (`Włączony` / `Wyłączony`) lub odpinaj je przyciskiem `Odepnij`.

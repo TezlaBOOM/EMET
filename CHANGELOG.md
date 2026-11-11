@@ -6,6 +6,12 @@ Format opiera się na [Keep a Changelog](https://keepachangelog.com/pl/1.0.0/).
 ## [Unreleased]
 
 ### Dodano (Added)
+- **Przypisywanie i odpinanie skilli z poziomu zakładki Agenci AI (`AgentController`)**:
+  - Bezpośrednie dodawanie skilli z rejestru katalogowego (`skills` + powiązanie `skill_id` i `skill_version_id`) oraz skilli niestandardowych (`custom_name`, `custom_driver`) do agentów AI z poziomu widoków:
+    - Lista agentów **Agenci AI** (`/agents` oraz `/agents/active`) – szybki formularz przypisania skilla z katalogu na karcie każdego agenta wraz z prezentacją przypisanych odznak skilli.
+    - Tworzenie nowego agenta (`/agents/create`) – sekcja wyboru początkowych skilli z katalogu za pomocą siatki checkboxów (`skill_ids[]`).
+    - Konfiguracja / edycja agenta (`/agents/{agent}/edit`) – formularz przypisywania skilla z katalogu lub własnego sterownika (`POST /agents/{agent}/skills`, `agents.skills.attach`), przełącznik Włączony/Wyłączony oraz przycisk odpięcia skilla (`DELETE /agents/{agent}/skills/{skill}`, `agents.skills.detach`).
+  - Pełna integracja z `SkillLifecycleService::checkDependencies()` (przypisanie skilla w zakładce Agenci AI automatycznie zdejmuje czerwoną flagę `🚩 Nieużywany` i chroni skill przed przypadkowym usunięciem kodem HTTP 409).
 - **Pakiet Autonomiczna Samokorekta, Strukturalny Parser RAG & Orkiestracja v2.0 (Modernizacja v2.0.0)**:
   - **Autonomiczna Pętla Refleksji i Samokorekty Agentów (`SelfReflectionCriticService`)**:
     - Nowy kontrakt `App\Contracts\Llm\SelfReflectionCriticInterface` oraz serwis `App\Services\LlmGateway\SelfReflectionCriticService` wpięty w `LlmGateway::executeWithAccount()`.

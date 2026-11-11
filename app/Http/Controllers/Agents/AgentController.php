@@ -9,6 +9,7 @@ use App\Models\Agent;
 use App\Models\AgentSkill;
 use App\Models\AuditLog;
 use App\Models\LlmAccountPool;
+use App\Models\Skill;
 use App\Rules\ValidModelForAgent;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -20,22 +21,25 @@ class AgentController extends Controller
     public function index(): View
     {
         $agents = Agent::with(['pool', 'skills'])->latest()->paginate(12);
+        $availableSkills = Skill::where('status', Skill::STATUS_ACTIVE)->orderBy('name')->get();
 
-        return view('module-agents::index', compact('agents'));
+        return view('module-agents::index', compact('agents', 'availableSkills'));
     }
 
     public function active(): View
     {
         $agents = Agent::with(['pool', 'skills'])->where('is_active', true)->latest()->paginate(12);
+        $availableSkills = Skill::where('status', Skill::STATUS_ACTIVE)->orderBy('name')->get();
 
-        return view('module-agents::index', compact('agents'));
+        return view('module-agents::index', compact('agents', 'availableSkills'));
     }
 
     public function create(): View
     {
         $pools = LlmAccountPool::where('is_active', true)->get();
+        $availableSkills = Skill::where('status', Skill::STATUS_ACTIVE)->orderBy('name')->get();
 
-        return view('module-agents::create', compact('pools'));
+        return view('module-agents::create', compact('pools', 'availableSkills'));
     }
 
     public function store(Request $request): RedirectResponse
@@ -55,7 +59,12 @@ class AgentController extends Controller
             'system_prompt' => ['nullable', 'string'],
             'temperature' => ['required', 'numeric', 'between:0,2'],
             'is_active' => ['nullable', 'boolean'],
+            'skill_ids' => ['nullable', 'array'],
+            'skill_ids.*' => ['integer', 'exists:skills,id'],
         ]);
+
+        $skillIds = $validated['skill_ids'] ?? [];
+        unset($validated['skill_ids']);
 
         $validated['slug'] = ! empty($validated['slug']) ? Str::slug($validated['slug']) : Str::slug($validated['name']);
         $validated['is_active'] = $request->has('is_active');
@@ -73,6 +82,21 @@ class AgentController extends Controller
             $agent->skills()->create($skill);
         }
 
+        if (! empty($skillIds)) {
+            $catalogSkills = Skill::whereIn('id', $skillIds)->get();
+            foreach ($catalogSkills as $catalogSkill) {
+                $agent->skills()->updateOrCreate(
+                    ['driver' => $catalogSkill->slug],
+                    [
+                        'skill_id' => $catalogSkill->id,
+                        'skill_version_id' => $catalogSkill->current_version_id,
+                        'name' => $catalogSkill->name,
+                        'is_enabled' => true,
+                    ]
+                );
+            }
+        }
+
         AuditLog::record('agent.created', 'Agent', (string) $agent->id, [
             'name' => $agent->name,
             'runtime_type' => $agent->runtime_type,
@@ -85,9 +109,10 @@ class AgentController extends Controller
     public function edit(Agent $agent): View
     {
         $pools = LlmAccountPool::where('is_active', true)->get();
+        $availableSkills = Skill::where('status', Skill::STATUS_ACTIVE)->orderBy('name')->get();
         $agent->load('skills');
 
-        return view('module-agents::edit', compact('agent', 'pools'));
+        return view('module-agents::edit', compact('agent', 'pools', 'availableSkills'));
     }
 
     public function update(Request $request, Agent $agent): RedirectResponse
@@ -131,6 +156,72 @@ class AgentController extends Controller
         return redirect()->route('agents.index')->with('success', __('agents.deleted_success'));
     }
 
+    public function attachSkill(Request $request, Agent $agent): RedirectResponse
+    {
+        $validated = $request->validate([
+            'skill_id' => ['nullable', 'integer', 'exists:skills,id'],
+            'custom_name' => ['nullable', 'string', 'max:100'],
+            'custom_driver' => ['nullable', 'string', 'max:100'],
+        ]);
+
+        if (! empty($validated['skill_id'])) {
+            $catalogSkill = Skill::findOrFail((int) $validated['skill_id']);
+
+            $agentSkill = $agent->skills()->where('skill_id', $catalogSkill->id)
+                ->orWhere(function ($q) use ($agent, $catalogSkill) {
+                    $q->where('agent_id', $agent->id)->where('driver', $catalogSkill->slug);
+                })
+                ->first();
+
+            if ($agentSkill) {
+                $agentSkill->update([
+                    'skill_id' => $catalogSkill->id,
+                    'skill_version_id' => $catalogSkill->current_version_id,
+                    'name' => $catalogSkill->name,
+                    'is_enabled' => true,
+                ]);
+            } else {
+                $agentSkill = $agent->skills()->create([
+                    'skill_id' => $catalogSkill->id,
+                    'skill_version_id' => $catalogSkill->current_version_id,
+                    'name' => $catalogSkill->name,
+                    'driver' => $catalogSkill->slug,
+                    'is_enabled' => true,
+                ]);
+            }
+
+            AuditLog::record('agent.skill.attached', 'Agent', (string) $agent->id, [
+                'skill_id' => $catalogSkill->id,
+                'skill_name' => $catalogSkill->name,
+            ]);
+
+            return back()->with('success', __('agents.skill_attached_success', ['skill' => $catalogSkill->name, 'agent' => $agent->name]));
+        }
+
+        if (! empty($validated['custom_name'])) {
+            $driver = ! empty($validated['custom_driver'])
+                ? Str::slug($validated['custom_driver'], '_')
+                : Str::slug($validated['custom_name'], '_');
+
+            $agentSkill = $agent->skills()->updateOrCreate(
+                ['driver' => $driver],
+                [
+                    'name' => $validated['custom_name'],
+                    'is_enabled' => true,
+                ]
+            );
+
+            AuditLog::record('agent.skill.attached', 'Agent', (string) $agent->id, [
+                'skill_name' => $agentSkill->name,
+                'driver' => $driver,
+            ]);
+
+            return back()->with('success', __('agents.skill_attached_success', ['skill' => $agentSkill->name, 'agent' => $agent->name]));
+        }
+
+        return back();
+    }
+
     public function toggleSkill(Agent $agent, AgentSkill $skill): RedirectResponse
     {
         if ($skill->agent_id !== $agent->id) {
@@ -140,6 +231,22 @@ class AgentController extends Controller
         $skill->update(['is_enabled' => ! $skill->is_enabled]);
 
         return back()->with('success', "Zmieniono status umiejętności {$skill->name}.");
+    }
+
+    public function detachSkill(Agent $agent, AgentSkill $skill): RedirectResponse
+    {
+        if ($skill->agent_id !== $agent->id) {
+            abort(403);
+        }
+
+        $skillName = $skill->name;
+        $skill->delete();
+
+        AuditLog::record('agent.skill.detached', 'Agent', (string) $agent->id, [
+            'skill_name' => $skillName,
+        ]);
+
+        return back()->with('success', __('agents.skill_detached_success', ['skill' => $skillName, 'agent' => $agent->name]));
     }
 
     public function templates(): View

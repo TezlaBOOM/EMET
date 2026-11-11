@@ -85,6 +85,23 @@
                 <textarea name="system_prompt" rows="5" placeholder="Wpisz instrukcję systemową określającą zachowanie, ton oraz ograniczenia agenta..." class="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm">{{ old('system_prompt', request('system_prompt')) }}</textarea>
             </div>
 
+            @if(isset($availableSkills) && $availableSkills->isNotEmpty())
+                <div>
+                    <label class="block text-xs font-semibold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-2">
+                        {{ __('agents.skills') }} (z katalogu Skilli)
+                    </label>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/40 max-h-48 overflow-y-auto">
+                        @foreach($availableSkills as $avSkill)
+                            <label class="flex items-center gap-2 text-xs text-slate-700 dark:text-slate-300 cursor-pointer">
+                                <input type="checkbox" name="skill_ids[]" value="{{ $avSkill->id }}" class="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500">
+                                <span class="font-medium">{{ $avSkill->name }}</span>
+                                <span class="text-[10px] font-mono text-slate-400">({{ $avSkill->slug }})</span>
+                            </label>
+                        @endforeach
+                    </div>
+                </div>
+            @endif
+
             <div class="flex items-center gap-2">
                 <input type="checkbox" name="is_active" id="is_active" value="1" checked class="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500">
                 <label for="is_active" class="text-sm font-medium text-slate-700 dark:text-slate-300">

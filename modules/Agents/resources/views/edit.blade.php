@@ -115,30 +115,83 @@
         </form>
 
         <!-- Sekcja zarządzania skillami -->
-        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 space-y-4 shadow-xs">
-            <h3 class="font-bold text-slate-900 dark:text-white text-base">
-                {{ __('agents.skills') }}
-            </h3>
-            <p class="text-xs text-slate-500">
-                Włącz lub wyłącz narzędzia, które agent może autonomicznie wywoływać podczas konwersacji.
-            </p>
+        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 space-y-5 shadow-xs">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h3 class="font-bold text-slate-900 dark:text-white text-base">
+                        {{ __('agents.skills') }}
+                    </h3>
+                    <p class="text-xs text-slate-500 mt-0.5">
+                        Przypisz skille z katalogu lub dodaj własne narzędzia, które agent może autonomicznie wywoływać.
+                    </p>
+                </div>
+                <a href="{{ route('agents.skills.create') }}" class="text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:underline">
+                    + Utwórz nowy skill w katalogu &rarr;
+                </a>
+            </div>
+
+            <!-- Formularz dodawania skilla do agenta -->
+            <form method="POST" action="{{ route('agents.skills.attach', $agent) }}" class="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200/80 dark:border-slate-800 space-y-3">
+                @csrf
+                <div class="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                    {{ __('agents.add_skill') }}
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                    <div>
+                        <label class="block text-[11px] text-slate-500 mb-1">Z katalogu Skilli</label>
+                        <select name="skill_id" class="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs text-slate-900 dark:text-white">
+                            <option value="">— {{ __('agents.select_skill_from_catalog') }} —</option>
+                            @foreach($availableSkills ?? [] as $avSkill)
+                                <option value="{{ $avSkill->id }}">{{ $avSkill->name }} ({{ $avSkill->slug }})</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-[11px] text-slate-500 mb-1">{{ __('agents.custom_skill_name') }}</label>
+                        <input type="text" name="custom_name" placeholder="np. Analizator SQL" class="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs text-slate-900 dark:text-white">
+                    </div>
+                    <div>
+                        <label class="block text-[11px] text-slate-500 mb-1">{{ __('agents.custom_skill_driver') }}</label>
+                        <div class="flex gap-2">
+                            <input type="text" name="custom_driver" placeholder="np. sql_analyzer" class="flex-1 min-w-0 px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-mono text-slate-900 dark:text-white">
+                            <button type="submit" class="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold whitespace-nowrap transition-colors">
+                                {{ __('agents.attach_skill_btn') }}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </form>
 
             <div class="divide-y divide-slate-100 dark:divide-slate-800">
-                @foreach($agent->skills as $skill)
+                @forelse($agent->skills as $skill)
                     <div class="py-3 flex items-center justify-between">
                         <div>
                             <span class="font-semibold text-sm text-slate-900 dark:text-white">{{ $skill->name }}</span>
                             <span class="ml-2 text-xs font-mono text-slate-400">({{ $skill->driver }})</span>
                         </div>
-                        <form method="POST" action="{{ route('agents.skills.toggle', [$agent, $skill]) }}">
-                            @csrf
-                            <button type="submit" class="px-3 py-1 rounded-lg text-xs font-semibold transition-colors
-                                {{ $skill->is_enabled ? 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 hover:bg-emerald-100' : 'bg-slate-100 dark:bg-slate-800 text-slate-400 hover:bg-slate-200' }}">
-                                {{ $skill->is_enabled ? 'Włączony' : 'Wyłączony' }}
-                            </button>
-                        </form>
+                        <div class="flex items-center gap-2">
+                            <form method="POST" action="{{ route('agents.skills.toggle', [$agent, $skill]) }}">
+                                @csrf
+                                <button type="submit" class="px-3 py-1 rounded-lg text-xs font-semibold transition-colors
+                                    {{ $skill->is_enabled ? 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 hover:bg-emerald-100' : 'bg-slate-100 dark:bg-slate-800 text-slate-400 hover:bg-slate-200' }}">
+                                    {{ $skill->is_enabled ? 'Włączony' : 'Wyłączony' }}
+                                </button>
+                            </form>
+
+                            <form method="POST" action="{{ route('agents.skills.detach', [$agent, $skill]) }}" onsubmit="return confirm('Odpiąć ten skill od agenta?');">
+                                @csrf
+                                @method('DELETE')
+                                <button type="submit" class="px-2.5 py-1 rounded-lg text-xs font-medium text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors">
+                                    {{ __('agents.remove_skill') }}
+                                </button>
+                            </form>
+                        </div>
                     </div>
-                @endforeach
+                @empty
+                    <div class="py-4 text-center text-xs text-slate-400">
+                        Brak przypisanych skilli do tego agenta.
+                    </div>
+                @endforelse
             </div>
         </div>
     </div>
