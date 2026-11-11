@@ -15,6 +15,7 @@
   },
   "menu2": [
     { "id": "index", "title": "agents.sub_all", "route": "agents.index", "permission": "agents.view" },
+    { "id": "cooperation", "title": "agents.sub_cooperation", "route": "agents.cooperation.index", "permission": "agents.view" },
     { "id": "skills", "title": "modules.agents.submenu.skills", "route": "agents.skills.index", "permission": "skills.view" },
     { "id": "active", "title": "agents.sub_active", "route": "agents.active", "permission": "agents.view" },
     { "id": "create", "title": "agents.sub_create", "route": "agents.create", "permission": "agents.manage" },

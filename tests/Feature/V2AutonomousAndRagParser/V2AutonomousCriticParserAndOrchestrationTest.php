@@ -10,6 +10,7 @@ use App\Contracts\Llm\SelfReflectionCriticInterface;
 use App\Contracts\Memory\DocumentParserInterface;
 use App\Contracts\Telemetry\DistributedTracerInterface;
 use App\Models\Agent;
+use App\Models\AgentCooperation;
 use App\Models\AgentSkill;
 use App\Models\LlmAccount;
 use App\Models\LlmProvider;
@@ -237,5 +238,84 @@ class V2AutonomousCriticParserAndOrchestrationTest extends TestCase
         $this->assertDatabaseMissing('agent_skills', [
             'id' => $attachedSkill->id,
         ]);
+    }
+
+    public function test_multi_agent_cooperation_executes_discussion_and_overheat_guard_trips_and_cools_down(): void
+    {
+        Permission::findOrCreate('agents.view');
+        Permission::findOrCreate('agents.manage');
+
+        $user = User::factory()->create();
+        $user->givePermissionTo(['agents.view', 'agents.manage']);
+
+        $agentA = Agent::create([
+            'name' => 'Architekt Systemowy',
+            'slug' => 'architekt-systemowy',
+            'runtime' => 'hermes',
+            'model' => 'llama3.2',
+            'status' => 'active',
+        ]);
+
+        $agentB = Agent::create([
+            'name' => 'Audytor Bezpieczeństwa',
+            'slug' => 'audytor-bezpieczenstwa',
+            'runtime' => 'hermes',
+            'model' => 'llama3.2',
+            'status' => 'active',
+        ]);
+
+        $storeResponse = $this->actingAs($user)->post(route('agents.cooperation.store'), [
+            'name' => 'Zespół Architektury i Bezpieczeństwa',
+            'description' => 'Wspólna debata nad architekturą mikroserwisów',
+            'topology' => 'round_table',
+            'coordinator_agent_id' => $agentA->id,
+            'participant_agent_ids' => [$agentA->id, $agentB->id],
+            'overheat_guard_enabled' => true,
+            'max_rounds' => 2,
+            'max_tokens_budget' => 5000,
+            'max_temperature_score' => 85,
+            'repetition_threshold' => 0.80,
+            'auto_synthesize_on_overheat' => true,
+        ]);
+
+        $storeResponse->assertRedirect();
+        $cooperation = AgentCooperation::firstOrFail();
+
+        // 1. Normalne uruchomienie dyskusji i zadania w granicach limitu rund (2 rundy)
+        $runNormal = $this->actingAs($user)->post(route('agents.cooperation.run', $cooperation), [
+            'task_prompt' => 'Zaprojektuj bramę autoryzacji API z rotacją kluczy.',
+            'rounds_override' => 1,
+        ]);
+
+        $runNormal->assertRedirect();
+        $cooperation->refresh();
+
+        $this->assertSame('completed', $cooperation->status);
+        $this->assertCount(2, $cooperation->discussion_log ?? []);
+        $this->assertNotEmpty($cooperation->final_synthesis);
+        $this->assertGreaterThan(22.0, $cooperation->current_temperature);
+
+        // 2. Wymuszenie przekroczenia liczby rund (rounds_override = 5 przy max_rounds = 2) -> zadziałanie Strażnika Przegrzania
+        $runOverheat = $this->actingAs($user)->post(route('agents.cooperation.run', $cooperation), [
+            'task_prompt' => 'Kontynuuj głęboką analizę wszystkich wektorów ataku w pętli.',
+            'rounds_override' => 5,
+        ]);
+
+        $runOverheat->assertRedirect();
+        $cooperation->refresh();
+
+        $this->assertSame('overheated', $cooperation->status);
+        $this->assertSame('overheated', $cooperation->thermal_status);
+        $this->assertNotEmpty($cooperation->overheat_events);
+        $this->assertStringContainsString('SYNTEZA AWARYJNA', (string) $cooperation->final_synthesis);
+
+        // 3. Schłodzenie układu (Cooldown Reset)
+        $cooldownResponse = $this->actingAs($user)->post(route('agents.cooperation.cooldown', $cooperation));
+        $cooldownResponse->assertRedirect();
+        $cooperation->refresh();
+
+        $this->assertSame(22.0, $cooperation->current_temperature);
+        $this->assertSame('nominal', $cooperation->thermal_status);
+        $this->assertSame('cooled_down', $cooperation->status);
     }
 }

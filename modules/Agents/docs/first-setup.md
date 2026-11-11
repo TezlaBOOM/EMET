@@ -43,3 +43,9 @@
    - **Na liście agentów (`/agents` oraz `/agents/active`)**: na karcie każdego agenta możesz jednym kliknięciem wybrać skill z katalogu z rozwijanej listy i przypisać go przyciskiem `+ Dodaj skill`.
    - **Podczas tworzenia agenta (`/agents/create`)**: zaznacz dowolne aktywne skille z katalogu, aby zostały od razu podpięte do nowo tworzonego agenta.
    - **W edycji agenta (`/agents/{agent}/edit`)**: przypisuj skille z katalogu lub dodawaj niestandardowe sterowniki (`custom_name` + `custom_driver`), przełączaj ich aktywność (`Włączony` / `Wyłączony`) lub odpinaj je przyciskiem `Odepnij`.
+
+9. **Kooperacja Wieloagentowa & Strażnik Przegrzania (Overheat Guard)**:
+   - Przejdź do zakładki **Agenci AI → Kooperacja** (`/agents/cooperation`).
+   - Zepnij co najmniej 2 agentów w zespół kooperacji, wybierając topologię połączenia (`round_table`, `pipeline`, `supervisor`, `debate_consensus`) oraz agenta koordynatora.
+   - Skonfiguruj **Strażnika Przegrzania (Overheat Circuit Breaker)**: maksymalną liczbę rund (`max_rounds`), budżet tokenów (`max_tokens_budget`), próg odcięcia temperatury (`max_temperature_score` w `°C`) oraz czułość wykrywania pętli semantycznej (`repetition_threshold`).
+   - Zleć zadanie do wspólnej dyskusji i wykonania — system na żywo wizualizuje graf spiętych agentów, mierzy przyrost temperatury po każdej wypowiedzi, automatycznie odcina pętlę w razie ryzyka przegrzania (generując syntezę awaryjną) oraz umożliwia schłodzenie układu przyciskiem `Schłodź układ (Cooldown 22°C)`.

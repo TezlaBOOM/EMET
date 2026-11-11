@@ -6,6 +6,14 @@ Format opiera się na [Keep a Changelog](https://keepachangelog.com/pl/1.0.0/).
 ## [Unreleased]
 
 ### Dodano (Added)
+- **Zakładka Kooperacja Wieloagentowa & Strażnik Przegrzania (`AgentCooperationService` & `AgentCooperationController`)**:
+  - Nowa zakładka **Agenci AI → Kooperacja** (`/agents/cooperation`), model `App\Models\AgentCooperation` (tabela `agent_cooperations`), kontrakt `App\Contracts\Agents\AgentCooperationInterface` oraz serwis `App\Services\Agents\AgentCooperationService`.
+  - Możliwość graficznego spinania wielu agentów AI w zespoły dyskusyjne i wykonawcze w czterech topologiach (`round_table`, `pipeline`, `supervisor`, `debate_consensus`) z wizualnym schematem ogniw, ról, przypisanych skilli i przepływu komunikatów (`Agent A ➔ Agent B`).
+  - **Strażnik Przegrzania (`Overheat Circuit Breaker`)**: ciągły pomiar temperatury układu kooperacji (`22.0°C – 100.0°C`) oraz wielowektorowa ochrona przed przegrzaniem:
+    - kontrola limitu rund (`max_rounds_exceeded`),
+    - kontrola budżetu tokenów sesji (`token_budget_exceeded`),
+    - detekcja zapętlenia semantycznego / Echo-Chamber metodą podobieństwa Jaccarda (`semantic_loop_detected`),
+    - próg temperatury krytycznej (`thermal_threshold_exceeded`, np. `85°C`) z automatyczną syntezą awaryjną (`auto_synthesize_on_overheat`) oraz funkcją schładzania układu (`POST /agents/cooperation/{cooperation}/cooldown`).
 - **Przypisywanie i odpinanie skilli z poziomu zakładki Agenci AI (`AgentController`)**:
   - Bezpośrednie dodawanie skilli z rejestru katalogowego (`skills` + powiązanie `skill_id` i `skill_version_id`) oraz skilli niestandardowych (`custom_name`, `custom_driver`) do agentów AI z poziomu widoków:
     - Lista agentów **Agenci AI** (`/agents` oraz `/agents/active`) – szybki formularz przypisania skilla z katalogu na karcie każdego agenta wraz z prezentacją przypisanych odznak skilli.

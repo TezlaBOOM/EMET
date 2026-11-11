@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Agents\AgentController;
+use App\Http\Controllers\Agents\AgentCooperationController;
 use App\Http\Controllers\Agents\AgentEvaluationController;
 use App\Http\Controllers\Agents\FederatedSkillHubController;
 use App\Http\Controllers\Agents\SkillsController;
@@ -10,6 +11,14 @@ Route::middleware(['web', 'auth'])->prefix('agents')->group(function () {
     Route::get('/', [AgentController::class, 'index'])->name('agents.index')->middleware('permission:agents.view');
     Route::get('/active', [AgentController::class, 'active'])->name('agents.active')->middleware('permission:agents.view');
     Route::get('/templates', [AgentController::class, 'templates'])->name('agents.templates')->middleware('permission:agents.view');
+
+    // Kooperacja Wieloagentowa & Strażnik Przegrzania (v2.1.0)
+    Route::get('/cooperation', [AgentCooperationController::class, 'index'])->name('agents.cooperation.index')->middleware('permission:agents.view');
+    Route::post('/cooperation', [AgentCooperationController::class, 'store'])->name('agents.cooperation.store')->middleware('permission:agents.manage');
+    Route::post('/cooperation/{cooperation}/run', [AgentCooperationController::class, 'runTask'])->name('agents.cooperation.run')->middleware('permission:agents.manage');
+    Route::put('/cooperation/{cooperation}/guard', [AgentCooperationController::class, 'updateGuard'])->name('agents.cooperation.guard')->middleware('permission:agents.manage');
+    Route::post('/cooperation/{cooperation}/cooldown', [AgentCooperationController::class, 'cooldown'])->name('agents.cooperation.cooldown')->middleware('permission:agents.manage');
+    Route::delete('/cooperation/{cooperation}', [AgentCooperationController::class, 'destroy'])->name('agents.cooperation.destroy')->middleware('permission:agents.manage');
 
     // Ewaluacje i Benchmarki A/B (v1.8.0)
     Route::get('/evals', [AgentEvaluationController::class, 'index'])->name('agents.evals.index')->middleware('permission:agents.view');

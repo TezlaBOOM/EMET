@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Contracts\Agents\AgentCooperationInterface;
 use App\Contracts\Agents\AgentEvaluationInterface;
 use App\Contracts\Chat\GroupChatOrchestratorInterface;
 use App\Contracts\Chat\MultimodalArtifactInterface;
@@ -22,6 +23,7 @@ use App\Contracts\Skills\FederatedSkillHubInterface;
 use App\Contracts\Skills\SkillLifecycleInterface;
 use App\Contracts\Telemetry\DistributedTracerInterface;
 use App\Contracts\Telemetry\TelemetryCollectorInterface;
+use App\Services\Agents\AgentCooperationService;
 use App\Services\Agents\AgentEvaluationService;
 use App\Services\Chat\GroupChatOrchestrator;
 use App\Services\Chat\MultimodalArtifactService;
@@ -121,6 +123,11 @@ class AppServiceProvider extends ServiceProvider
         $this->app->singleton(
             AgentEvaluationInterface::class,
             AgentEvaluationService::class
+        );
+
+        $this->app->singleton(
+            AgentCooperationInterface::class,
+            AgentCooperationService::class
         );
 
         $this->app->singleton(

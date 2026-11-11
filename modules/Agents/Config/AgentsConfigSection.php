@@ -6,8 +6,10 @@ namespace Modules\Agents\Config;
 
 use App\Contracts\Config\ConfigSectionInterface;
 use App\Models\Agent;
+use App\Models\AgentCooperation;
 use App\Models\AgentEvalSuite;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 class AgentsConfigSection implements ConfigSectionInterface
 {
@@ -50,6 +52,7 @@ class AgentsConfigSection implements ConfigSectionInterface
                 ];
             })->all(),
             'eval_suites_count' => AgentEvalSuite::count(),
+            'cooperations_count' => Schema::hasTable('agent_cooperations') ? AgentCooperation::count() : 0,
         ];
     }
 
