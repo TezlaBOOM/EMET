@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services\LlmGateway\Strategies;
 
+use App\Contracts\Llm\CompletionRequest;
 use App\Models\LlmAccount;
 use App\Models\LlmAccountPool;
 use Illuminate\Support\Collection;
@@ -15,5 +16,5 @@ interface RoutingStrategyInterface
      *
      * @param  Collection<int, LlmAccount>  $availableAccounts
      */
-    public function selectAccount(Collection $availableAccounts, LlmAccountPool $pool): ?LlmAccount;
+    public function selectAccount(Collection $availableAccounts, LlmAccountPool $pool, ?CompletionRequest $request = null): ?LlmAccount;
 }

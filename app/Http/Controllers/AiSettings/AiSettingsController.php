@@ -4,14 +4,19 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\AiSettings;
 
+use App\Contracts\Llm\AiGuardrailsInterface;
+use App\Contracts\Llm\SemanticCacheInterface;
 use App\Http\Controllers\Controller;
 use App\Models\AuditLog;
 use App\Models\LlmAccount;
+use App\Models\LlmGuardrailEvent;
 use App\Models\LlmProvider;
+use App\Models\LlmSemanticCacheEntry;
 use App\Services\LlmConnectionTester;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\View\View;
 
 class AiSettingsController extends Controller
@@ -137,5 +142,44 @@ class AiSettingsController extends Controller
     public function limits(): View
     {
         return view('module-ai-settings::limits');
+    }
+
+    /**
+     * Widok Semantic Cache & AI Guardrails / DLP (v1.6.0)
+     */
+    public function guardrails(SemanticCacheInterface $semanticCache, AiGuardrailsInterface $guardrails): View
+    {
+        $cacheStats = $semanticCache->getStats();
+        $guardrailStats = $guardrails->getStats();
+
+        $recentEvents = Schema::hasTable('llm_guardrail_events')
+            ? LlmGuardrailEvent::query()->latest('created_at')->limit(20)->get()
+            : collect();
+
+        $recentCacheEntries = Schema::hasTable('llm_semantic_cache_entries')
+            ? LlmSemanticCacheEntry::query()->latest('updated_at')->limit(15)->get()
+            : collect();
+
+        return view('module-ai-settings::guardrails', compact(
+            'cacheStats',
+            'guardrailStats',
+            'recentEvents',
+            'recentCacheEntries',
+        ));
+    }
+
+    /**
+     * Czyszczenie wpisów Semantycznej Pamięci Podręcznej LLM
+     */
+    public function flushSemanticCache(Request $request, SemanticCacheInterface $semanticCache): RedirectResponse
+    {
+        $model = $request->input('model');
+        $deletedCount = $semanticCache->flush(is_string($model) ? $model : null);
+
+        AuditLog::record('llm_semantic_cache.flushed', 'SemanticCache', $model ?: 'all', [
+            'deleted_entries' => $deletedCount,
+        ]);
+
+        return back()->with('success', __('ai.semantic_cache_flushed', ['count' => $deletedCount]));
     }
 }

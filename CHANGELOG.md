@@ -6,6 +6,22 @@ Format opiera się na [Keep a Changelog](https://keepachangelog.com/pl/1.0.0/).
 ## [Unreleased]
 
 ### Dodano (Added)
+- **Pakiet Rdzeniowy AI & Bezpieczeństwo (Modernizacja v1.6.0)**:
+  - **Semantyczna Pamięć Podręczna w Bramie LLM (`SemanticCacheService`)**:
+    - Nowy kontrakt `App\Contracts\Llm\SemanticCacheInterface`, serwis `App\Services\LlmGateway\SemanticCacheService` oraz model `App\Models\LlmSemanticCacheEntry` (tabela `llm_semantic_cache_entries`).
+    - Automatyczne obliczanie 128-wymiarowego znormalizowanego wektora semantycznego L2 (tokeny słowne, rdzenie oraz 3-gramy znakowe) oraz wyszukiwanie po podobieństwie kosinusowym (próg domyślny `0.95`) i kluczu `cache_key` z uwzględnieniem `system_prompt_hash` i temperatury.
+    - Rejestrowanie trafień (`hit_count`), zaoszczędzonych tokenów (`saved_tokens`), zaoszczędzonych kosztów (`saved_cost_usd`) oraz wpisów telemetrycznych `status = cache_hit` w `llm_calls` z zerowym kosztem tokenów.
+  - **Bramka Bezpieczeństwa Promptów i Maskowania Danych Wrażliwych (`AiGuardrailsService` & DLP)**:
+    - Nowy kontrakt `App\Contracts\Llm\AiGuardrailsInterface`, serwis `App\Services\LlmGateway\AiGuardrailsService`, wyjątek `GuardrailViolationException` oraz model `App\Models\LlmGuardrailEvent` (tabela `llm_guardrail_events`).
+    - Warstwa wejściowa wykrywająca próby *Prompt Injection / Jailbreak* (`ignore_previous_instructions`, `dan_jailbreak_mode`, `system_prompt_exfiltration`) z konfigurowalną akcją (`block`, `sanitize`, `audit`) i blokadą failoveru przy naruszeniu bezpieczeństwa.
+    - Dwukierunkowa warstwa wyjściowa DLP (*Data Loss Prevention*) automatycznie pseudonimizująca dane osobowe i sekrety (`PESEL`, `EMAIL`, `CARD`, `IBAN`, `APIKEY`, `PHONE`) przed opuszczeniem sieci lokalnej do chmury oraz odtwarzająca je w odpowiedzi dla użytkownika końcowego.
+  - **Inteligentny Router Modeli oparty o Złożoność Zapytania (`ComplexityAwareStrategy` & `PromptComplexityAnalyzer`)**:
+    - Analizator `PromptComplexityAnalyzer` oceniający złożoność promptu w skali `0.0–1.0` (`low`, `medium`, `high`) na podstawie długości kontekstu, bloków kodu/SQL, narzędzi `tools` oraz słów kluczowych wnioskowania.
+    - Nowa strategia puli `complexity_aware` kierująca proste zadania do darmowych modeli lokalnych (`ollama`, `lmstudio`) lub szybkich modeli *Flash/Mini*, a zadania złożone do modeli flagowych.
+  - **Rozbudowa modułu `AiSettings` i diagnostyki**:
+    - Nowa zakładka *Ustawienia AI → Cache & Guardrails* (`/ai-settings/guardrails`) ze statystykami trafień cache'u, oszczędności USD, rejestrem zdarzeń DLP/Jailbreak oraz czyszczeniem pamięci podręcznej (`POST /ai-settings/semantic-cache/flush`).
+    - Dodano `Modules\AiSettings\Config\AiSettingsConfigSection` (kontrakt eksportu/importu konfiguracji) oraz instrukcję `modules/AiSettings/docs/first-setup.md`.
+    - Podbicie wersji platformy do `1.6.0` w pliku `VERSION` oraz `config/agenthub.php`.
 - **Reguła dokumentacyjna aktualizacji wersji projektu w dashboardzie**:
   - Dodano do `AGENTS.md`, `CLAUDE.md`, `.github/pull_request_template.md`, `!Spec/Agenthub_v1.5.md` oraz dokumentacji (`docs/ARCHITECTURE.md`, `docs/UPDATE.md`, `docs/README.md`) bezwzględny wymóg aktualizacji numeru wersji projektu wyświetlanego w dashboardzie (`VERSION` oraz `config/agenthub.php`) przy dokonywaniu większych zmian w projekcie (nowe wydania, wersje major/minor, istotne moduły/funkcjonalności).
   - Zsynchronizowano wersję w `config/agenthub.php` z `VERSION` (1.5.0) wraz z mechanizmem dynamicznego odczytu z pliku `VERSION`.

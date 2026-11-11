@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services\LlmGateway\Strategies;
 
+use App\Contracts\Llm\CompletionRequest;
 use App\Models\LlmAccount;
 use App\Models\LlmAccountPool;
 use Illuminate\Support\Collection;
@@ -11,7 +12,7 @@ use Illuminate\Support\Facades\Cache;
 
 class RoundRobinStrategy implements RoutingStrategyInterface
 {
-    public function selectAccount(Collection $availableAccounts, LlmAccountPool $pool): ?LlmAccount
+    public function selectAccount(Collection $availableAccounts, LlmAccountPool $pool, ?CompletionRequest $request = null): ?LlmAccount
     {
         $count = $availableAccounts->count();
         if ($count === 0) {

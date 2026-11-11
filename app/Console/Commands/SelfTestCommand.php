@@ -5,7 +5,10 @@ declare(strict_types=1);
 namespace App\Console\Commands;
 
 use App\Contracts\Chat\GroupChatOrchestratorInterface;
+use App\Contracts\Llm\AiGuardrailsInterface;
+use App\Contracts\Llm\LlmGatewayInterface;
 use App\Contracts\Llm\ModelManagementInterface;
+use App\Contracts\Llm\SemanticCacheInterface;
 use App\Contracts\Memory\VectorStoreInterface;
 use App\Contracts\Scenarios\ScenarioEngineInterface;
 use App\Contracts\Scenarios\ScenarioSchedulerInterface;
@@ -312,6 +315,25 @@ class SelfTestCommand extends Command
             ];
         } catch (\Throwable $e) {
             $checks['scenario_scheduler'] = ['status' => 'warn', 'message' => $e->getMessage()];
+        }
+
+        // --- 1.6.0 Rozszerzenia diagnostyczne (Pakiet Rdzeniowy AI & Bezpieczeństwo) ---
+
+        // 16. Semantic Cache, AI Guardrails & DLP oraz Smart Router (v1.6.0)
+        try {
+            $hasCacheTable = Schema::hasTable('llm_semantic_cache_entries');
+            $hasGuardrailsTable = Schema::hasTable('llm_guardrail_events');
+            $semanticCache = app(SemanticCacheInterface::class);
+            $guardrails = app(AiGuardrailsInterface::class);
+            $gateway = app(LlmGatewayInterface::class);
+            $hasSmartStrategy = method_exists($gateway, 'getStrategy') && $gateway->getStrategy('complexity_aware') !== null;
+
+            $checks['ai_core_security'] = [
+                'status' => ($hasCacheTable && $hasGuardrailsTable && $semanticCache && $guardrails && $hasSmartStrategy) ? 'ok' : 'fail',
+                'message' => 'Semantic Cache, AI Guardrails & DLP oraz Complexity-Aware Smart Router gotowe (v1.6.0)',
+            ];
+        } catch (\Throwable $e) {
+            $checks['ai_core_security'] = ['status' => 'warn', 'message' => $e->getMessage()];
         }
 
         if ($isJson) {

@@ -9,7 +9,7 @@ return [
     |--------------------------------------------------------------------------
     */
     'name' => env('APP_NAME', 'Projekt-Emet'),
-    'version' => file_exists(base_path('VERSION')) ? trim((string) file_get_contents(base_path('VERSION'))) : '1.5.7',
+    'version' => file_exists(base_path('VERSION')) ? trim((string) file_get_contents(base_path('VERSION'))) : '1.6.0',
     'setup_completed' => (bool) env('SETUP_COMPLETED', false),
 
     /*
@@ -36,7 +36,7 @@ return [
 
     /*
     |--------------------------------------------------------------------------
-    | Brama modeli AI (LLM Gateway)
+    | Brama modeli AI (LLM Gateway), Semantic Cache, Guardrails & Smart Routing
     |--------------------------------------------------------------------------
     */
     'llm' => [
@@ -45,6 +45,23 @@ return [
         'allow_prompt_logging' => (bool) env('ALLOW_PROMPT_LOGGING', true),
         'max_retry_attempts' => (int) env('LLM_MAX_RETRY_ATTEMPTS', 3),
         'request_timeout_seconds' => (int) env('LLM_REQUEST_TIMEOUT', 120),
+        'semantic_cache' => [
+            'enabled' => (bool) env('LLM_SEMANTIC_CACHE_ENABLED', false),
+            'similarity_threshold' => (float) env('LLM_SEMANTIC_CACHE_THRESHOLD', 0.95),
+            'ttl_seconds' => (int) env('LLM_SEMANTIC_CACHE_TTL', 86400),
+            'max_temperature' => (float) env('LLM_SEMANTIC_CACHE_MAX_TEMP', 0.7),
+        ],
+        'guardrails' => [
+            'enabled' => (bool) env('LLM_GUARDRAILS_ENABLED', true),
+            'jailbreak_action' => env('LLM_GUARDRAILS_JAILBREAK_ACTION', 'block'),
+            'dlp_enabled' => (bool) env('LLM_DLP_ENABLED', true),
+            'dlp_restore_in_response' => (bool) env('LLM_DLP_RESTORE_RESPONSE', true),
+            'dlp_skip_local_models' => (bool) env('LLM_DLP_SKIP_LOCAL_MODELS', true),
+        ],
+        'smart_routing' => [
+            'low_threshold' => (float) env('LLM_SMART_ROUTING_LOW_THRESHOLD', 0.35),
+            'high_threshold' => (float) env('LLM_SMART_ROUTING_HIGH_THRESHOLD', 0.65),
+        ],
     ],
 
     /*

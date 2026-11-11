@@ -1,7 +1,7 @@
 # Podręcznik Pierwszej Konfiguracji AgentHub (Wydanie 1.5.0)
 
 > Niniejszy dokument jest generowany automatycznie poleceniem `php artisan docs:first-setup --build`.
-> Ostatnia aktualizacja: 2026-10-10 09:52:53
+> Ostatnia aktualizacja: 2026-11-11 15:22:13
 
 ## Spis treści
 
@@ -17,25 +17,41 @@
 
 ## Moduł: Agenci AI
 
-# Pierwsza Konfiguracja: Agenci AI & Skille (v1.5.0)
+# Pierwsza Konfiguracja: Agenci AI & Skille (v1.5.7)
 
-## Krok: Konfiguracja magazynu skilli i zdolności agentów
+## Krok: Konfiguracja magazynu skilli, zdolności agentów oraz wyboru modeli AI
 
 1. **Weryfikacja uprawnień**:
-   Upewnij się, że rola użytkownika posiada uprawnienia `skills.view` oraz `skills.manage`.
+   - `skills.view` – przeglądanie listy i szczegółów skilli.
+   - `skills.manage` – dodawanie nowych skilli.
+   - `skills.edit` – edycja metadanych i kodu definicji skilla (v1.5.7).
+   - `skills.delete` – przenoszenie skilla do kosza (soft-delete) oraz przywracanie (v1.5.7).
+   - `skills.purge` – trwałe usuwanie skilla z bazy danych i magazynu (v1.5.7).
 
 2. **Dysk dyskowy skilli**:
    Upewnij się, że katalog `storage/app/skills` posiada prawa zapisu dla procesu aplikacji (`chmod 775 storage/app/skills`).
 
-3. **Dodawanie pierwszego skilla**:
+3. **Dodawanie i import skilla**:
    Przejdź do zakładki **Agenci AI → Skille** i kliknij **Dodaj skill**.
-   - Możesz przesłać paczkę archiwum `.zip` zawierającą manifest `skill.json`.
+   - Możesz przesłać paczkę archiwum `.zip` zawierającą manifest `skill.json` lub utworzyć skill manualnie.
    - Każda paczka jest automatycznie weryfikowana pod kątem sumy kontrolnej SHA-256 oraz bezpieczeństwa ścieżek (Zip-Slip).
 
-4. **Weryfikacja kompatybilności zdolności**:
-   Przed przypisaniem skilla do agenta system sprawdza zgodność wymagań (`requires`):
-   - Jeśli skill wymaga dostępu do sieci (`internet`), agent musi posiadać `internet_mode` ustawiony na `allowlist` lub `open`.
-   - Jeśli skill wymaga pamięci wektorowej, agent musi mieć przypiętą kolekcję wektorową.
+4. **Wersjonowanie i edycja skilli (v1.5.7)**:
+   - Edycja metadanych (nazwa, opis, tagi) nie inkrementuje wersji semantycznej.
+   - Edycja definicji technicznej (`content`, `entrypoint`, `schema`) wymaga wskazania typu podbicia wersji SemVer (`patch`, `minor`, `major`) oraz wpisania notatki zmian (changelog).
+   - Historia wersji archiwalnych jest trwale rejestrowana w tabeli `skill_versions`.
+
+5. **Czerwona flaga 🚩 dla nieużywanych skilli & manualne usuwanie (v1.5.7)**:
+   - Skille, które nie są przypisane do żadnego agenta ani nie występują w węzłach grafów scenariuszy, są w widoku listy automatycznie oznaczane czerwoną flagą (🚩 badge „Nieużywany”).
+   - Zgodnie z zasadą bezpieczeństwa, system **nie usuwa automatycznie nieużywanych skilli w tle** — decyzja o usunięciu pozostaje całkowicie w rękach użytkownika.
+   - Próba usunięcia skilla używanego przez aktywnych agentów lub scenariusze zostaje zablokowana z kodem HTTP 409 i czytelną listą zależności.
+   - Usunięte skille trafiają do Kosza (`deleted_at`), skąd mogą zostać w każdej chwili przywrócone lub trwale usunięte przez administratora (`skills.purge`).
+
+6. **Kaskadowy wybór modelu w konfiguracji agenta (v1.5.7)**:
+   - Formularze tworzenia i edycji agenta wykorzystują komponent kaskadowy `<x-model-select>`:
+     Wybór środowiska wykonawczego (Runtime: Ollama, Hermes, OpenClaw, Brama LLM) → Wybór konta/puli dostawcy → Filtrowana lista modeli.
+   - Reguła walidacyjna `ValidModelForAgent` weryfikuje dostępność i stan włączenia wybranego modelu.
+   - W przypadku wyłączenia lub usunięcia modelu z rejestru, powiązani agenci są w panelu oznaczani widoczną etykietą ostrzegawczą „Model niedostępny”.
 
 ---
 
@@ -67,24 +83,36 @@
 
 ## Moduł: Scenariusze
 
-# Pierwsza Konfiguracja: Scenariusze Wizualne (v1.5.0)
+# Pierwsza Konfiguracja: Scenariusze Wizualne (v1.5.7)
 
-## Krok: Konfiguracja edytora blokowego i silnika wykonawczego
+## Krok: Konfiguracja edytora blokowego, wersjonowania i harmonogramów
 
 1. **Wymagane uprawnienia**:
    - `scenarios.view` – przeglądanie listy scenariuszy i historii runów.
-   - `scenarios.manage` – tworzenie, edycja i publikowanie grafów w edytorze Drawflow.
+   - `scenarios.manage` – tworzenie, edycja i publikowanie grafów w edytorze Drawflow, zarządzanie blokadami i harmonogramami.
    - `scenarios.run` – ręczne wyzwalanie uruchomień testowych scenariuszy.
 
-2. **Edytor w osobnym oknie**:
+2. **Kreator i edycja scenariuszy (v1.5.7)**:
+   - Formularz tworzenia scenariusza (`/scenarios/create`) inicjalizuje atomowo wersję roboczą (draft) z początkowym grafem `start` → `end` w ramach bezpiecznej transakcji bazodanowej z automatyczną deduplikacją unikalnego slugu.
+   - Edycja metadanych dostępna pod adresem `/scenarios/{id}/edit`.
+   - Zmiana opublikowanego scenariusza tworzy nową wersję roboczą grafu, pozostawiając wersję opublikowaną aktywną dla produkcyjnych wywołań.
+   - Publikacja nowej wersji grafu automatycznie zatwierdza poprawność schematu (węzły start, end, brak wiszących krawędzi) i podmienia wskaźnik `current_version_id`.
+   - Blokada współbieżnej edycji: otwarcie edytora przez użytkownika nakłada blokadę `locked_by` i `locked_at` (ważność 15 minut z mechanizmem heartbeat). Inny użytkownik widzi ostrzeżenie z możliwością przejęcia blokady przez administratora.
+
+3. **Edytor w osobnym oknie**:
    - Bezpośredni URL do edytora: `/scenarios/{id}/editor`.
    - Edytor obsługuje 12 typów węzłów: `start`, `agent`, `skill`, `memory`, `condition`, `parallel`, `join`, `loop`, `human`, `transform`, `delay`, `end`.
    - Zabezpieczenie `SCENARIO_MAX_NODES=200` chroni przed przeciążeniem przeglądarki i serwera.
 
-3. **Wyzwalacze i webhooki**:
-   - Scenariusze mogą być uruchamiane ręcznie, harmonogramem cron oraz webhookami HTTPS:
-     `POST /api/v1/hooks/scenarios/{token}`.
-   - Token webhooka jest haszowany funkcją SHA-256 w bazie danych.
+4. **Harmonogramy i Timery (v1.5.7)**:
+   - Panel konfiguracji timerów: `/scenarios/{id}/triggers`.
+   - 6 typów wyzwalaczy czasowych: `once` (jednorazowo), `interval` (co zadany interwał minutowy), `daily` (codziennie o określonej godzinie), `weekly` (wybrane dni tygodnia), `monthly` (dzień miesiąca) oraz `cron` (dowolne wyrażenie 5-polowe).
+   - Domyślna strefa czasowa: `Europe/Warsaw` z automatycznym uwzględnianiem czasu letniego/zimowego.
+   - Podgląd kolejnych 5 uruchomień wyliczany dynamicznie w interfejsie.
+   - Cykliczny proces konsolowy: `php artisan scenarios:dispatch-due` (rejestrowany co minutę w harmonogramie Laravel `routes/console.php`).
+   - Ochrona przed współbieżnością: atomowa blokada `Cache::lock('scenarios:dispatch-due', 55)` zapobiega równoległym wywołaniom z wielu workerów.
+   - Klucz idempotentności: każde utworzone wykonanie `scenario_runs` posiada unikalny `idempotency_key`.
+   - Auto-pauza: po 5 kolejnych nieudanych uruchomieniach wyzwalacz zostaje automatycznie zatrzymany (`state = error`) w celu ochrony zasobów, a w UI prezentowany jest szczegółowy komunikat błędu.
 
 ---
 
@@ -99,8 +127,10 @@
 1. **Wymagane uprawnienia**:
    - `integrations.manage` – wykrywanie, adopcja i konfiguracja kontenerów Docker oraz instancji zewnętrznych.
 
-2. **Dostęp do Docker Socket**:
+2. **Dostęp do Docker Socket i tryb Mock**:
    - AgentHub komunikuje się z demonem Docker przez dedykowany socket: `unix:///var/run/docker.sock` (konfiguracja: `DOCKER_SOCKET_PATH`).
+   - W środowiskach deweloperskich lub bez demona Docker dostępny jest aktywny sterownik mock (`DOCKER_MOCK=true` lub `CONTAINERS_MOCK=true`), symulujący obecność kontenerów runtime'ów (Ollama, Hermes, OpenClaw).
+   - W razie problemów ze środowiskiem lub socketem, automatyczną konfigurację wykonuje skrypt: `./scripts/repairkit.sh`.
    - Brak terminala interaktywnego – wszelkie polecenia wewnątrz kontenerów są ograniczone przez ścisłą białą listę `execAllowlist()`.
    - Ścieżki zapisu konfiguracji są ograniczone przez `configWritablePaths()`.
 

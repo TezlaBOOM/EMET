@@ -1,12 +1,16 @@
 {
   "name": "Ustawienia AI",
   "slug": "ai-settings",
-  "description": "Konfiguracja dostawców modeli AI, zarządzanie wieloma kontami, pule i limity",
-  "version": "1.0.0",
+  "description": "Konfiguracja dostawców modeli AI, zarządzanie wieloma kontami, pule, Semantic Cache oraz AI Guardrails & DLP",
+  "version": "1.6.0",
   "icon": "cpu-chip",
   "order": 5,
   "enabled": true,
   "permission": "ai_settings.manage",
+  "first_setup": "docs/first-setup.md",
+  "config_sections": [
+    "Modules\\AiSettings\\Config\\AiSettingsConfigSection"
+  ],
   "menu1": {
     "title": "ai.menu_title",
     "route": "ai-settings.index",
@@ -18,6 +22,7 @@
     { "id": "models", "title": "ai.sub_models", "route": "ai-settings.models.index", "permission": "ai_settings.manage" },
     { "id": "accounts", "title": "ai.sub_accounts", "route": "ai-settings.accounts", "permission": "ai_settings.manage" },
     { "id": "pools", "title": "ai.sub_pools", "route": "ai-settings.pools", "permission": "ai_settings.manage" },
+    { "id": "guardrails", "title": "ai.sub_guardrails", "route": "ai-settings.guardrails", "permission": "ai_settings.manage" },
     { "id": "limits", "title": "ai.sub_limits", "route": "ai-settings.limits", "permission": "ai_settings.manage" }
   ]
 }

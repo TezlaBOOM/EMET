@@ -47,6 +47,9 @@ Zlokalizowany w `services/llm-gateway/` i dostępny przez `App\Contracts\Llm\Llm
   - `WeightedStrategy` – losowanie kont proporcjonalnie do przydzielonej wagi.
   - `LeastUsedStrategy` – wybór konta o najmniejszej liczbie zapytań w oknie czasowym.
   - `PriorityFallbackStrategy` – kierowanie ruchu do konta o najwyższym priorytecie z automatycznym failoverem.
+  - `ComplexityAwareStrategy` *(v1.6.0)* – inteligentny wybór modelu na podstawie analizy złożoności zapytania (`PromptComplexityAnalyzer`): proste zadania kierowane są do darmowych modeli lokalnych (`ollama`, `lmstudio`) lub *Flash/Mini*, a złożone do modeli flagowych.
+- **Semantyczna Pamięć Podręczna (`SemanticCacheService`, v1.6.0):** warstwa cache'u semantycznego w `LlmGateway` rozpoznająca identyczne i semantycznie zbieżne zapytania (próg podobieństwa kosinusowego domyślnie `0.95`) i zwracająca odpowiedź bez kosztu tokenów.
+- **Bramka Bezpieczeństwa Promptów i DLP (`AiGuardrailsService`, v1.6.0):** dwukierunkowy filtr wykrywający próby *Prompt Injection / Jailbreak* oraz pseudonimizujący dane wrażliwe PII (`PESEL`, `EMAIL`, `CARD`, `IBAN`, `APIKEY`, `PHONE`) przed wysłaniem do zewnętrznych dostawców chmurowych z automatyczną de-pseudonimizacją w odpowiedzi.
 - **Dynamiczny Cooldown:** automatyczne wykrywanie kodu `429 Too Many Requests`, zawieszenie konta na czas cooldownu i natychmiastowe ponowienie zapytania przez kolejne aktywne konto z puli.
 
 ---

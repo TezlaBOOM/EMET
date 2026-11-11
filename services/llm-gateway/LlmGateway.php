@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services\LlmGateway;
 
+use App\Contracts\Llm\AiGuardrailsInterface;
 use App\Contracts\Llm\CompletionRequest;
 use App\Contracts\Llm\CompletionResponse;
 use App\Contracts\Llm\ConnectionTestResult;
@@ -11,6 +12,7 @@ use App\Contracts\Llm\EmbeddingRequest;
 use App\Contracts\Llm\EmbeddingResponse;
 use App\Contracts\Llm\LlmDriverInterface;
 use App\Contracts\Llm\LlmGatewayInterface;
+use App\Contracts\Llm\SemanticCacheInterface;
 use App\Models\LlmAccount;
 use App\Models\LlmAccountPool;
 use App\Models\LlmCall;
@@ -21,8 +23,10 @@ use App\Services\LlmGateway\Drivers\LmStudioDriver;
 use App\Services\LlmGateway\Drivers\OllamaDriver;
 use App\Services\LlmGateway\Drivers\OpenAiDriver;
 use App\Services\LlmGateway\Drivers\OpenRouterDriver;
+use App\Services\LlmGateway\Exceptions\GuardrailViolationException;
 use App\Services\LlmGateway\Exceptions\LlmDriverException;
 use App\Services\LlmGateway\Exceptions\RateLimitExceededException;
+use App\Services\LlmGateway\Strategies\ComplexityAwareStrategy;
 use App\Services\LlmGateway\Strategies\LeastUsedStrategy;
 use App\Services\LlmGateway\Strategies\PriorityFallbackStrategy;
 use App\Services\LlmGateway\Strategies\RoundRobinStrategy;
@@ -44,8 +48,17 @@ class LlmGateway implements LlmGatewayInterface
      */
     protected array $strategies = [];
 
-    public function __construct()
-    {
+    protected SemanticCacheInterface $semanticCache;
+
+    protected AiGuardrailsInterface $guardrails;
+
+    public function __construct(
+        ?SemanticCacheInterface $semanticCache = null,
+        ?AiGuardrailsInterface $guardrails = null,
+    ) {
+        $this->semanticCache = $semanticCache ?? new SemanticCacheService;
+        $this->guardrails = $guardrails ?? new AiGuardrailsService;
+
         $this->drivers = [
             'gemini' => new GeminiDriver,
             'openai' => new OpenAiDriver,
@@ -60,6 +73,7 @@ class LlmGateway implements LlmGatewayInterface
             'weighted' => new WeightedStrategy,
             'least_used' => new LeastUsedStrategy,
             'priority_fallback' => new PriorityFallbackStrategy,
+            'complexity_aware' => new ComplexityAwareStrategy,
         ];
     }
 
@@ -79,6 +93,16 @@ class LlmGateway implements LlmGatewayInterface
         $key = strtolower($strategyName);
 
         return $this->strategies[$key] ?? $this->strategies['weighted'];
+    }
+
+    public function getSemanticCache(): SemanticCacheInterface
+    {
+        return $this->semanticCache;
+    }
+
+    public function getGuardrails(): AiGuardrailsInterface
+    {
+        return $this->guardrails;
     }
 
     /**
@@ -154,7 +178,7 @@ class LlmGateway implements LlmGatewayInterface
             }
 
             $strategy = $this->getStrategy($pool->strategy);
-            $selectedAccount = $strategy->selectAccount($availableAccounts, $pool);
+            $selectedAccount = $strategy->selectAccount($availableAccounts, $pool, $request);
 
             if (! $selectedAccount) {
                 throw new LlmDriverException("Strategia nie mogła wybrać konta z puli [{$pool->name}]");
@@ -167,6 +191,20 @@ class LlmGateway implements LlmGatewayInterface
                 $selectedAccount->update(['last_used_at' => now()]);
 
                 return $response;
+            } catch (GuardrailViolationException $e) {
+                // Błąd naruszenia polityk bezpieczeństwa (Jailbreak) nie podlega failoverowi na inne konto
+                $this->recordTelemetry(
+                    request: $request,
+                    account: $selectedAccount,
+                    model: $request->model ?: ($selectedAccount->provider?->default_model ?: 'unknown'),
+                    promptTokens: 0,
+                    completionTokens: 0,
+                    durationMs: (int) round((microtime(true) - $startTime) * 1000),
+                    status: 'blocked_guardrail',
+                    errorMessage: $e->getMessage(),
+                );
+
+                throw $e;
             } catch (RateLimitExceededException $e) {
                 // Wykryto 429: automatyczny cooldown i failover
                 $selectedAccount->setCooldown($e->retryAfterSeconds, $e->getMessage());
@@ -219,7 +257,7 @@ class LlmGateway implements LlmGatewayInterface
 
         if (! $account && $pool) {
             $available = $pool->accounts()->with('provider')->get()->filter(fn (LlmAccount $a) => $a->isAvailable());
-            $account = $this->getStrategy($pool->strategy)->selectAccount($available, $pool);
+            $account = $this->getStrategy($pool->strategy)->selectAccount($available, $pool, $request);
         }
 
         if (! $account) {
@@ -251,14 +289,25 @@ class LlmGateway implements LlmGatewayInterface
             throw new LlmDriverException('Brak dostępnego konta do strumieniowania. Przejdź do panelu Ustawienia AI -> Konta i dodaj lub aktywuj konto.');
         }
 
-        $driver = $this->getDriver($account->provider?->driver ?? 'openai');
+        $driverName = strtolower($account->provider?->driver ?? 'openai');
+        $isLocalModel = in_array($driverName, ['ollama', 'lmstudio'], true);
+
+        // Inspekcja AI Guardrails & DLP przed strumieniowaniem
+        $guardrailResult = $this->guardrails->inspectAndMaskRequest($request, $isLocalModel);
+        $effectiveRequest = $guardrailResult['request'];
+        $replacements = $guardrailResult['replacements'];
+
+        $driver = $this->getDriver($driverName);
         $fullContent = '';
         $tokenCount = 0;
         $ttft = null;
 
-        foreach ($driver->stream($request, $account) as $chunk) {
+        foreach ($driver->stream($effectiveRequest, $account) as $chunk) {
             if ($ttft === null) {
                 $ttft = (int) round((microtime(true) - $startTime) * 1000);
+            }
+            if (! empty($replacements)) {
+                $chunk = strtr($chunk, $replacements);
             }
             $fullContent .= $chunk;
             $tokenCount++;
@@ -269,10 +318,10 @@ class LlmGateway implements LlmGatewayInterface
 
         // Zapis telemetrii po zakończeniu strumienia
         $this->recordTelemetry(
-            request: $request,
+            request: $effectiveRequest,
             account: $account,
-            model: $request->model ?: ($account->provider?->default_model ?: 'unknown'),
-            promptTokens: count($request->messages) * 10,
+            model: $effectiveRequest->model ?: ($account->provider?->default_model ?: 'unknown'),
+            promptTokens: count($effectiveRequest->messages) * 10,
             completionTokens: $tokenCount,
             durationMs: $durationMs,
             ttftMs: $ttft,
@@ -308,19 +357,57 @@ class LlmGateway implements LlmGatewayInterface
     }
 
     /**
-     * Wykonuje zapytanie za pomocą wskazanego konta i rejestruje telemetrię
+     * Wykonuje zapytanie za pomocą wskazanego konta z obsługą AI Guardrails, DLP oraz Semantic Cache
      */
     protected function executeWithAccount(LlmAccount $account, CompletionRequest $request, float $startTime): CompletionResponse
     {
-        $driver = $this->getDriver($account->provider?->driver ?? 'openai');
-        $response = $driver->complete($request, $account);
+        $driverName = strtolower($account->provider?->driver ?? 'openai');
+        $isLocalModel = in_array($driverName, ['ollama', 'lmstudio'], true);
+
+        // 1. Inspekcja bezpieczeństwa AI Guardrails i pseudonimizacja DLP
+        $guardrailResult = $this->guardrails->inspectAndMaskRequest($request, $isLocalModel);
+        $effectiveRequest = $guardrailResult['request'];
+        $replacements = $guardrailResult['replacements'];
+
+        // 2. Sprawdzenie Semantycznej Pamięci Podręcznej (Semantic Cache)
+        $cachedResponse = $this->semanticCache->lookup($effectiveRequest);
+        if ($cachedResponse !== null) {
+            $cachedResponse->accountId = $account->id;
+            $restoredCached = $this->guardrails->inspectAndRestoreResponse($cachedResponse, $replacements);
+            $durationMs = max(1, (int) round((microtime(true) - $startTime) * 1000));
+
+            $this->recordTelemetry(
+                request: $effectiveRequest,
+                account: $account,
+                model: $restoredCached->model,
+                promptTokens: $restoredCached->promptTokens,
+                completionTokens: $restoredCached->completionTokens,
+                durationMs: $durationMs,
+                ttftMs: $restoredCached->ttftMs ?? $durationMs,
+                status: 'cache_hit',
+                responseContent: $restoredCached->content,
+                estimatedCost: 0.0,
+            );
+
+            return $restoredCached;
+        }
+
+        // 3. Wywołanie sterownika dostawcy LLM
+        $driver = $this->getDriver($driverName);
+        $response = $driver->complete($effectiveRequest, $account);
 
         $durationMs = (int) round((microtime(true) - $startTime) * 1000);
         $cost = ModelPricing::calculateCost($response->model, $response->promptTokens, $response->completionTokens);
         $response->estimatedCost = $cost;
 
+        // 4. Zapis odpowiedzi w Semantic Cache (w formie zmaskowanej przez DLP)
+        $this->semanticCache->store($effectiveRequest, $response);
+
+        // 5. Odtworzenie oryginalnych danych (de-pseudonimizacja DLP) dla odbiorcy końcowego
+        $response = $this->guardrails->inspectAndRestoreResponse($response, $replacements);
+
         $this->recordTelemetry(
-            request: $request,
+            request: $effectiveRequest,
             account: $account,
             model: $response->model,
             promptTokens: $response->promptTokens,

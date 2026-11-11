@@ -14,6 +14,10 @@ Route::middleware(['web', 'auth', 'permission:ai_settings.manage'])->prefix('ai-
     Route::get('/pools', [AiSettingsController::class, 'pools'])->name('ai-settings.pools');
     Route::get('/limits', [AiSettingsController::class, 'limits'])->name('ai-settings.limits');
 
+    // Semantic Cache & AI Guardrails / DLP (v1.6.0)
+    Route::get('/guardrails', [AiSettingsController::class, 'guardrails'])->name('ai-settings.guardrails');
+    Route::post('/semantic-cache/flush', [AiSettingsController::class, 'flushSemanticCache'])->name('ai-settings.semantic-cache.flush');
+
     // Rejestr i edycja modeli AI
     Route::get('/models', [ModelsController::class, 'index'])->name('ai-settings.models.index');
     Route::post('/models', [ModelsController::class, 'store'])->name('ai-settings.models.store');

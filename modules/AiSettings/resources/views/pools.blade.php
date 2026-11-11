@@ -5,11 +5,44 @@
                 {{ __('ai.sub_pools') }}
             </h1>
             <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">
-                Strategie równoważenia obciążenia i automatycznego przełączania awaryjnego (Failover & Cooldown).
+                Strategie równoważenia obciążenia, analizy złożoności zapytania (`complexity_aware`) i automatycznego przełączania awaryjnego (Failover & Cooldown).
             </p>
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <!-- Complexity-Aware Smart Router Card (v1.6.0) -->
+            <div class="bg-white dark:bg-slate-900 border border-indigo-300 dark:border-indigo-800 rounded-2xl p-6 shadow-xs flex flex-col justify-between">
+                <div>
+                    <div class="flex items-center justify-between">
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800">
+                            {{ __('ai.complexity_routing_badge') }}
+                        </span>
+                        <span class="text-xs text-slate-400 font-mono">complexity_aware</span>
+                    </div>
+                    <h3 class="mt-3 text-lg font-bold text-slate-900 dark:text-white">
+                        {{ __('ai.complexity_routing_title') }}
+                    </h3>
+                    <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                        {{ __('ai.complexity_routing_desc') }}
+                    </p>
+
+                    <div class="mt-4 pt-4 border-t border-slate-100 dark:border-slate-800 space-y-2 text-xs">
+                        <div class="flex justify-between">
+                            <span class="text-slate-500">Niska złożoność:</span>
+                            <span class="font-medium text-emerald-600">Ollama / LM Studio / Flash</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-slate-500">Wysoka złożoność:</span>
+                            <span class="font-medium text-indigo-600 dark:text-indigo-400">Claude Sonnet / GPT-4o</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-slate-500">Klasyfikator:</span>
+                            <span class="text-slate-800 dark:text-slate-200 font-medium">PromptComplexityAnalyzer</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <!-- Smart Pool Card -->
             <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-xs flex flex-col justify-between">
                 <div>
@@ -119,7 +152,7 @@
                     1. <strong>Wybór konta:</strong> Brama LLM pobiera aktywne konta przypisane do danego dostawcy lub puli, filtrując konta w stanie <span class="font-mono text-xs bg-amber-100 dark:bg-amber-900/50 text-amber-800 dark:text-amber-200 px-1 py-0.5 rounded">cooldown</span>.
                 </p>
                 <p>
-                    2. <strong>Ważony algorytm:</strong> Konta o wyższej wadze (np. waga 20 vs waga 10) otrzymują proporcjonalnie więcej zapytań (Weighted Round-Robin).
+                    2. <strong>Ważony algorytm & Complexity-Aware:</strong> Konta o wyższej wadze otrzymują proporcjonalnie więcej zapytań (Weighted Round-Robin), natomiast strategia <span class="font-mono text-xs bg-indigo-100 dark:bg-indigo-900/50 text-indigo-800 dark:text-indigo-200 px-1 py-0.5 rounded">complexity_aware</span> analizuje trudność zadania przed wyborem modelu.
                 </p>
                 <p>
                     3. <strong>Detekcja błędu 429 / HTTP Error:</strong> Jeśli dostawca zwróci kod HTTP 429 (Rate Limit Exceeded), konto jest natychmiast oznaczane statusem <span class="font-mono text-xs bg-amber-100 dark:bg-amber-900/50 text-amber-800 dark:text-amber-200 px-1 py-0.5 rounded">cooldown</span> na czas 60 sekund, a zapytanie jest automatycznie powtarzane (failover) na kolejnym dostępnym koncie w puli bez przerywania sesji użytkownika.
