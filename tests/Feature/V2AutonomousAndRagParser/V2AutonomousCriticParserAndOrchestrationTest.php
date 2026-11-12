@@ -267,6 +267,10 @@ class V2AutonomousCriticParserAndOrchestrationTest extends TestCase
             'status' => 'active',
         ]);
 
+        // 0. Sprawdzenie renderowania widoku GET /agents/cooperation
+        $indexEmptyResponse = $this->actingAs($user)->get(route('agents.cooperation.index'));
+        $indexEmptyResponse->assertOk();
+
         $storeResponse = $this->actingAs($user)->post(route('agents.cooperation.store'), [
             'name' => 'Zespół Architektury i Bezpieczeństwa',
             'description' => 'Wspólna debata nad architekturą mikroserwisów',
@@ -292,6 +296,10 @@ class V2AutonomousCriticParserAndOrchestrationTest extends TestCase
 
         $runNormal->assertRedirect();
         $cooperation->refresh();
+
+        $indexWithCoopResponse = $this->actingAs($user)->get(route('agents.cooperation.index', ['cooperation_id' => $cooperation->id]));
+        $indexWithCoopResponse->assertOk();
+        $indexWithCoopResponse->assertSee('Zespół Architektury i Bezpieczeństwa');
 
         $this->assertSame('completed', $cooperation->status);
         $this->assertCount(2, $cooperation->discussion_log ?? []);

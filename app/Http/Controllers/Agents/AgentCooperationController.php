@@ -8,8 +8,10 @@ use App\Contracts\Agents\AgentCooperationInterface;
 use App\Http\Controllers\Controller;
 use App\Models\Agent;
 use App\Models\AgentCooperation;
+use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 use Illuminate\View\View;
 
@@ -21,6 +23,8 @@ class AgentCooperationController extends Controller
 
     public function index(Request $request): View
     {
+        $this->ensureTableExists();
+
         $agents = Agent::with('skills')->orderBy('name')->get();
         $cooperations = AgentCooperation::with('coordinator')->latest()->get();
 
@@ -34,7 +38,7 @@ class AgentCooperationController extends Controller
             ? round((float) $cooperations->avg('current_temperature'), 1)
             : 22.0;
 
-        return view('agents::cooperation', [
+        return view('module-agents::cooperation', [
             'agents' => $agents,
             'cooperations' => $cooperations,
             'activeCooperation' => $activeCooperation,
@@ -45,6 +49,7 @@ class AgentCooperationController extends Controller
 
     public function store(Request $request): RedirectResponse
     {
+        $this->ensureTableExists();
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:140'],
             'description' => ['nullable', 'string', 'max:1000'],
@@ -161,5 +166,41 @@ class AgentCooperationController extends Controller
         return redirect()
             ->route('agents.cooperation.index')
             ->with('status', __('agents.cooperation.deleted_success'));
+    }
+
+    protected function ensureTableExists(): void
+    {
+        if (! Schema::hasTable('agent_cooperations')) {
+            Schema::create('agent_cooperations', function (Blueprint $table) {
+                $table->id();
+                $table->string('name');
+                $table->string('slug')->unique();
+                $table->text('description')->nullable();
+                $table->string('topology')->default('round_table');
+                $table->foreignId('coordinator_agent_id')->nullable()->constrained('agents')->nullOnDelete();
+                $table->json('participant_agent_ids');
+                $table->json('participant_roles')->nullable();
+                $table->boolean('overheat_guard_enabled')->default(true);
+                $table->unsignedInteger('max_rounds')->default(4);
+                $table->unsignedInteger('max_tokens_budget')->default(12000);
+                $table->decimal('max_temperature_score', 5, 2)->default(85.00);
+                $table->unsignedInteger('cooldown_seconds')->default(30);
+                $table->decimal('repetition_threshold', 4, 2)->default(0.78);
+                $table->boolean('auto_synthesize_on_overheat')->default(true);
+                $table->decimal('current_temperature', 5, 2)->default(22.00);
+                $table->string('thermal_status')->default('nominal');
+                $table->string('status')->default('idle');
+                $table->unsignedInteger('total_tokens_used')->default(0);
+                $table->unsignedInteger('total_turns_executed')->default(0);
+                $table->unsignedInteger('context_reloads_count')->default(0);
+                $table->text('last_task_prompt')->nullable();
+                $table->longText('preserved_context')->nullable();
+                $table->longText('final_synthesis')->nullable();
+                $table->json('discussion_log')->nullable();
+                $table->json('overheat_events')->nullable();
+                $table->timestamp('cooled_down_at')->nullable();
+                $table->timestamps();
+            });
+        }
     }
 }
